@@ -36,7 +36,7 @@ namespace xsm::detail{
       const std::map<std::string,Node*>& GetChildren() const;
       
       // Display
-      void Print();
+      void print();
     private:
       T m_value;
       bool m_is_leaf;
@@ -76,20 +76,20 @@ namespace xsm::detail{
 namespace xsm{
   // Publicly accessible container class
   template <class T>
-  class Radix{
+  class radix{
     public:
-      Radix();
-      ~Radix();
+      radix();
+      ~radix();
 
-      // Typedef allows iterator class to be accessed through xsm::Radix::Iterator
-      typedef detail::Iterator_impl<T> Iterator;
+      // Typedef allows iterator class to be accessed through xsm::radix::iterator
+      typedef detail::Iterator_impl<T> iterator;
   
       void insert(const std::vector<std::string>, const T);
       void insert(const std::string, const T);
 
-      Iterator Begin();
-      Iterator End();
-      void Print();
+      iterator begin();
+      iterator end();
+      void print();
 
     private:
       // Pointer to root node of radix tree
@@ -109,40 +109,40 @@ namespace xsm{
   // RADIXTREE //
   ///////////////
   template <class T>
-  Radix<T>::Radix(){
+  radix<T>::radix(){
     m_root = new detail::Node<T>(NULL);
   }
   
   template <class T>
-  Radix<T>::~Radix(){
+  radix<T>::~radix(){
     delete m_root;
   }
   
   template <class T>
-  void Radix<T>::insert(const std::vector<std::string> key_list, const T value){
+  void radix<T>::insert(const std::vector<std::string> key_list, const T value){
     for (const std::string& key : key_list){
       m_root->insert(key, value);
     }
   }
   
   template <class T>
-  void Radix<T>::insert(const std::string key, const T value){ 
+  void radix<T>::insert(const std::string key, const T value){ 
     m_root->insert(key, value);
   }
   
   template <class T>
-  detail::Iterator_impl<T> Radix<T>::Begin(){
-    return Iterator(m_root, "");
+  detail::Iterator_impl<T> radix<T>::begin(){
+    return iterator(m_root, "");
   }
   
   template <class T>
-  detail::Iterator_impl<T> Radix<T>::End(){
-    return Iterator(NULL, "");
+  detail::Iterator_impl<T> radix<T>::end(){
+    return iterator(NULL, "");
   }
   
   template <class T>
-  void Radix<T>::Print(){
-    m_root->Print();
+  void radix<T>::print(){
+    m_root->print();
     std::cout << std::endl;
   }
 }
@@ -324,10 +324,10 @@ namespace xsm::detail{
   }
   
   template <class T>
-  void Node<T>::Print(){
+  void Node<T>::print(){
     for (auto& entry : m_children){
       std::cout << entry.first << " <";
-      entry.second->Print();
+      entry.second->print();
       std::cout << "> ";
     }
     std::cout << (m_is_leaf? "+" : "-");
