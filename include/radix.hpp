@@ -27,7 +27,7 @@ namespace xsm::detail{
       ~Node();
      
       // Insert
-      void insert(const std::string&, const T&);
+      bool Insert(const std::string&, const T&);
       // TODO: At(), Erase(), Find()
       
       // Display
@@ -47,7 +47,8 @@ namespace xsm::detail{
   
       // Methods used during container manipulation
       void MakeLeaf(const T&);
-      void AddChild(const std::string&, const T&, const bool=false);
+      bool AddChild(const std::string&, const T&, const bool=true);
+      void AddChild(const std::string&);
       void AddChild(const std::string&, Node*);
   };
 
@@ -85,9 +86,9 @@ namespace xsm{
       // Typedef allows iterator class to be accessed through xsm::radix::iterator
       typedef detail::Iterator_impl<T> iterator;
   
-      void insert(const std::string&, const T&);
-      void insert(const std::pair<std::string,T>&);
-      void insert(const std::vector<std::string>&, const T&);
+      bool insert(const std::string&, const T&);
+      bool insert(const std::pair<std::string,T>&);
+      std::pair<bool,bool> insert(const std::vector<std::string>&, const T&);
 
       iterator begin();
       iterator end();
@@ -121,20 +122,25 @@ namespace xsm{
   }
   
   template <class T>
-  void radix<T>::insert(const std::vector<std::string>& key_list, const T& value){
+  std::pair<bool,bool> radix<T>::insert(const std::vector<std::string>& key_list, const T& value){
+    bool all = true;
+    bool any = false;
     for (const std::string& key : key_list){
-      m_root->insert(key, value);
+      bool success = m_root->Insert(key, value);
+      all &= success;
+      any |= success;
     }
+    return std::make_pair(all,any);
   }
   
   template <class T>
-  void radix<T>::insert(const std::string& key, const T& value){
-    m_root->insert(key, value);
+  bool radix<T>::insert(const std::string& key, const T& value){
+    return m_root->Insert(key, value);
   }
 
   template <class T>
-  void radix<T>::insert(const std::pair<std::string,T>& key_value){ 
-    m_root->insert(key_value.first, key_value.second);
+  bool radix<T>::insert(const std::pair<std::string,T>& key_value){ 
+    return m_root->Insert(key_value.first, key_value.second);
   }
   
   template <class T>
@@ -244,7 +250,8 @@ namespace xsm::detail{
   
   // Recursively insert a single word into the radix tree
   template <class T>
-  void Node<T>::insert(const std::string& word, const T& value){
+  bool Node<T>::Insert(const std::string& word, const T& value){
+    bool success = false;
     for (auto& entry : m_children){
   
       auto last_match = std::mismatch(word.begin(), word.end(), entry.first.begin(), entry.first.end());
@@ -256,40 +263,46 @@ namespace xsm::detail{
       if (word.end() == last_match.first && entry.first.end() == last_match.second){
         // If the target node is already a leaf node do not continue
         if (entry.second->IsLeaf()){
-          return; // insert unsuccessful
+          return false;
         }
         else {
-          entry.second->MakeLeaf(value); // insert successful
-          return;
+          entry.second->MakeLeaf(value);
+          return true;
         }
       }
       // Either string is prefix of the other string
       else if (word.end() == last_match.first || entry.first.end() == last_match.second){
+        // Inserted word is prefix of the existing key
         if (word.end() == last_match.first){
-          AddChild(word, value, true);
+          // Add a new node with the prefix to the current node
+          success = AddChild(word, value);
+          // Old child node becomes child of the new node
           m_children[word]->AddChild(std::string(last_match.second, entry.first.end()), entry.second);
-  
+          // Remove old node from current node
           m_children.erase(entry.first);
         }
         else {
-          entry.second->insert(std::string(last_match.first, word.end()), value);
+          // Insert new word as child of its prefix
+          success = entry.second->Insert(std::string(last_match.first, word.end()), value);
         }
-        return;
+        return success;
       }
       // Words partially match but diverge
       else {
         std::string common_prefix(word.begin(), last_match.first);
-        
-        AddChild(common_prefix, value);
-        m_children[common_prefix]->AddChild(std::string(last_match.first,word.end()), value, true);
+        // Add a new node with the common prefix 
+        AddChild(common_prefix);
+        // Add new and old node
+        success = m_children[common_prefix]->AddChild(std::string(last_match.first,word.end()), value);
         m_children[common_prefix]->AddChild(std::string(last_match.second,entry.first.end()), entry.second);
-  
+        // Remove old node from current node's children
         m_children.erase(entry.first);
-        return;
+        return success;
       }
     }
     // If no common prefix has been found then word becomes a new prefix
-    AddChild(word, value, true);
+    success = AddChild(word, value);
+    return success;
   }
   
   template <class T>
@@ -298,12 +311,20 @@ namespace xsm::detail{
     m_is_leaf = true;
   }
   
-  // Adds a new node
+  // Adds a new node.  
   template <class T>
-  void Node<T>::AddChild(const std::string& word, const T& value, const bool is_leaf){
-    if (!m_children.contains(word)){
+  bool Node<T>::AddChild(const std::string& word, const T& value, const bool is_leaf){
+    bool child_exists = m_children.contains(word);
+    if (!child_exists){
       m_children[word] = new Node(this, value, is_leaf);
     }
+    return !child_exists;
+  }
+  
+  // Adds a new node.  
+  template <class T>
+  void Node<T>::AddChild(const std::string& word){
+    AddChild(word, T(), false);
   }
   
   // Adds an existing node

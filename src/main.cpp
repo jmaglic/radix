@@ -10,6 +10,17 @@ int main(){
 
   std::cout << "Insert: " << (TestInsert()? "yey" : "ney") << std::endl;
 
+  xsm::radix<bool> rdx;
+  bool exit = false;
+  while (!exit) {
+    std::string word;
+    std::cout << "Enter: ";
+    std::cin >> word;
+
+    bool success = rdx.insert(word,true);
+    std::cout << "Insert " << (success? "succeeded" : "failed") << "\n";
+    rdx.print();
+  }
 }
 
 // Insertion and tree structure
