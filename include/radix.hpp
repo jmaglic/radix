@@ -17,7 +17,7 @@
 #include <vector>
 
 namespace xsm::detail{
-  // Forward declaraion for friend relation
+  // Forward declaration for friend relation
   template <class T> class Iterator_impl;
   // Node represents a key-value pair but the key is not stored explicitly
   template <class T> class Node{
@@ -46,7 +46,7 @@ namespace xsm::detail{
       const std::map<std::string,Node*>& GetChildren() const;
   
       // Methods used during container manipulation
-      void SetEnd(bool);
+      void MakeLeaf(const T&);
       void AddChild(const std::string&, const T&, const bool=false);
       void AddChild(const std::string&, Node*);
   };
@@ -173,12 +173,6 @@ namespace xsm::detail{
   template <class T>
   bool Iterator_impl<T>::Advance(){
     Node<T>* prev_child = NULL; // TODO: make this a unique ptr
-    /*
-    auto GoToParent = [&, prev_child]() mutable {
-      // Go up one node
-      prev_child = m_node;
-      m_node = m_node->GetParent();
-    };*/
     
     // If node has children, go to first child in sequence
     if (!m_node->IsChildless()){
@@ -189,8 +183,6 @@ namespace xsm::detail{
     }
     // If node has no children, then go up to parent and remember child
     else {
-      //GoToParent(_node, prev_child);
-      //GoToParent();
       prev_child = m_node;
       m_node = m_node->GetParent();
     }
@@ -213,7 +205,6 @@ namespace xsm::detail{
       }
       // If this section is reached, then the previous child was the last in sequence
       // Therefore, go up to parent
-      //GoToParent();
       prev_child = m_node;
       m_node = m_node->GetParent();
     }
@@ -263,8 +254,14 @@ namespace xsm::detail{
   
       // Word and prefix are identical
       if (word.end() == last_match.first && entry.first.end() == last_match.second){
-        entry.second->SetEnd(true);
-        return;
+        // If the target node is already a leaf node do not continue
+        if (entry.second->IsLeaf()){
+          return; // insert unsuccessful
+        }
+        else {
+          entry.second->MakeLeaf(value); // insert successful
+          return;
+        }
       }
       // Either string is prefix of the other string
       else if (word.end() == last_match.first || entry.first.end() == last_match.second){
@@ -296,8 +293,9 @@ namespace xsm::detail{
   }
   
   template <class T>
-  void Node<T>::SetEnd(bool end){
-    m_is_leaf = end;
+  void Node<T>::MakeLeaf(const T& value){
+    m_value = value;
+    m_is_leaf = true;
   }
   
   // Adds a new node
