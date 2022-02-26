@@ -17,9 +17,11 @@
 #include <vector>
 
 namespace xsm::detail{
-  // Represents a key-value pair. The key is not stored expicitly but inferred
-  template <class T>
-  class Node{
+  // Forward declaraion for friend relation
+  template <class T> class Iterator_impl;
+  // Node represents a key-value pair but the key is not stored explicitly
+  template <class T> class Node{
+    friend xsm::detail::Iterator_impl<T>;
     public:
       Node(Node*, bool=false);
       ~Node();
@@ -27,13 +29,6 @@ namespace xsm::detail{
       // Insert
       void insert(const std::string&, const T&);
       // TODO: At(), Erase(), Find()
-
-      // For Iterator
-      bool IsChildless() const;
-      Node* GetParent() const;
-      void SetParent(Node*);
-      std::pair<std::string,Node*> GetFirstChild() const;
-      const std::map<std::string,Node*>& GetChildren() const;
       
       // Display
       void print();
@@ -42,6 +37,13 @@ namespace xsm::detail{
       bool m_is_leaf;
       Node* m_parent;
       std::map<std::string,Node*> m_children;
+
+      // For iterator
+      bool IsChildless() const;
+      Node* GetParent() const;
+      void SetParent(Node*);
+      std::pair<std::string,Node*> GetFirstChild() const;
+      const std::map<std::string,Node*>& GetChildren() const;
   
       // Methods used during container manipulation
       void SetEnd(bool);
@@ -50,13 +52,11 @@ namespace xsm::detail{
   };
 
   // Forward declarations to allow for overloaded comparison operators
-  template <class T> class Iterator_impl;
   template <class T> bool operator==(const Iterator_impl<T>&, const Iterator_impl<T>&);
   template <class T> bool operator!=(const Iterator_impl<T>&, const Iterator_impl<T>&);
 
   // Custom iterator class
-  template <class T>
-  class Iterator_impl {
+  template <class T> class Iterator_impl {
     public:
       Iterator_impl(Node<T>*, const std::string&);
 
@@ -158,11 +158,12 @@ namespace xsm::detail{
   Iterator_impl<T>& Iterator_impl<T>::operator++(){
 
     Node<T>* prev_child = NULL;
+    /*
     auto GoToParent = [&, prev_child]() mutable {
       // Go up one node
       prev_child = m_node;
       m_node = m_node->GetParent();
-    };
+    };*/
     
     // If node has children, go to first child in sequence
     if (!m_node->IsChildless()){
