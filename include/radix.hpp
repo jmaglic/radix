@@ -23,7 +23,7 @@ namespace xsm::detail{
   template <class T> class Node{
     friend xsm::detail::Iterator_impl<T>;
     public:
-      Node(Node*, bool=false);
+      Node(Node*, const T&, const bool=false);
       ~Node();
      
       // Insert
@@ -47,7 +47,7 @@ namespace xsm::detail{
   
       // Methods used during container manipulation
       void SetEnd(bool);
-      void AddChild(const std::string&, const bool=false);
+      void AddChild(const std::string&, const T&, const bool=false);
       void AddChild(const std::string&, Node*);
   };
 
@@ -84,8 +84,9 @@ namespace xsm{
       // Typedef allows iterator class to be accessed through xsm::radix::iterator
       typedef detail::Iterator_impl<T> iterator;
   
-      void insert(const std::vector<std::string>, const T);
-      void insert(const std::string, const T);
+      void insert(const std::string&, const T&);
+      void insert(const std::pair<std::string,T>&);
+      void insert(const std::vector<std::string>&, const T&);
 
       iterator begin();
       iterator end();
@@ -110,7 +111,7 @@ namespace xsm{
   ///////////////
   template <class T>
   radix<T>::radix(){
-    m_root = new detail::Node<T>(NULL);
+    m_root = new detail::Node<T>(NULL, T());
   }
   
   template <class T>
@@ -119,15 +120,20 @@ namespace xsm{
   }
   
   template <class T>
-  void radix<T>::insert(const std::vector<std::string> key_list, const T value){
+  void radix<T>::insert(const std::vector<std::string>& key_list, const T& value){
     for (const std::string& key : key_list){
       m_root->insert(key, value);
     }
   }
   
   template <class T>
-  void radix<T>::insert(const std::string key, const T value){ 
+  void radix<T>::insert(const std::string& key, const T& value){
     m_root->insert(key, value);
+  }
+
+  template <class T>
+  void radix<T>::insert(const std::pair<std::string,T>& key_value){ 
+    m_root->insert(key_value.first, key_value.second);
   }
   
   template <class T>
@@ -224,8 +230,8 @@ namespace xsm::detail{
   // NODE //
   //////////
   template <class T>
-  Node<T>::Node(Node* parent, bool is_leaf) 
-    : m_is_leaf(is_leaf), m_parent(parent), m_children(std::map<std::string,Node<T>*>()) {}
+  Node<T>::Node(Node* parent, const T& value, const bool is_leaf) 
+    : m_is_leaf(is_leaf), m_value(value), m_parent(parent), m_children(std::map<std::string,Node<T>*>()) {}
   
   // Each Node is responsible for deleting its children
   template <class T>
@@ -253,7 +259,7 @@ namespace xsm::detail{
       // Either string is prefix of the other string
       else if (word.end() == last_match.first || entry.first.end() == last_match.second){
         if (word.end() == last_match.first){
-          AddChild(word, true);
+          AddChild(word, value, true);
           m_children[word]->AddChild(std::string(last_match.second, entry.first.end()), entry.second);
   
           m_children.erase(entry.first);
@@ -267,8 +273,8 @@ namespace xsm::detail{
       else {
         std::string common_prefix(word.begin(), last_match.first);
         
-        AddChild(common_prefix);
-        m_children[common_prefix]->AddChild(std::string(last_match.first,word.end()), true);
+        AddChild(common_prefix, value);
+        m_children[common_prefix]->AddChild(std::string(last_match.first,word.end()), value, true);
         m_children[common_prefix]->AddChild(std::string(last_match.second,entry.first.end()), entry.second);
   
         m_children.erase(entry.first);
@@ -276,7 +282,7 @@ namespace xsm::detail{
       }
     }
     // If no common prefix has been found then word becomes a new prefix
-    AddChild(word, true);
+    AddChild(word, value, true);
   }
   
   template <class T>
@@ -284,13 +290,15 @@ namespace xsm::detail{
     m_is_leaf = end;
   }
   
+  // Adds a new node
   template <class T>
-  void Node<T>::AddChild(const std::string& word, const bool state){
+  void Node<T>::AddChild(const std::string& word, const T& value, const bool is_leaf){
     if (!m_children.contains(word)){
-      m_children[word] = new Node(this, state);
+      m_children[word] = new Node(this, value, is_leaf);
     }
   }
   
+  // Adds an existing node
   template <class T>
   void Node<T>::AddChild(const std::string& word, Node* node){
     if (!m_children.contains(word)){
