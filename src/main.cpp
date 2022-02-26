@@ -2,6 +2,7 @@
 #include <map>
 #include <vector>
 #include <array>
+#include <algorithm>
 #include "radix.hpp"
 
 int main(){
@@ -14,6 +15,11 @@ int main(){
   rdx.insert(words[5], true);
 
   rdx.print();
+
+  sort(words.begin(), words.end());
+  for (auto word : words){
+    std::cout << word << std::endl;
+  }
 
   for (xsm::radix<bool>::iterator it = rdx.begin(); it != rdx.end(); ++it){
     std::cout << it.GetKey() << std::endl;
