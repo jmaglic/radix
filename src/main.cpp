@@ -1,15 +1,17 @@
 #include <iostream>
 #include <map>
+#include <vector>
+#include <array>
 #include "radix.hpp"
 
 int main(){
+
   // Insertion and tree structure
   xsm::radix<bool> rdx;
-  rdx.insert("hello", true);
-  rdx.insert(std::make_pair("hell", true));
-  rdx.insert("here", true);
-  rdx.insert("hate", true);
-  rdx.insert("love", true);
+  std::vector<std::string> words = {"hello", "hell", "here", "hate", "love"};
+  rdx.insert(std::vector<std::string>{words[1], words[2], words[3]}, true);
+  rdx.insert(std::make_pair(words[4], true));
+  rdx.insert(words[5], true);
 
   rdx.print();
 

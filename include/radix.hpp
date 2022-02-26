@@ -37,9 +37,9 @@ namespace xsm::detail{
       bool m_is_leaf;
       Node* m_parent;
       std::map<std::string,Node*> m_children;
-
       // For iterator
       bool IsChildless() const;
+      bool IsLeaf() const;
       Node* GetParent() const;
       void SetParent(Node*);
       std::pair<std::string,Node*> GetFirstChild() const;
@@ -67,6 +67,7 @@ namespace xsm::detail{
       friend bool operator== <> (const Iterator_impl<T>&, const Iterator_impl<T>&);
       friend bool operator!= <> (const Iterator_impl<T>&, const Iterator_impl<T>&);
     private:
+      bool Advance();
       // Value is accessible through node
       Node<T>* m_node;
       std::string m_key;
@@ -162,7 +163,14 @@ namespace xsm::detail{
  
   template <class T>
   Iterator_impl<T>& Iterator_impl<T>::operator++(){
+    // Advance iterator until you reach a leaf node
+    while (Advance()) {}
+    return *this;
+  }
 
+  // Advances iterator forward by one. Returns true if the iterator lands on a non-leaf node
+  template <class T>
+  bool Iterator_impl<T>::Advance(){
     Node<T>* prev_child = NULL;
     /*
     auto GoToParent = [&, prev_child]() mutable {
@@ -176,7 +184,7 @@ namespace xsm::detail{
       std::string suffix;
       std::tie(suffix, m_node) = m_node->GetFirstChild();
       m_key += suffix;
-      return *this;
+      return !m_node->IsLeaf();
     }
     // If node has no children, then go up to parent and remember child
     else {
@@ -189,13 +197,13 @@ namespace xsm::detail{
     while (m_node != NULL){
       // Search for the previous child
       bool prev_child_found = false;
-   
+    
       for (const auto& elem : m_node->GetChildren()){
         // Go to the next child in sequence, located after the previously visited child
         if (prev_child_found){
           m_key += elem.first;
           m_node = elem.second;
-          return *this;
+          return !m_node->IsLeaf();
         }
         if (prev_child == elem.second){
           prev_child_found = true;
@@ -208,7 +216,8 @@ namespace xsm::detail{
       prev_child = m_node;
       m_node = m_node->GetParent();
     }
-    return *this;
+    // Iterator has reached end
+    return false;
   }
   
   template <class T>
@@ -310,6 +319,11 @@ namespace xsm::detail{
   template <class T>
   bool Node<T>::IsChildless() const {
     return !m_children.size();
+  }
+
+  template <class T>
+  bool Node<T>::IsLeaf() const {
+    return m_is_leaf;
   }
   
   template <class T>
