@@ -139,7 +139,8 @@ namespace xsm{
   
   template <class T>
   detail::Iterator_impl<T> radix<T>::begin(){
-    return iterator(m_root, "");
+    // need to increment because the root node is not a leaf node
+    return ++iterator(m_root, "");
   }
   
   template <class T>
@@ -171,7 +172,7 @@ namespace xsm::detail{
   // Advances iterator forward by one. Returns true if the iterator lands on a non-leaf node
   template <class T>
   bool Iterator_impl<T>::Advance(){
-    Node<T>* prev_child = NULL;
+    Node<T>* prev_child = NULL; // TODO: make this a unique ptr
     /*
     auto GoToParent = [&, prev_child]() mutable {
       // Go up one node
