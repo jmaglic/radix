@@ -15,41 +15,47 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <stdexcept>
 
+// Forward declaration for friend relation
+namespace xsm{template <class T> class radix;}
 namespace xsm::detail{
   // Forward declaration for friend relation
   template <class T> class Iterator_impl;
   // Node represents a key-value pair but the key is not stored explicitly
   template <class T> class Node{
-    friend xsm::detail::Iterator_impl<T>;
+    friend Iterator_impl<T>;
+    friend xsm::radix<T>;
     public:
       Node(Node*, const T&, const bool=false);
       ~Node();
-     
-      // Insert
-      bool Insert(const std::string&, const T&);
-      // TODO: At(), Erase(), Find()
       
       // Display
       void print();
     private:
+      // Members
       T m_value;
       bool m_is_leaf;
       Node* m_parent;
       std::map<std::string,Node*> m_children;
-      // For iterator
+
+      // Container operations
+      bool Insert(const std::string&, const T&);
+      T& At(const std::string&);
+
+      // Methods used during container manipulation
+      void MakeLeaf(const T&);
+      bool AddChild(const std::string&, const T&, const bool=true);
+      void AddChild(const std::string&);
+      void AddChild(const std::string&, Node*);
+      
+      // For iterator operations
       bool IsChildless() const;
       bool IsLeaf() const;
       Node* GetParent() const;
       void SetParent(Node*);
       std::pair<std::string,Node*> GetFirstChild() const;
       const std::map<std::string,Node*>& GetChildren() const;
-  
-      // Methods used during container manipulation
-      void MakeLeaf(const T&);
-      bool AddChild(const std::string&, const T&, const bool=true);
-      void AddChild(const std::string&);
-      void AddChild(const std::string&, Node*);
   };
 
   // Forward declarations to allow for overloaded comparison operators
@@ -63,6 +69,7 @@ namespace xsm::detail{
 
       Iterator_impl& operator++();
       std::string GetKey() const;
+      const T& GetValue() const;
       
       // Explicit instantiation for template type
       friend bool operator== <> (const Iterator_impl<T>&, const Iterator_impl<T>&);
@@ -77,18 +84,22 @@ namespace xsm::detail{
 
 namespace xsm{
   // Publicly accessible container class
-  template <class T>
-  class radix{
+  template <class T> class radix{
     public:
       radix();
       ~radix();
 
-      // Typedef allows iterator class to be accessed through xsm::radix::iterator
+      // Aliases
       typedef detail::Iterator_impl<T> iterator;
+      typedef std::string key_type;
+      typedef T mapped_type;
+      typedef std::pair<const std::string, T> value_type;
   
-      bool insert(const std::string&, const T&);
-      bool insert(const std::pair<std::string,T>&);
-      std::pair<bool,bool> insert(const std::vector<std::string>&, const T&);
+      bool insert(const std::string&, const mapped_type&);
+      bool insert(const value_type&);
+      std::pair<bool,bool> insert(const std::vector<std::string>&, const mapped_type&);
+
+      mapped_type& at(const key_type&);
 
       iterator begin();
       iterator end();
@@ -96,7 +107,7 @@ namespace xsm{
 
     private:
       // Pointer to root node of radix tree
-      detail::Node<T>* m_root; 
+      detail::Node<mapped_type>* m_root; 
   };
 }
  
@@ -139,8 +150,18 @@ namespace xsm{
   }
 
   template <class T>
-  bool radix<T>::insert(const std::pair<std::string,T>& key_value){ 
+  bool radix<T>::insert(const value_type& key_value){ 
     return m_root->Insert(key_value.first, key_value.second);
+  }
+
+  template <class T>
+  T& radix<T>::at(const std::string& key){
+    try{
+      return m_root->At(key);
+    }
+    catch(const std::out_of_range& e){
+      throw e;
+    }
   }
   
   template <class T>
@@ -178,7 +199,8 @@ namespace xsm::detail{
   // Advances iterator forward by one. Returns true if the iterator lands on a non-leaf node
   template <class T>
   bool Iterator_impl<T>::Advance(){
-    Node<T>* prev_child = NULL; // TODO: make this a unique ptr
+    // This pointer does not need to be deleted
+    Node<T>* prev_child = NULL;
     
     // If node has children, go to first child in sequence
     if (!m_node->IsChildless()){
@@ -197,6 +219,9 @@ namespace xsm::detail{
       // Search for the previous child
       bool prev_child_found = false;
     
+      // Going through all children and comparing the pointer is inefficient, O(n) where
+      // n is the number of elements in the map. It may be better if the iterator kept track 
+      // of the key that way used to access this node from its parent
       for (const auto& elem : m_node->GetChildren()){
         // Go to the next child in sequence, located after the previously visited child
         if (prev_child_found){
@@ -222,6 +247,11 @@ namespace xsm::detail{
   std::string Iterator_impl<T>::GetKey() const {
     return m_key;
   }
+  
+  template <class T>
+  const T& Iterator_impl<T>::GetValue() const {
+    return m_node->m_value;
+  }
 
   template <class T>
   bool operator==(const Iterator_impl<T>& lhs, const Iterator_impl<T>& rhs){
@@ -236,6 +266,7 @@ namespace xsm::detail{
   //////////
   // NODE //
   //////////
+  // CONSTRUCTORS
   template <class T>
   Node<T>::Node(Node* parent, const T& value, const bool is_leaf) 
     : m_is_leaf(is_leaf), m_value(value), m_parent(parent), m_children(std::map<std::string,Node<T>*>()) {}
@@ -248,6 +279,7 @@ namespace xsm::detail{
     }
   }
   
+  // METHODS
   // Recursively insert a single word into the radix tree
   template <class T>
   bool Node<T>::Insert(const std::string& word, const T& value){
@@ -303,6 +335,22 @@ namespace xsm::detail{
     // If no common prefix has been found then word becomes a new prefix
     success = AddChild(word, value);
     return success;
+  }
+
+  template <class T>
+  T& Node<T>::At(const std::string& key){
+    if (key.empty()){
+      return m_value;
+    }
+    auto begin = key.begin();
+    auto end = key.end();
+    for (auto pos = begin; pos <= end; ++pos){
+      std::string substr(begin,pos);
+      if (m_children.contains(substr)){
+        return m_children[substr]->At(std::string(pos,end));
+      }
+    }
+    throw std::out_of_range("radix::at:  key not found");
   }
   
   template <class T>

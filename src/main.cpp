@@ -10,6 +10,14 @@ int main(){
 
   std::cout << "Insert: " << (TestInsert()? "yey" : "ney") << std::endl;
 
+  xsm::radix<std::string> rdx;
+
+  rdx.insert("name", "jasmin");
+
+  std::cout << rdx.at("name") << std::endl;
+
+  // Interactive demonstration
+  /*
   xsm::radix<bool> rdx;
   bool exit = false;
   while (!exit) {
@@ -21,20 +29,24 @@ int main(){
     std::cout << "Insert " << (success? "succeeded" : "failed") << "\n";
     rdx.print();
   }
+  */
 }
 
 // Insertion and tree structure
 bool TestInsert(){
   xsm::radix<bool> rdx;
   // Insert words with different methods
-  std::vector<std::string> words = {"hello", "hell", "here", "hate", "love"};
+  std::vector<std::string> words = {"hello", "hell", "here", "hate", "love", "hell"};
   rdx.insert(std::vector<std::string>{words[0], words[1], words[2]}, true);
   rdx.insert(std::make_pair(words[3], true));
   rdx.insert(words[4], true);
+  rdx.insert(words[5], true);
   // Print the tree structure
   //rdx.print();
   // Sort word vector for comparison
-  sort(words.begin(), words.end());
+  std::sort(words.begin(), words.end());
+  // Remove duplicate keys
+  words.erase(std::unique(words.begin(), words.end()), words.end());
 
   size_t i = 0;
   bool all_correct = true;
