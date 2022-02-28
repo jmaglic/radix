@@ -6,15 +6,11 @@
 #include "radix.hpp"
 
 bool TestInsert();
+bool TestOverwrite();
 int main(){
 
   std::cout << "Insert: " << (TestInsert()? "yey" : "ney") << std::endl;
-
-  xsm::radix<std::string> rdx;
-
-  rdx.insert("name", "jasmin");
-
-  std::cout << rdx.at("name") << std::endl;
+  std::cout << "Overwrite: " << (TestOverwrite()? "yey" : "ney") << std::endl;
 
   // Interactive demonstration
   /*
@@ -56,3 +52,20 @@ bool TestInsert(){
   }
   return all_correct;
 }
+
+// Changing value using at()
+bool TestOverwrite(){
+  bool success = true;
+  xsm::radix<std::string> rdx;
+  std::string name1 = "jasmin";
+  std::string name2 = "alexandra";
+  rdx.insert("name", name1);
+
+  success &= rdx.at("name") == name1;
+
+  rdx.at("name") = name2;
+
+  success &= rdx.at("name") == name2;
+  return success;
+}
+

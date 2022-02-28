@@ -41,7 +41,7 @@ namespace xsm::detail{
 
       // Container operations
       bool Insert(const std::string&, const T&);
-      T& At(const std::string&);
+      const T& At(const std::string&) const;
 
       // Methods used during container manipulation
       void MakeLeaf(const T&);
@@ -93,13 +93,14 @@ namespace xsm{
       typedef detail::Iterator_impl<T> iterator;
       typedef std::string key_type;
       typedef T mapped_type;
-      typedef std::pair<const std::string, T> value_type;
+      typedef std::pair<const std::string, mapped_type> value_type;
   
       bool insert(const std::string&, const mapped_type&);
       bool insert(const value_type&);
       std::pair<bool,bool> insert(const std::vector<std::string>&, const mapped_type&);
 
       mapped_type& at(const key_type&);
+      const mapped_type& at(const key_type&) const;
 
       iterator begin();
       iterator end();
@@ -156,6 +157,11 @@ namespace xsm{
 
   template <class T>
   T& radix<T>::at(const std::string& key){
+    return const_cast<T&>(std::as_const(*this).at(key));
+  }
+
+  template <class T>
+  const T& radix<T>::at(const std::string& key) const {
     try{
       return m_root->At(key);
     }
@@ -338,7 +344,7 @@ namespace xsm::detail{
   }
 
   template <class T>
-  T& Node<T>::At(const std::string& key){
+  const T& Node<T>::At(const std::string& key) const {
     if (key.empty()){
       return m_value;
     }
@@ -347,7 +353,7 @@ namespace xsm::detail{
     for (auto pos = begin; pos <= end; ++pos){
       std::string substr(begin,pos);
       if (m_children.contains(substr)){
-        return m_children[substr]->At(std::string(pos,end));
+        return m_children.at(substr)->At(std::string(pos,end));
       }
     }
     throw std::out_of_range("radix::at:  key not found");
