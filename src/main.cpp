@@ -7,10 +7,13 @@
 
 bool TestInsert();
 bool TestOverwrite();
+bool TestContains();
 int main(){
 
   std::cout << "Insert: " << (TestInsert()? "yey" : "ney") << std::endl;
   std::cout << "Overwrite: " << (TestOverwrite()? "yey" : "ney") << std::endl;
+  std::cout << "Contains: " << (TestContains()? "yey" : "ney") << std::endl;
+
 
   // Interactive demonstration
   /*
@@ -66,6 +69,21 @@ bool TestOverwrite(){
   rdx.at("name") = name2;
 
   success &= rdx.at("name") == name2;
+  return success;
+}
+
+bool TestContains(){
+  bool success = true;
+  xsm::radix<bool> rdx;
+  rdx.insert("hello",true);
+  
+  success &= rdx.contains("hello");
+  success &= !rdx.contains("hell");
+  
+  rdx.insert("hell",true);
+
+  success &= rdx.contains("hell");
+
   return success;
 }
 

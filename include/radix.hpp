@@ -41,7 +41,7 @@ namespace xsm::detail{
 
       // Container operations
       bool Insert(const std::string&, const T&);
-      const T& At(const std::string&) const;
+      const Node<T>* Retrieve(const std::string&) const;
 
       // Methods used during container manipulation
       void MakeLeaf(const T&);
@@ -95,12 +95,17 @@ namespace xsm{
       typedef T mapped_type;
       typedef std::pair<const std::string, mapped_type> value_type;
   
+      // Modifiers
       bool insert(const std::string&, const mapped_type&);
       bool insert(const value_type&);
       std::pair<bool,bool> insert(const std::vector<std::string>&, const mapped_type&);
 
+      // Element access
       mapped_type& at(const key_type&);
       const mapped_type& at(const key_type&) const;
+
+      // Lookup
+      bool contains(const key_type&) const;
 
       iterator begin();
       iterator end();
@@ -162,12 +167,17 @@ namespace xsm{
 
   template <class T>
   const T& radix<T>::at(const std::string& key) const {
-    try{
-      return m_root->At(key);
+    const detail::Node<T>* ptr = m_root->Retrieve(key);
+    if (ptr == NULL){
+      throw std::out_of_range("radix::at:  key not found");
     }
-    catch(const std::out_of_range& e){
-      throw e;
-    }
+    return m_root->Retrieve(key)->m_value;
+  }
+
+  template <class T>
+  bool radix<T>::contains(const std::string& key) const {
+    const detail::Node<T>* ptr = m_root->Retrieve(key);
+    return (ptr != NULL);
   }
   
   template <class T>
@@ -344,19 +354,19 @@ namespace xsm::detail{
   }
 
   template <class T>
-  const T& Node<T>::At(const std::string& key) const {
+  const Node<T>* Node<T>::Retrieve(const std::string& key) const {
     if (key.empty()){
-      return m_value;
+      return this;
     }
     auto begin = key.begin();
     auto end = key.end();
     for (auto pos = begin; pos <= end; ++pos){
       std::string substr(begin,pos);
       if (m_children.contains(substr)){
-        return m_children.at(substr)->At(std::string(pos,end));
+        return m_children.at(substr)->Retrieve(std::string(pos,end));
       }
     }
-    throw std::out_of_range("radix::at:  key not found");
+    return NULL;
   }
   
   template <class T>
