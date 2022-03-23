@@ -10,10 +10,28 @@ bool TestOverwrite();
 bool TestContains();
 int main(){
 
+  
   std::cout << "Insert: " << (TestInsert()? "yey" : "ney") << std::endl;
   std::cout << "Overwrite: " << (TestOverwrite()? "yey" : "ney") << std::endl;
   std::cout << "Contains: " << (TestContains()? "yey" : "ney") << std::endl;
 
+  /*
+  xsm::radix<std::string> rdx;
+
+  std::vector<std::string> keys = {"job", "age", "name"};
+  std::vector<std::string> values = {"lawyer", "31", "jeremy"};
+
+  for (size_t i = 0; i < keys.size(); ++i){
+    rdx[keys[i]] = values[i];
+  }
+
+  bool all_correct = true;
+  for (size_t i = 0; i < keys.size(); ++i){
+    all_correct &= rdx.at(keys[i]) == values[i];
+  }
+
+  std::cout << (all_correct? "yey" : "ney") << std::endl;
+*/
 
   // Interactive demonstration
   /*
