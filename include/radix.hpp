@@ -54,7 +54,7 @@ namespace xsm::detail{
       bool IsLeaf() const;
       Node* GetParent() const;
       void SetParent(Node*);
-      std::pair<std::string,Node*> GetFirstChild() const;
+      Node* GetFirstChild() const;
       const std::map<std::string,Node*>& GetChildren() const;
   };
 
@@ -65,7 +65,7 @@ namespace xsm::detail{
   // Custom iterator class
   template <class T> class Iterator_impl {
     public:
-      Iterator_impl(Node<T>*, const std::string&);
+      Iterator_impl(Node<T>*);
 
       Iterator_impl& operator++();
       std::pair<std::string,T>& operator*() const;
@@ -78,7 +78,6 @@ namespace xsm::detail{
       friend bool operator!= <> (const Iterator_impl<T>&, const Iterator_impl<T>&);
     private:
       bool Advance();
-      std::pair<std::string,T> m_key_value;
       Node<T>* m_node;
   };
 }  
@@ -156,13 +155,13 @@ namespace xsm{
   template <class T>
   std::pair<detail::Iterator_impl<T>,bool> radix<T>::insert(const std::string& key, const T& value){
     std::pair<detail::Node<T>*,bool> node_success = m_root->Insert(key, value);
-    return std::make_pair(detail::Iterator_impl(node_success.first, key), node_success.second);
+    return std::make_pair(detail::Iterator_impl(node_success.first), node_success.second);
   }
 
   template <class T>
   std::pair<detail::Iterator_impl<T>,bool> radix<T>::insert(const value_type& key_value){ 
     std::pair<detail::Node<T>*,bool> node_success = m_root->Insert(key_value.first, key_value.second);
-    return std::make_pair(detail::Iterator_impl(node_success.first, key_value.first), node_success.second);
+    return std::make_pair(detail::Iterator_impl(node_success.first), node_success.second);
   }
 
   template <class T>
@@ -194,12 +193,12 @@ namespace xsm{
   template <class T>
   detail::Iterator_impl<T> radix<T>::begin(){
     // need to increment because the root node is not a leaf node
-    return ++iterator(m_root, "");
+    return ++iterator(m_root);
   }
   
   template <class T>
   detail::Iterator_impl<T> radix<T>::end(){
-    return iterator(NULL, "");
+    return iterator(NULL);
   }
   
   template <class T>
@@ -214,25 +213,23 @@ namespace xsm::detail{
   // ITERATOR //
   //////////////
   template <class T>
-  Iterator_impl<T>::Iterator_impl(Node<T>* ptr, const std::string& key) : 
-    m_key_value(std::make_pair(key,ptr? ptr->m_value_pair.second : T())), m_node(ptr) {}
+  Iterator_impl<T>::Iterator_impl(Node<T>* ptr) : m_node(ptr) {}
  
   template <class T>
   Iterator_impl<T>& Iterator_impl<T>::operator++(){
     // Advance iterator until you reach a leaf node
     while (Advance()) {}
-    m_key_value.second = m_node? m_node->m_value_pair.second : T();
     return *this;
   }
 
   template <class T>
   std::pair<std::string,T>& Iterator_impl<T>::operator*() const {
-    return m_key_value;
+    return m_node->m_value_pair;
   }
 
   template <class T>
   std::pair<std::string,T>* Iterator_impl<T>::operator->() const {
-    return m_key_value;
+    return m_node->m_value_pair;
   }
 
   // Advances iterator forward by one. Returns true if the iterator lands on a non-leaf node
@@ -243,9 +240,7 @@ namespace xsm::detail{
     
     // If node has children, go to first child in sequence
     if (!m_node->IsChildless()){
-      std::string suffix;
-      std::tie(suffix, m_node) = m_node->GetFirstChild();
-      m_key_value.first += suffix;
+      m_node = m_node->GetFirstChild();
       return !m_node->IsLeaf();
     }
     // If node has no children, then go up to parent and remember child
@@ -264,13 +259,11 @@ namespace xsm::detail{
       for (const auto& elem : m_node->GetChildren()){
         // Go to the next child in sequence, located after the previously visited child
         if (prev_child_found){
-          m_key_value.first += elem.first;
           m_node = elem.second;
           return !m_node->IsLeaf();
         }
         if (prev_child == elem.second){
           prev_child_found = true;
-          m_key_value.first.erase(m_key_value.first.length()-elem.first.length());
         }
       }
       // If this section is reached, then the previous child was the last in sequence
@@ -284,12 +277,12 @@ namespace xsm::detail{
   
   template <class T>
   std::string Iterator_impl<T>::GetKey() const {
-    return m_key_value.first;
+    return m_node->m_value_pair.first;
   }
   
   template <class T>
   const T& Iterator_impl<T>::GetValue() const {
-    return m_key_value.second;
+    return m_node->m_value_pair.second;
   }
 
   template <class T>
@@ -415,27 +408,26 @@ namespace xsm::detail{
   
   // Adds a new node
   template <class T>
-  bool Node<T>::AddChild(const std::string& suffix, const T& value, const bool is_leaf){
-    // TODO: Try replacing the check with an assert
-    if (!m_children.contains(suffix)){
-      std::string fullkey = (m_parent? m_parent->m_value_pair.first : "") + suffix;
-      m_children[suffix] = new Node(this, fullkey, value, is_leaf);
-      return false;
+  bool Node<T>::AddChild(const std::string& word, const T& value, const bool is_leaf){
+    if (!m_children.contains(word)){
+      std::string fullkey = m_value_pair.first + word;
+      m_children[word] = new Node(this, fullkey, value, is_leaf);
+      return true;
     }
-    return true;
+    return false;
   }
   
   // Adds a new node 
   template <class T>
-  void Node<T>::AddChild(const std::string& suffix){
-    AddChild(suffix, T(), false);
+  void Node<T>::AddChild(const std::string& word){
+    AddChild(word, T(), false);
   }
   
   // Adds an existing node
   template <class T>
-  void Node<T>::AddChild(const std::string& suffix, Node* node){
-    if (!m_children.contains(suffix)){
-      m_children[suffix] = node;
+  void Node<T>::AddChild(const std::string& word, Node* node){
+    if (!m_children.contains(word)){
+      m_children[word] = node;
       node->SetParent(this);
     }
   }
@@ -461,8 +453,8 @@ namespace xsm::detail{
   }
   
   template <class T>
-  std::pair<std::string,Node<T>*> Node<T>::GetFirstChild() const {
-    return std::make_pair(m_children.begin()->first,m_children.begin()->second);
+  Node<T>* Node<T>::GetFirstChild() const {
+    return m_children.begin()->second;
   }
   
   template <class T>
