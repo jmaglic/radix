@@ -78,8 +78,8 @@ namespace xsm::detail{
       Iterator_impl(Node<T>*);
 
       Iterator_impl& operator++();
-      std::pair<const std::string,T>& operator*() const;
-      std::pair<const std::string,T>* operator->() const;
+      typename radix<T>::reference operator*() const;
+      typename radix<T>::value_type* operator->() const;
       std::string GetKey() const;
       const T& GetValue() const;
       
@@ -108,6 +108,7 @@ namespace xsm{
       typedef std::string key_type;
       typedef T mapped_type;
       typedef std::pair<const key_type, mapped_type> value_type;
+      typedef value_type& reference;
   
       // Modifiers
       std::pair<iterator,bool> insert(const std::string&, const mapped_type&);
@@ -236,12 +237,12 @@ namespace xsm::detail{
   }
 
   template <class T>
-  std::pair<const std::string,T>& Iterator_impl<T>::operator*() const {
+    typename radix<T>::reference Iterator_impl<T>::operator*() const {
     return m_node->m_value_pair;
   }
 
   template <class T>
-  std::pair<const std::string,T>* Iterator_impl<T>::operator->() const {
+    typename radix<T>::value_type* Iterator_impl<T>::operator->() const {
     return &m_node->m_value_pair;
   }
 
