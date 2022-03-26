@@ -18,6 +18,12 @@ int main(){
   std::cout << "Dereference: " << (TestDeref()? "yey" : "ney") << std::endl;
 
  
+  xsm::radix<std::string> rdx;
+  rdx["hello"] = "greetings";
+  std::cout << rdx["hello"] << std::endl;
+
+
+//  const xsm::radix<std::string> c_rdx = rdx;
 
   /*
   xsm::radix<std::string> rdx;
@@ -72,7 +78,7 @@ bool TestInsert(){
   size_t i = 0;
   bool all_correct = true;
   for (xsm::radix<bool>::iterator it = rdx.begin(); it != rdx.end(); ++it){
-    all_correct &= (it.GetKey() == words[i]);
+    all_correct &= (it->first == words[i]);
     ++i;
   }
   return all_correct;

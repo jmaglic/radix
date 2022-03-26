@@ -194,8 +194,7 @@ namespace xsm{
 
   template <class T>
   T& radix<T>::operator[](const std::string& key){
-    return NULL;
-    //return insert(std::make_pair(key, T())).first->second;
+    return insert(std::make_pair(key, T())).first->second;
   }
 
   template <class T>
