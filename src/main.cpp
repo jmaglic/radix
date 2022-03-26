@@ -8,43 +8,16 @@
 bool TestInsert();
 bool TestOverwrite();
 bool TestContains();
+bool TestDeref();
 int main(){
 
   
   std::cout << "Insert: " << (TestInsert()? "yey" : "ney") << std::endl;
   std::cout << "Overwrite: " << (TestOverwrite()? "yey" : "ney") << std::endl;
   std::cout << "Contains: " << (TestContains()? "yey" : "ney") << std::endl;
+  std::cout << "Dereference: " << (TestDeref()? "yey" : "ney") << std::endl;
 
-  struct Hello{
-    Hello() : val(1) {};
-    Hello(int i) : val(i) {};
-    int val;
-  };
-
-
-  std::map<std::string,Hello> map;
-
-  auto it_b = map.insert(std::make_pair("mick", Hello()));
-
-  std::cout << it_b.first->second.val << std::endl;
-  it_b.first->second = Hello(2);
-  auto pair = it_b.first;
-  pair->second = Hello(3);
-  std::cout << it_b.first->second.val << std::endl;
-  std::cout << map["mick"].val << std::endl;
-
-  /*
-  xsm::radix<std::string> rdx;
-  xsm::radix<std::string>::iterator it = rdx.insert(std::make_pair("name", "gordon")).first;
-
-  bool success = true;
-  success &= it->first == "name";
-  success &= it->second == "gordon";
-//  success &= *it->first == "name";
-//  success &= *it->second == "gordon";
-
-  std::cout << (success? "yey" : "ney") << std::endl;
-*/
+ 
 
   /*
   xsm::radix<std::string> rdx;
@@ -136,3 +109,23 @@ bool TestContains(){
   return success;
 }
 
+bool TestDeref(){
+  xsm::radix<std::string> rdx;
+  auto it = rdx.insert(std::make_pair("name", "gordon")).first;
+
+  bool success = true;
+  // operator->
+  success &= it->first == "name";
+  success &= it->second == "gordon";
+  // operator*
+  success &= (*it).first == "name";
+  success &= (*it).second == "gordon";
+  // mutability
+  it->second = "william";
+  success &= rdx.at("name") == "william";
+  // mutability
+  (*it).second = "elija";
+  success &= rdx.at("name") == "elija";
+
+  return success;
+}

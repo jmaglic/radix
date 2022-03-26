@@ -69,17 +69,17 @@ namespace xsm::detail{
   template <class T> bool operator==(const Iterator_impl<T>&, const Iterator_impl<T>&);
   template <class T> bool operator!=(const Iterator_impl<T>&, const Iterator_impl<T>&);
 
-  ///////////////////
-  // ITERATOR_IMPL //
-  ///////////////////
+  //////////////
+  // ITERATOR //
+  //////////////
   // Custom iterator class
   template <class T> class Iterator_impl {
     public:
       Iterator_impl(Node<T>*);
 
       Iterator_impl& operator++();
-      std::pair<std::string,T>& operator*() const;
-      std::pair<std::string,T>* operator->() const;
+      std::pair<const std::string,T>& operator*() const;
+      std::pair<const std::string,T>* operator->() const;
       std::string GetKey() const;
       const T& GetValue() const;
       
@@ -236,13 +236,13 @@ namespace xsm::detail{
   }
 
   template <class T>
-  std::pair<std::string,T>& Iterator_impl<T>::operator*() const {
+  std::pair<const std::string,T>& Iterator_impl<T>::operator*() const {
     return m_node->m_value_pair;
   }
 
   template <class T>
-  std::pair<std::string,T>* Iterator_impl<T>::operator->() const {
-    return m_node->m_value_pair;
+  std::pair<const std::string,T>* Iterator_impl<T>::operator->() const {
+    return &m_node->m_value_pair;
   }
 
   // Advances iterator forward by one. Returns true if the iterator lands on a non-leaf node
