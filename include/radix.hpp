@@ -1,6 +1,5 @@
 //
 //  radix.hpp
-//  wonderland
 //
 //  Created by Jasmin B. Maglic on 01.01.22.
 //
@@ -16,12 +15,20 @@
 #include <string>
 #include <vector>
 #include <stdexcept>
+#include <cassert>
 
 // Forward declaration for friend relation
-namespace xsm{template <class T> class radix;}
+namespace xsm{
+  template <class T> class radix;
+}
+
 namespace xsm::detail{
   // Forward declaration for friend relation
   template <class T> class Iterator_impl;
+
+  //////////
+  // NODE //
+  //////////
   // Node represents a key-value pair but the key is not stored explicitly
   template <class T> class Node{
     friend Iterator_impl<T>;
@@ -45,7 +52,7 @@ namespace xsm::detail{
 
       // Methods used during container manipulation
       void MakeLeaf(const T&);
-      bool AddChild(const std::string&, const T&, const bool=true);
+      void AddChild(const std::string&, const T&, const bool=true);
       void AddChild(const std::string&);
       void AddChild(const std::string&, Node*);
       
@@ -62,6 +69,9 @@ namespace xsm::detail{
   template <class T> bool operator==(const Iterator_impl<T>&, const Iterator_impl<T>&);
   template <class T> bool operator!=(const Iterator_impl<T>&, const Iterator_impl<T>&);
 
+  ///////////////////
+  // ITERATOR_IMPL //
+  ///////////////////
   // Custom iterator class
   template <class T> class Iterator_impl {
     public:
@@ -83,6 +93,9 @@ namespace xsm::detail{
 }  
 
 namespace xsm{
+  ///////////
+  // RADIX //
+  ///////////
   // Publicly accessible container class
   template <class T> class radix{
     public:
@@ -348,12 +361,13 @@ namespace xsm::detail{
         // New keyword is prefix of the existing nodekey
         if (keyword.end() == last_match.first){
           // Add a new node with the prefix to the current node
-          retval.second = AddChild(keyword, value);
+          AddChild(keyword, value);
           // Old child node becomes child of the new node
           m_children[keyword]->AddChild(std::string(last_match.second, entry.first.end()), entry.second);
           // Remove old node from current node
           m_children.erase(entry.first);
           retval.first = m_children[keyword];
+          retval.second = true;
         }
         else {
           // Insert new keyword as child of its prefix
@@ -370,18 +384,18 @@ namespace xsm::detail{
         
         AddChild(common_prefix);
         
-        retval.second = m_children[common_prefix]->AddChild(std::string(last_match.first,keyword.end()), value);
+        m_children[common_prefix]->AddChild(std::string(last_match.first,keyword.end()), value);
         m_children[common_prefix]->AddChild(std::string(last_match.second,entry.first.end()), entry.second);
         
         m_children.erase(entry.first);
         retval.first = m_children[common_prefix]->m_children[std::string(last_match.first,keyword.end())];
+        retval.second = true;
         return retval;
       }
     }
-    // If no common prefix has been found then keyword becomes a new prefix
-    retval.second = AddChild(keyword, value);
-    retval.first = m_children[keyword];
-    return retval;
+    // If no common prefix has been found then keyword becomes a new entry
+    AddChild(keyword, value);
+    return std::make_pair(m_children[keyword],true);
   }
 
   template <class T>
@@ -408,13 +422,10 @@ namespace xsm::detail{
   
   // Adds a new node
   template <class T>
-  bool Node<T>::AddChild(const std::string& word, const T& value, const bool is_leaf){
-    if (!m_children.contains(word)){
-      std::string fullkey = m_value_pair.first + word;
-      m_children[word] = new Node(this, fullkey, value, is_leaf);
-      return true;
-    }
-    return false;
+  void Node<T>::AddChild(const std::string& word, const T& value, const bool is_leaf){
+    assert(!m_children.contains(word));
+    std::string fullkey = m_value_pair.first + word;
+    m_children[word] = new Node(this, fullkey, value, is_leaf);
   }
   
   // Adds a new node 
