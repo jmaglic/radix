@@ -14,6 +14,7 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <type_traits>
 #include <stdexcept>
 #include <cassert>
 
@@ -67,10 +68,10 @@ namespace xsm::detail{
   };
 
   // Forward declarations to allow for overloaded comparison operators
-  template <class T, class ItType>
-  bool operator==(const Iterator_impl<T,ItType>&, const Iterator_impl<T,ItType>&);
-  template <class T, class ItType>
-  bool operator!=(const Iterator_impl<T,ItType>&, const Iterator_impl<T,ItType>&);
+  template <class T, class ItType, class ItType2=ItType>
+  bool operator==(const Iterator_impl<T,ItType>&, const Iterator_impl<T,ItType2>&);
+  template <class T, class ItType, class ItType2=ItType>
+  bool operator!=(const Iterator_impl<T,ItType>&, const Iterator_impl<T,ItType2>&);
 
   //////////////
   // ITERATOR //
@@ -84,9 +85,15 @@ namespace xsm::detail{
       typename radix<T>::reference operator*() const;
       typename radix<T>::value_type* operator->() const;
       
+      // If ItType is T: ItType2 is const T
+      // If ItType is const T: ItType2 is T
+      typedef typename std::conditional<std::is_const_v<ItType>, T, const T>::type ItType2;
+      friend Iterator_impl<T,ItType2>;
       // Explicit instantiation for template type
       friend bool operator== <> (const Iterator_impl<T,ItType>&, const Iterator_impl<T,ItType>&);
+      friend bool operator== <> (const Iterator_impl<T,ItType>&, const Iterator_impl<T,ItType2>&);
       friend bool operator!= <> (const Iterator_impl<T,ItType>&, const Iterator_impl<T,ItType>&);
+      friend bool operator!= <> (const Iterator_impl<T,ItType>&, const Iterator_impl<T,ItType2>&);
     private:
       bool Advance();
       Node<T>* m_node;
@@ -311,13 +318,13 @@ namespace xsm::detail{
     return false;
   }
   
-  template <class T, class ItType>
-  bool operator==(const Iterator_impl<T,ItType>& lhs, const Iterator_impl<T,ItType>& rhs){
+  template <class T, class ItType, class ItType2>
+  bool operator==(const Iterator_impl<T,ItType>& lhs, const Iterator_impl<T,ItType2>& rhs){
     return lhs.m_node == rhs.m_node;
   }
 
-  template <class T, class ItType>
-  bool operator!=(const Iterator_impl<T,ItType>& lhs, const Iterator_impl<T,ItType>& rhs){
+  template <class T, class ItType, class ItType2>
+  bool operator!=(const Iterator_impl<T,ItType>& lhs, const Iterator_impl<T,ItType2>& rhs){
     return !(lhs == rhs);
   }
   

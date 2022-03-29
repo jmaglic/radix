@@ -19,9 +19,13 @@ int main(){
 
  
   xsm::radix<std::string> rdx;
-  rdx["hello"] = "greetings";
+//  rdx["hello"] = "greetings";
 
-//  xsm::radix<std::string> c_rdx = rdx;
+  const xsm::radix<std::string> c_rdx;
+
+  std::cout << (rdx.begin() == xsm::radix<std::string>::iterator(NULL)? "yay" : "ney") << std::endl ;
+
+  //xsm::radix<std::string> c_rdx = rdx;
 
 
   /*
