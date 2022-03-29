@@ -168,9 +168,9 @@ namespace xsm{
   
   template <class T>
   radix<T>::radix(const radix& rdx){
-    // does the old tree need to be removed?
+    m_root = new detail::Node<T>(NULL, "", T());
     for (auto it = rdx.begin(); it != rdx.end(); ++it){
-      insert(it->first,it->second);
+      insert(it->first, it->second);
     }
   }
   

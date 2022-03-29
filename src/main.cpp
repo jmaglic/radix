@@ -19,14 +19,20 @@ int main(){
 
  
   xsm::radix<std::string> rdx;
-//  rdx["hello"] = "greetings";
+  rdx["hello"] = "greetings";
 
-  const xsm::radix<std::string> c_rdx;
+  xsm::radix<std::string> c_rdx(rdx);
 
-  std::cout << (rdx.begin() == xsm::radix<std::string>::iterator(NULL)? "yay" : "ney") << std::endl ;
+  std::cout << (rdx.begin() == c_rdx.begin()? "yay" : "ney") << std::endl ;
 
-  //xsm::radix<std::string> c_rdx = rdx;
-
+  
+  for (auto it = rdx.begin(); it != rdx.end(); ++it){
+    std::cout << it->first << " " << it->second << std::endl;
+  }
+  for (auto it = c_rdx.begin(); it != c_rdx.end(); ++it){
+    std::cout << it->first << " " << it->second << std::endl;
+  }
+  
 
   /*
   xsm::radix<std::string> rdx;
