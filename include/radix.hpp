@@ -111,6 +111,8 @@ namespace xsm{
       ~radix();
       radix(const radix&);
 
+      radix<T>& operator=(radix<T>);
+
       // Aliases
       typedef detail::Iterator_impl<T> iterator;
       typedef detail::Iterator_impl<T,const T> const_iterator;
@@ -124,6 +126,7 @@ namespace xsm{
       std::pair<iterator,bool> insert(const std::string&, const mapped_type&);
       std::pair<iterator,bool> insert(const value_type&);
       std::pair<bool,bool> insert(const std::vector<std::string>&, const mapped_type&);
+      void swap(radix<T>&);
 
       // Element access
       mapped_type& at(const key_type&);
@@ -173,6 +176,12 @@ namespace xsm{
       insert(it->first, it->second);
     }
   }
+
+  template <class T>
+  radix<T>& radix<T>::operator=(radix<T> rdx){
+    this->swap(rdx);
+    return *this;
+  }
   
   template <class T>
   std::pair<bool,bool> radix<T>::insert(const std::vector<std::string>& key_list, const T& value){
@@ -196,6 +205,13 @@ namespace xsm{
   std::pair<detail::Iterator_impl<T>,bool> radix<T>::insert(const value_type& key_value){ 
     std::pair<detail::Node<T>*,bool> node_success = m_root->Insert(key_value.first, key_value.second);
     return std::make_pair(detail::Iterator_impl(node_success.first), node_success.second);
+  }
+
+  template <class T>
+  void radix<T>::swap(radix<T>& rdx){
+    detail::Node<T>* temp = m_root;
+    m_root = rdx.m_root;
+    rdx.m_root = temp;
   }
 
   template <class T>
