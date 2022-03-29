@@ -24,14 +24,15 @@ namespace xsm{
 
 namespace xsm::detail{
   // Forward declaration for friend relation
-  template <class T> class Iterator_impl;
+  template <class T, class ItType=T> class Iterator_impl;
 
   //////////
   // NODE //
   //////////
-  // Node represents a key-value pair but the key is not stored explicitly
+  // Node represents a key-value pair
   template <class T> class Node{
     friend Iterator_impl<T>;
+    friend Iterator_impl<T,const T>;
     friend xsm::radix<T>;
     public:
       Node(Node*, const std::string&, const T&, const bool=false);
@@ -66,26 +67,26 @@ namespace xsm::detail{
   };
 
   // Forward declarations to allow for overloaded comparison operators
-  template <class T> bool operator==(const Iterator_impl<T>&, const Iterator_impl<T>&);
-  template <class T> bool operator!=(const Iterator_impl<T>&, const Iterator_impl<T>&);
+  template <class T, class ItType>
+  bool operator==(const Iterator_impl<T,ItType>&, const Iterator_impl<T,ItType>&);
+  template <class T, class ItType>
+  bool operator!=(const Iterator_impl<T,ItType>&, const Iterator_impl<T,ItType>&);
 
   //////////////
   // ITERATOR //
   //////////////
   // Custom iterator class
-  template <class T> class Iterator_impl {
+  template <class T, class ItType> class Iterator_impl {
     public:
       Iterator_impl(Node<T>*);
 
       Iterator_impl& operator++();
       typename radix<T>::reference operator*() const;
       typename radix<T>::value_type* operator->() const;
-      std::string GetKey() const;
-      const T& GetValue() const;
       
       // Explicit instantiation for template type
-      friend bool operator== <> (const Iterator_impl<T>&, const Iterator_impl<T>&);
-      friend bool operator!= <> (const Iterator_impl<T>&, const Iterator_impl<T>&);
+      friend bool operator== <> (const Iterator_impl<T,ItType>&, const Iterator_impl<T,ItType>&);
+      friend bool operator!= <> (const Iterator_impl<T,ItType>&, const Iterator_impl<T,ItType>&);
     private:
       bool Advance();
       Node<T>* m_node;
@@ -101,14 +102,16 @@ namespace xsm{
     public:
       radix();
       ~radix();
+      radix(const radix&);
 
       // Aliases
       typedef detail::Iterator_impl<T> iterator;
-      typedef detail::Iterator_impl<const T> const_iterator;
+      typedef detail::Iterator_impl<T,const T> const_iterator;
       typedef std::string key_type;
       typedef T mapped_type;
       typedef std::pair<const key_type, mapped_type> value_type;
       typedef value_type& reference;
+      typedef const value_type& const_reference;
   
       // Modifiers
       std::pair<iterator,bool> insert(const std::string&, const mapped_type&);
@@ -124,7 +127,9 @@ namespace xsm{
       bool contains(const key_type&) const;
 
       iterator begin();
+      const_iterator begin() const;
       iterator end();
+      const_iterator end() const;
       void print();
 
     private:
@@ -141,9 +146,9 @@ namespace xsm{
 #include <utility>
 
 namespace xsm{
-  ///////////////
-  // RADIXTREE //
-  ///////////////
+  ///////////
+  // RADIX //
+  ///////////
   template <class T>
   radix<T>::radix(){
     m_root = new detail::Node<T>(NULL, "", T());
@@ -152,6 +157,14 @@ namespace xsm{
   template <class T>
   radix<T>::~radix(){
     delete m_root;
+  }
+  
+  template <class T>
+  radix<T>::radix(const radix& rdx){
+    // does the old tree need to be removed?
+    for (auto it = rdx.begin(); it != rdx.end(); ++it){
+      insert(it->first,it->second);
+    }
   }
   
   template <class T>
@@ -210,8 +223,18 @@ namespace xsm{
   }
   
   template <class T>
+  detail::Iterator_impl<T,const T> radix<T>::begin() const {
+    return ++const_iterator(m_root);
+  }
+  
+  template <class T>
   detail::Iterator_impl<T> radix<T>::end(){
     return iterator(NULL);
+  }
+  
+  template <class T>
+  detail::Iterator_impl<T,const T> radix<T>::end() const {
+    return const_iterator(NULL);
   }
   
   template <class T>
@@ -225,29 +248,29 @@ namespace xsm::detail{
   //////////////
   // ITERATOR //
   //////////////
-  template <class T>
-  Iterator_impl<T>::Iterator_impl(Node<T>* ptr) : m_node(ptr) {}
+  template <class T, class ItType>
+  Iterator_impl<T,ItType>::Iterator_impl(Node<T>* ptr) : m_node(ptr) {}
  
-  template <class T>
-  Iterator_impl<T>& Iterator_impl<T>::operator++(){
+  template <class T, class ItType>
+  Iterator_impl<T,ItType>& Iterator_impl<T,ItType>::operator++(){
     // Advance iterator until you reach a leaf node
     while (Advance()) {}
     return *this;
   }
 
-  template <class T>
-    typename radix<T>::reference Iterator_impl<T>::operator*() const {
+  template <class T, class ItType>
+    typename radix<T>::reference Iterator_impl<T,ItType>::operator*() const {
     return m_node->m_value_pair;
   }
 
-  template <class T>
-    typename radix<T>::value_type* Iterator_impl<T>::operator->() const {
+  template <class T, class ItType>
+    typename radix<T>::value_type* Iterator_impl<T,ItType>::operator->() const {
     return &m_node->m_value_pair;
   }
 
   // Advances iterator forward by one. Returns true if the iterator lands on a non-leaf node
-  template <class T>
-  bool Iterator_impl<T>::Advance(){
+  template <class T, class ItType>
+  bool Iterator_impl<T,ItType>::Advance(){
     // This pointer does not need to be deleted
     Node<T>* prev_child = NULL;
     
@@ -288,23 +311,13 @@ namespace xsm::detail{
     return false;
   }
   
-  template <class T>
-  std::string Iterator_impl<T>::GetKey() const {
-    return m_node->m_value_pair.first;
-  }
-  
-  template <class T>
-  const T& Iterator_impl<T>::GetValue() const {
-    return m_node->m_value_pair.second;
-  }
-
-  template <class T>
-  bool operator==(const Iterator_impl<T>& lhs, const Iterator_impl<T>& rhs){
+  template <class T, class ItType>
+  bool operator==(const Iterator_impl<T,ItType>& lhs, const Iterator_impl<T,ItType>& rhs){
     return lhs.m_node == rhs.m_node;
   }
 
-  template <class T>
-  bool operator!=(const Iterator_impl<T>& lhs, const Iterator_impl<T>& rhs){
+  template <class T, class ItType>
+  bool operator!=(const Iterator_impl<T,ItType>& lhs, const Iterator_impl<T,ItType>& rhs){
     return !(lhs == rhs);
   }
   

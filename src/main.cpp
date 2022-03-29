@@ -20,10 +20,9 @@ int main(){
  
   xsm::radix<std::string> rdx;
   rdx["hello"] = "greetings";
-  std::cout << rdx["hello"] << std::endl;
 
+//  xsm::radix<std::string> c_rdx = rdx;
 
-//  const xsm::radix<std::string> c_rdx = rdx;
 
   /*
   xsm::radix<std::string> rdx;
