@@ -21,7 +21,8 @@ int main(){
   xsm::radix<std::string> rdx;
   rdx["hello"] = "greetings";
 
-  xsm::radix<std::string> c_rdx = rdx;
+  xsm::radix<std::string> c_rdx = std::move(rdx);
+  std::cout << "Did we get out?" << std::endl;
 
   std::cout << (rdx.begin() == c_rdx.begin()? "yay" : "ney") << std::endl ;
 

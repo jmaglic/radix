@@ -110,8 +110,10 @@ namespace xsm{
       radix();
       ~radix();
       radix(const radix&);
+      radix(radix&&);
 
       radix<T>& operator=(radix<T>);
+      radix<T>& operator=(radix<T>&&);
 
       // Aliases
       typedef detail::Iterator_impl<T> iterator;
@@ -161,7 +163,7 @@ namespace xsm{
   ///////////
   template <class T>
   radix<T>::radix(){
-    m_root = new detail::Node<T>(NULL, "", T());
+    m_root = new detail::Node<T>(nullptr, "", T());
   }
   
   template <class T>
@@ -171,15 +173,30 @@ namespace xsm{
   
   template <class T>
   radix<T>::radix(const radix& rdx){
-    m_root = new detail::Node<T>(NULL, "", T());
+    m_root = new detail::Node<T>(nullptr, "", T());
     for (auto it = rdx.begin(); it != rdx.end(); ++it){
       insert(it->first, it->second);
     }
   }
 
   template <class T>
+  radix<T>::radix(radix&& rdx){
+    std::cout << "Are we here?" << std::endl;
+    m_root = rdx.m_root;
+    rdx.m_root = new detail::Node<T>(nullptr, "", T());
+  }
+
+  template <class T>
   radix<T>& radix<T>::operator=(radix<T> rdx){
     this->swap(rdx);
+    return *this;
+  }
+
+  template <class T>
+  radix<T>& radix<T>::operator=(radix<T>&& rdx){
+    delete[] m_root;
+    m_root = rdx.m_root;
+    rdx.m_root = new detail::Node<T>(nullptr, "", T());
     return *this;
   }
   
@@ -222,7 +239,7 @@ namespace xsm{
   template <class T>
   const T& radix<T>::at(const std::string& key) const {
     const detail::Node<T>* ptr = m_root->Retrieve(key);
-    if (ptr == NULL){
+    if (ptr == nullptr){
       throw std::out_of_range("radix::at:  key not found");
     }
     return m_root->Retrieve(key)->m_value_pair.second;
@@ -236,7 +253,7 @@ namespace xsm{
   template <class T>
   bool radix<T>::contains(const std::string& key) const {
     const detail::Node<T>* ptr = m_root->Retrieve(key);
-    return (ptr != NULL);
+    return (ptr != nullptr);
   }
   
   template <class T>
@@ -252,12 +269,12 @@ namespace xsm{
   
   template <class T>
   detail::Iterator_impl<T> radix<T>::end(){
-    return iterator(NULL);
+    return iterator(nullptr);
   }
   
   template <class T>
   detail::Iterator_impl<T,const T> radix<T>::end() const {
-    return const_iterator(NULL);
+    return const_iterator(nullptr);
   }
   
   template <class T>
@@ -295,7 +312,7 @@ namespace xsm::detail{
   template <class T, class ItType>
   bool Iterator_impl<T,ItType>::Advance(){
     // This pointer does not need to be deleted
-    Node<T>* prev_child = NULL;
+    Node<T>* prev_child = nullptr;
     
     // If node has children, go to first child in sequence
     if (!m_node->IsChildless()){
@@ -308,7 +325,7 @@ namespace xsm::detail{
       m_node = m_node->GetParent();
     }
     
-    while (m_node != NULL){
+    while (m_node != nullptr){
       // Search for the previous child
       bool prev_child_found = false;
     
@@ -367,7 +384,7 @@ namespace xsm::detail{
   // Recursively insert a single keyword into the radix tree
   template <class T>
   std::pair<Node<T>*,bool> Node<T>::Insert(const std::string& keyword, const T& value){
-    std::pair<Node<T>*,bool> retval = std::make_pair<Node<T>*,bool>(NULL,false);
+    std::pair<Node<T>*,bool> retval = std::make_pair<Node<T>*,bool>(nullptr,false);
     // Go through all child nodes until you find a node for which either
     // - the new keyword and the existing nodekey share a common prefix, or 
     // - the new keyword and the existing nodekey are identical, or
@@ -447,7 +464,7 @@ namespace xsm::detail{
         return m_children.at(substr)->Retrieve(std::string(pos,end));
       }
     }
-    return NULL;
+    return nullptr;
   }
   
   template <class T>
