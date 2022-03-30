@@ -9,6 +9,7 @@ bool TestInsert();
 bool TestOverwrite();
 bool TestContains();
 bool TestDeref();
+bool TestAssignment();
 int main(){
 
   
@@ -16,42 +17,7 @@ int main(){
   std::cout << "Overwrite: " << (TestOverwrite()? "yey" : "ney") << std::endl;
   std::cout << "Contains: " << (TestContains()? "yey" : "ney") << std::endl;
   std::cout << "Dereference: " << (TestDeref()? "yey" : "ney") << std::endl;
-
- 
-  xsm::radix<std::string> rdx;
-  rdx["hello"] = "greetings";
-
-  xsm::radix<std::string> c_rdx = std::move(rdx);
-  std::cout << "Did we get out?" << std::endl;
-
-  std::cout << (rdx.begin() == c_rdx.begin()? "yay" : "ney") << std::endl ;
-
-  
-  for (auto it = rdx.begin(); it != rdx.end(); ++it){
-    std::cout << it->first << " " << it->second << std::endl;
-  }
-  for (auto it = c_rdx.begin(); it != c_rdx.end(); ++it){
-    std::cout << it->first << " " << it->second << std::endl;
-  }
-  
-
-  /*
-  xsm::radix<std::string> rdx;
-
-  std::vector<std::string> keys = {"job", "age", "name"};
-  std::vector<std::string> values = {"lawyer", "31", "jeremy"};
-
-  for (size_t i = 0; i < keys.size(); ++i){
-    rdx[keys[i]] = values[i];
-  }
-
-  bool all_correct = true;
-  for (size_t i = 0; i < keys.size(); ++i){
-    all_correct &= rdx.at(keys[i]) == values[i];
-  }
-
-  std::cout << (all_correct? "yey" : "ney") << std::endl;
-*/
+  std::cout << "Assignment: " << (TestAssignment()? "yey" : "ney") << std::endl;
 
   // Interactive demonstration
   /*
@@ -143,5 +109,75 @@ bool TestDeref(){
   (*it).second = "elija";
   success &= rdx.at("name") == "elija";
 
+  return success;
+}
+
+bool TestAssignment(){
+  // Init rdx
+  xsm::radix<int> rdx;
+
+  std::vector<std::string> keys = {"aaaa", "aabb", "aa", "abc", "abd"};
+  std::vector<int> values = {1,1,1,1,1};
+
+  for (size_t i = 0; i < keys.size(); ++i){
+    rdx[keys[i]] = values[i];
+  }
+  
+  std::sort(keys.begin(), keys.end());
+  keys.erase(std::unique(keys.begin(), keys.end()), keys.end());
+
+  // Copy constructor
+  xsm::radix<int> c_rdx = rdx;
+
+  bool success = true;
+  auto c_it = c_rdx.begin();
+  for (auto it = rdx.begin(); it != rdx.end(); ++it){
+    success &= it->first == c_it->first;
+    success &= it->second == c_it->second;
+    success &= it != c_it;
+    ++c_it;
+  }
+
+  // Move assignment
+  auto comp_it = rdx.begin();
+
+  c_rdx = std::move(rdx);
+
+  success &= comp_it == c_rdx.begin();
+
+  // rdx should be empty
+  success &= rdx.begin() == rdx.end();
+
+  size_t i = 0;
+  for (c_it = c_rdx.begin(); c_it != c_rdx.end(); ++c_it){
+    success &= c_it->first == keys[i];
+    ++i;
+  }
+ 
+  // Copy assignment
+  comp_it = c_rdx.begin();
+
+  rdx = c_rdx;
+  
+  success &= comp_it != rdx.begin();
+
+  c_it = c_rdx.begin();
+  for (auto it = rdx.begin(); it != rdx.end(); ++it){
+    success &= it->first == c_it->first;
+    success &= it->second == c_it->second;
+    success &= it != c_it;
+    ++c_it;
+  }
+
+  // Move constructor
+  xsm::radix<int> n_rdx = std::move(rdx);
+  
+  success &= rdx.begin() == rdx.end();
+
+  i = 0;
+  for (auto n_it = n_rdx.begin(); n_it != n_rdx.end(); ++n_it){
+    success &= n_it->first == keys[i];
+    ++i;
+  }
   return success;
 }

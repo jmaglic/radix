@@ -36,6 +36,7 @@ namespace xsm::detail{
     friend Iterator_impl<T,const T>;
     friend xsm::radix<T>;
     public:
+      Node();
       Node(Node*, const std::string&, const T&, const bool=false);
       ~Node();
       
@@ -108,12 +109,12 @@ namespace xsm{
   template <class T> class radix{
     public:
       radix();
-      ~radix();
       radix(const radix&);
-      radix(radix&&);
+      radix(radix&&) noexcept;
+      ~radix();
 
-      radix<T>& operator=(radix<T>);
-      radix<T>& operator=(radix<T>&&);
+      radix<T>& operator=(const radix<T>&);
+      radix<T>& operator=(radix<T>&&) noexcept;
 
       // Aliases
       typedef detail::Iterator_impl<T> iterator;
@@ -125,7 +126,7 @@ namespace xsm{
       typedef const value_type& const_reference;
   
       // Modifiers
-      std::pair<iterator,bool> insert(const std::string&, const mapped_type&);
+      std::pair<iterator,bool> insert(const key_type&, const mapped_type&);
       std::pair<iterator,bool> insert(const value_type&);
       std::pair<bool,bool> insert(const std::vector<std::string>&, const mapped_type&);
       void swap(radix<T>&);
@@ -133,15 +134,17 @@ namespace xsm{
       // Element access
       mapped_type& at(const key_type&);
       const mapped_type& at(const key_type&) const;
-      T& operator[](const key_type&);
+      mapped_type& operator[](const key_type&);
 
       // Lookup
       bool contains(const key_type&) const;
 
+      // Iterator
       iterator begin();
-      const_iterator begin() const;
       iterator end();
+      const_iterator begin() const;
       const_iterator end() const;
+
       void print();
 
     private:
@@ -161,42 +164,48 @@ namespace xsm{
   ///////////
   // RADIX //
   ///////////
+  // Constructor
   template <class T>
   radix<T>::radix(){
-    m_root = new detail::Node<T>(nullptr, "", T());
+    m_root = new detail::Node<T>();
   }
   
-  template <class T>
-  radix<T>::~radix(){
-    delete m_root;
-  }
-  
+  // Copy constructor
   template <class T>
   radix<T>::radix(const radix& rdx){
-    m_root = new detail::Node<T>(nullptr, "", T());
+    m_root = new detail::Node<T>();
     for (auto it = rdx.begin(); it != rdx.end(); ++it){
       insert(it->first, it->second);
     }
   }
 
+  // Move constructor
   template <class T>
-  radix<T>::radix(radix&& rdx){
-    std::cout << "Are we here?" << std::endl;
+  radix<T>::radix(radix&& rdx) noexcept {
     m_root = rdx.m_root;
-    rdx.m_root = new detail::Node<T>(nullptr, "", T());
+    rdx.m_root = new detail::Node<T>();
   }
-
+  
+  // Destructor
   template <class T>
-  radix<T>& radix<T>::operator=(radix<T> rdx){
-    this->swap(rdx);
+  radix<T>::~radix(){
+    delete m_root;
+  }
+  
+  // Copy assignment
+  template <class T>
+  radix<T>& radix<T>::operator=(const radix<T>& rdx){
+    radix<T> cpy = rdx;
+    this->swap(cpy);
     return *this;
   }
 
+  // Move assignment
   template <class T>
-  radix<T>& radix<T>::operator=(radix<T>&& rdx){
-    delete[] m_root;
+  radix<T>& radix<T>::operator=(radix<T>&& rdx) noexcept {
+    delete m_root;
     m_root = rdx.m_root;
-    rdx.m_root = new detail::Node<T>(nullptr, "", T());
+    rdx.m_root = new detail::Node<T>();
     return *this;
   }
   
@@ -365,6 +374,13 @@ namespace xsm::detail{
   // NODE //
   //////////
   // CONSTRUCTORS
+  template <class T>
+  Node<T>::Node()
+    : m_is_leaf(false), 
+      m_value_pair(std::make_pair("",T())),
+      m_parent(nullptr),
+      m_children(std::map<std::string,Node<T>*>()) {}
+
   template <class T>
   Node<T>::Node(Node* parent, const std::string& key, const T& value, const bool is_leaf) 
     : m_is_leaf(is_leaf), 
