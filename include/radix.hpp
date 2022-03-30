@@ -140,10 +140,10 @@ namespace xsm{
       bool contains(const key_type&) const;
 
       // Iterator
-      iterator begin();
-      iterator end();
-      const_iterator begin() const;
-      const_iterator end() const;
+      iterator begin() noexcept;
+      iterator end() noexcept;
+      const_iterator begin() const noexcept;
+      const_iterator end() const noexcept;
 
       void print();
 
@@ -266,23 +266,23 @@ namespace xsm{
   }
   
   template <class T>
-  detail::Iterator_impl<T> radix<T>::begin(){
+  detail::Iterator_impl<T> radix<T>::begin() noexcept {
     // need to increment because the root node is not a leaf node
     return ++iterator(m_root);
   }
   
   template <class T>
-  detail::Iterator_impl<T,const T> radix<T>::begin() const {
+  detail::Iterator_impl<T,const T> radix<T>::begin() const noexcept {
     return ++const_iterator(m_root);
   }
   
   template <class T>
-  detail::Iterator_impl<T> radix<T>::end(){
+  detail::Iterator_impl<T> radix<T>::end() noexcept {
     return iterator(nullptr);
   }
   
   template <class T>
-  detail::Iterator_impl<T,const T> radix<T>::end() const {
+  detail::Iterator_impl<T,const T> radix<T>::end() const noexcept {
     return const_iterator(nullptr);
   }
   
