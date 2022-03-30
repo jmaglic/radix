@@ -124,12 +124,19 @@ namespace xsm{
       typedef std::pair<const key_type, mapped_type> value_type;
       typedef value_type& reference;
       typedef const value_type& const_reference;
+
+      // Capacity
+      bool empty() const;
+      // size
   
       // Modifiers
       std::pair<iterator,bool> insert(const key_type&, const mapped_type&);
       std::pair<iterator,bool> insert(const value_type&);
       std::pair<bool,bool> insert(const std::vector<std::string>&, const mapped_type&);
+      // erase
       void swap(radix<T>&);
+      void clear();
+
 
       // Element access
       mapped_type& at(const key_type&);
@@ -141,9 +148,11 @@ namespace xsm{
 
       // Iterator
       iterator begin() noexcept;
-      iterator end() noexcept;
       const_iterator begin() const noexcept;
+      iterator end() noexcept;
       const_iterator end() const noexcept;
+      // cbegin
+      // cend
 
       void print();
 
@@ -208,6 +217,11 @@ namespace xsm{
     rdx.m_root = new detail::Node<T>();
     return *this;
   }
+
+  template <class T>
+  bool radix<T>::empty() const {
+    return begin() == end();
+  }
   
   template <class T>
   std::pair<bool,bool> radix<T>::insert(const std::vector<std::string>& key_list, const T& value){
@@ -238,6 +252,12 @@ namespace xsm{
     detail::Node<T>* temp = m_root;
     m_root = rdx.m_root;
     rdx.m_root = temp;
+  }
+
+  template <class T>
+  void radix<T>::clear(){
+    delete m_root;
+    m_root = new detail::Node<T>();
   }
 
   template <class T>

@@ -10,6 +10,7 @@ bool TestOverwrite();
 bool TestContains();
 bool TestDeref();
 bool TestAssignment();
+bool TestClear();
 int main(){
 
   
@@ -18,6 +19,8 @@ int main(){
   std::cout << "Contains: " << (TestContains()? "yey" : "ney") << std::endl;
   std::cout << "Dereference: " << (TestDeref()? "yey" : "ney") << std::endl;
   std::cout << "Assignment: " << (TestAssignment()? "yey" : "ney") << std::endl;
+  std::cout << "Clear: " << (TestClear()? "yey" : "ney") << std::endl;
+
 
   // Interactive demonstration
   /*
@@ -179,5 +182,18 @@ bool TestAssignment(){
     success &= n_it->first == keys[i];
     ++i;
   }
+  return success;
+}
+
+bool TestClear(){
+  xsm::radix<bool> rdx;
+  bool success = true;
+  success &= rdx.empty();
+  
+  rdx.insert("something",true);
+  success &= !rdx.empty();
+
+  rdx.clear();
+  success &= rdx.empty();
   return success;
 }
