@@ -234,28 +234,29 @@ namespace xsm{
     return m_size;
   }
   
+  // Main insert function
   template <class T>
-  std::pair<bool,bool> radix<T>::insert(const std::vector<std::string>& key_list, const T& value){
-    bool all = true;
-    bool any = false;
-    for (const std::string& key : key_list){
-      bool success = m_root->Insert(key, value).second;
-      all &= success;
-      any |= success;
-    }
-    return std::make_pair(all,any);
-  }
-  
-  template <class T>
-  std::pair<detail::Iterator_impl<T>,bool> radix<T>::insert(const std::string& key, const T& value){
-    std::pair<detail::Node<T>*,bool> node_success = m_root->Insert(key, value);
-    return std::make_pair(detail::Iterator_impl(node_success.first), node_success.second);
+  std::pair<detail::Iterator_impl<T>,bool> radix<T>::insert(const key_type& key, const mapped_type& value){
+    std::pair<node_type,bool> node_success = m_root->Insert(key, value);
+    m_size += node_success.second;
+    return std::make_pair(iterator(node_success.first), node_success.second);
   }
 
   template <class T>
   std::pair<detail::Iterator_impl<T>,bool> radix<T>::insert(const value_type& key_value){ 
-    std::pair<detail::Node<T>*,bool> node_success = m_root->Insert(key_value.first, key_value.second);
-    return std::make_pair(detail::Iterator_impl(node_success.first), node_success.second);
+    return insert(key_value.first, key_value.second);
+  }
+  
+  template <class T>
+  std::pair<bool,bool> radix<T>::insert(const std::vector<key_type>& key_list, const mapped_type& value){
+    bool all = true;
+    bool any = false;
+    for (const key_type& key : key_list){
+      bool success = insert(key, value).second;
+      all &= success;
+      any |= success;
+    }
+    return std::make_pair(all,any);
   }
 
   template <class T>
@@ -278,6 +279,7 @@ namespace xsm{
   void radix<T>::clear(){
     delete m_root;
     m_root = new detail::Node<T>();
+    m_size = 0;
   }
 
   template <class T>
@@ -428,6 +430,8 @@ namespace xsm::detail{
       delete entry.second;
     }
   }
+
+  // TODO: Copy and move?
   
   // METHODS
   // Recursively insert a single keyword into the radix tree
