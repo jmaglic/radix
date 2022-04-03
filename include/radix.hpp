@@ -357,23 +357,23 @@ namespace xsm::detail{
     return &m_node->m_value_pair;
   }
 
-  std::string StrDiff(const std::string& fullstr, const std::string& substr){
-    auto last_match = std::mismatch(fullstr.begin(), fullstr.end(), substr.begin(), substr.end());
-    return std::string(last_match.first, fullstr.end());
-  }
-
   // Advances iterator forward by one. Returns true if the iterator lands on a non-leaf node
   template <class T, class ItType>
   bool Iterator_impl<T,ItType>::Advance(){
-    std::string prev_child = "";
-    
+
+    auto StrDiff = [](const std::string& fullstr, const std::string& substr){
+      auto last_match = std::mismatch(fullstr.begin(), fullstr.end(), substr.begin(), substr.end());
+      return std::string(last_match.first, fullstr.end());
+    };
+
     // If node has children, go to first child in sequence
     if (!m_node->IsChildless()){
       m_node = m_node->GetFirstChild();
       return !m_node->IsLeaf();
     }
+
     // If node has no children, then go up to parent and remember child
-    prev_child = m_node->m_value_pair.first;
+    std::string prev_child = m_node->m_value_pair.first;
     m_node = m_node->GetParent();
     
     while (m_node != nullptr){
@@ -389,6 +389,7 @@ namespace xsm::detail{
       prev_child = m_node->m_value_pair.first;
       m_node = m_node->GetParent();
     }
+    // Cannot advance anymore, nullptr reached
     return false;
   }
   
