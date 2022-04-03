@@ -333,7 +333,7 @@ namespace xsm{
   }
 }
 
-namespace xsm::detail{  
+namespace xsm::detail{ 
   //////////////
   // ITERATOR //
   //////////////
@@ -357,11 +357,15 @@ namespace xsm::detail{
     return &m_node->m_value_pair;
   }
 
+  std::string StrDiff(const std::string& fullstr, const std::string& substr){
+    auto last_match = std::mismatch(fullstr.begin(), fullstr.end(), substr.begin(), substr.end());
+    return std::string(last_match.first, fullstr.end());
+  }
+
   // Advances iterator forward by one. Returns true if the iterator lands on a non-leaf node
   template <class T, class ItType>
   bool Iterator_impl<T,ItType>::Advance(){
-    // This pointer does not need to be deleted
-    Node<T>* prev_child = nullptr;
+    std::string prev_child = "";
     
     // If node has children, go to first child in sequence
     if (!m_node->IsChildless()){
@@ -369,34 +373,22 @@ namespace xsm::detail{
       return !m_node->IsLeaf();
     }
     // If node has no children, then go up to parent and remember child
-    else {
-      prev_child = m_node;
-      m_node = m_node->GetParent();
-    }
+    prev_child = m_node->m_value_pair.first;
+    m_node = m_node->GetParent();
     
     while (m_node != nullptr){
-      // Search for the previous child
-      bool prev_child_found = false;
-    
-      // Going through all children and comparing the pointer is inefficient, O(n) where
-      // n is the number of elements in the map. It may be better if the iterator kept track 
-      // of the key that way used to access this node from its parent
-      for (const auto& elem : m_node->GetChildren()){
-        // Go to the next child in sequence, located after the previously visited child
-        if (prev_child_found){
-          m_node = elem.second;
-          return !m_node->IsLeaf();
-        }
-        if (prev_child == elem.second){
-          prev_child_found = true;
-        }
+      // Find next child 
+      std::string key = StrDiff(prev_child, m_node->m_value_pair.first);
+      auto it = m_node->m_children.find(key);
+      ++it;
+      if (it != m_node->m_children.end()){
+        m_node = it->second;
+        return !m_node->IsLeaf();
       }
-      // If this section is reached, then the previous child was the last in sequence
-      // Therefore, go up to parent
-      prev_child = m_node;
+      // If there are no more children, go up to parent
+      prev_child = m_node->m_value_pair.first;
       m_node = m_node->GetParent();
     }
-    // Iterator has reached end
     return false;
   }
   
