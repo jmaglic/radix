@@ -117,17 +117,19 @@ namespace xsm{
       radix<T>& operator=(radix<T>&&) noexcept;
 
       // Aliases
-      typedef detail::Iterator_impl<T> iterator;
-      typedef detail::Iterator_impl<T,const T> const_iterator;
       typedef std::string key_type;
       typedef T mapped_type;
       typedef std::pair<const key_type, mapped_type> value_type;
+      typedef std::size_t size_type;
       typedef value_type& reference;
       typedef const value_type& const_reference;
+      typedef detail::Iterator_impl<T> iterator;
+      typedef detail::Iterator_impl<T,const T> const_iterator;
+      typedef detail::Node<mapped_type>* node_type;
 
       // Capacity
       bool empty() const;
-      // size
+      size_type size() const noexcept;
   
       // Modifiers
       std::pair<iterator,bool> insert(const key_type&, const mapped_type&);
@@ -158,7 +160,8 @@ namespace xsm{
 
     private:
       // Pointer to root node of radix tree
-      detail::Node<mapped_type>* m_root; 
+      node_type m_root; 
+      size_type m_size;
   };
 }
  
@@ -175,9 +178,7 @@ namespace xsm{
   ///////////
   // Constructor
   template <class T>
-  radix<T>::radix(){
-    m_root = new detail::Node<T>();
-  }
+  radix<T>::radix() : m_root(new detail::Node<T>()), m_size(0) {}
   
   // Copy constructor
   template <class T>
@@ -186,13 +187,16 @@ namespace xsm{
     for (auto it = rdx.begin(); it != rdx.end(); ++it){
       insert(it->first, it->second);
     }
+    m_size = rdx.size();
   }
 
   // Move constructor
   template <class T>
   radix<T>::radix(radix&& rdx) noexcept {
     m_root = rdx.m_root;
+    m_size = rdx.size();
     rdx.m_root = new detail::Node<T>();
+    rdx.m_size = 0;
   }
   
   // Destructor
@@ -214,13 +218,20 @@ namespace xsm{
   radix<T>& radix<T>::operator=(radix<T>&& rdx) noexcept {
     delete m_root;
     m_root = rdx.m_root;
+    m_size = rdx.m_size;
     rdx.m_root = new detail::Node<T>();
+    rdx.m_size = 0;
     return *this;
   }
 
   template <class T>
   bool radix<T>::empty() const {
     return begin() == end();
+  }
+  
+  template <class T>
+  typename radix<T>::size_type radix<T>::size() const noexcept {
+    return m_size;
   }
   
   template <class T>
@@ -249,9 +260,18 @@ namespace xsm{
 
   template <class T>
   void radix<T>::swap(radix<T>& rdx){
-    detail::Node<T>* temp = m_root;
-    m_root = rdx.m_root;
-    rdx.m_root = temp;
+    // swap m_root
+    {
+      detail::Node<T>* temp = m_root;
+      m_root = rdx.m_root;
+      rdx.m_root = temp;
+    }
+    // swap m_size
+    {
+      size_t temp = m_size;
+      m_size = rdx.m_size;
+      rdx.m_size = temp;
+    }
   }
 
   template <class T>
