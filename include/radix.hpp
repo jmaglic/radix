@@ -51,7 +51,9 @@ namespace xsm::detail{
 
       // Container operations
       std::pair<Node<T>*,bool> Insert(const std::string&, const T&);
+      void Remove();
       const Node<T>* Retrieve(const std::string&) const;
+      Node<T>* Retrieve(const std::string&);
 
       // Methods used during container manipulation
       void MakeLeaf(const T&);
@@ -79,12 +81,15 @@ namespace xsm::detail{
   //////////////
   // Custom iterator class
   template <class T, class ItType> class Iterator_impl {
+    friend radix<T>;
     public:
       Iterator_impl(Node<T>*);
 
       Iterator_impl& operator++();
       typename radix<T>::reference operator*() const;
       typename radix<T>::value_type* operator->() const;
+
+      operator typename radix<T>::const_iterator() const;
       
       // If ItType is T: ItType2 is const T
       // If ItType is const T: ItType2 is T
@@ -136,13 +141,18 @@ namespace xsm{
       std::pair<iterator,bool> insert(const value_type&);
       std::pair<bool,bool> insert(const std::vector<std::string>&, const mapped_type&);
       // erase
+      // iterator erase(iterator);
+      iterator erase(const_iterator);
+      // iterator erase(const_iterator, const_iterator);
+      // size_type erase(const key_type&);
       void swap(radix<T>&);
       void clear();
-
 
       // Element access
       mapped_type& at(const key_type&);
       const mapped_type& at(const key_type&) const;
+      iterator find(const key_type&);
+      const_iterator find(const key_type&) const;
       mapped_type& operator[](const key_type&);
 
       // Lookup
@@ -260,6 +270,15 @@ namespace xsm{
   }
 
   template <class T>
+  typename radix<T>::iterator radix<T>::erase(const_iterator it){
+    detail::Node<T>* node = it.m_node;
+    ++it;
+    node->Remove();
+    --m_size;
+    return iterator(it.m_node); 
+  }
+
+  template <class T>
   void radix<T>::swap(radix<T>& rdx){
     // swap m_root
     {
@@ -295,6 +314,16 @@ namespace xsm{
     }
     return m_root->Retrieve(key)->m_value_pair.second;
   }
+  
+  template <class T>
+  typename radix<T>::iterator radix<T>::find(const key_type& key){
+    return iterator(m_root->Retrieve(key));
+  }
+
+  template <class T>
+  typename radix<T>::const_iterator radix<T>::find(const key_type& key) const {
+    return const_iterator(m_root->Retrieve(key));
+  }
 
   template <class T>
   T& radix<T>::operator[](const std::string& key){
@@ -304,7 +333,7 @@ namespace xsm{
   template <class T>
   bool radix<T>::contains(const std::string& key) const {
     const detail::Node<T>* ptr = m_root->Retrieve(key);
-    return (ptr != nullptr);
+    return (ptr != nullptr && ptr->m_is_leaf);
   }
   
   template <class T>
@@ -359,14 +388,20 @@ namespace xsm::detail{
     return &m_node->m_value_pair;
   }
 
+  // conversion iterator to const_iterator
+  template<class T, class ItType>
+  Iterator_impl<T,ItType>::operator typename radix<T>::const_iterator() const {
+    return Iterator_impl<T,const T>(m_node);
+  }
+
+  std::string StrDiff(const std::string& fullstr, const std::string& substr){
+    auto last_match = std::mismatch(fullstr.begin(), fullstr.end(), substr.begin(), substr.end());
+    return std::string(last_match.first, fullstr.end());
+  }
+
   // Advances iterator forward by one. Returns true if the iterator lands on a non-leaf node
   template <class T, class ItType>
   bool Iterator_impl<T,ItType>::Advance(){
-
-    auto StrDiff = [](const std::string& fullstr, const std::string& substr){
-      auto last_match = std::mismatch(fullstr.begin(), fullstr.end(), substr.begin(), substr.end());
-      return std::string(last_match.first, fullstr.end());
-    };
 
     // If node has children, go to first child in sequence
     if (!m_node->IsChildless()){
@@ -505,6 +540,18 @@ namespace xsm::detail{
   }
 
   template <class T>
+  void Node<T>::Remove(){
+    if (!IsChildless()){
+      m_is_leaf = false;
+    }
+    else {
+      const std::string key = StrDiff(m_value_pair.first, m_parent->m_value_pair.first);
+      m_parent->m_children.erase(key);
+      delete this;
+    }
+  }
+
+  template <class T>
   const Node<T>* Node<T>::Retrieve(const std::string& key) const {
     if (key.empty()){
       return this;
@@ -518,6 +565,11 @@ namespace xsm::detail{
       }
     }
     return nullptr;
+  }
+
+  template <class T>
+  Node<T>* Node<T>::Retrieve(const std::string& key) {
+    return const_cast<Node<T>*>(std::as_const(*this).Retrieve(key)); 
   }
   
   template <class T>

@@ -4,13 +4,15 @@
 
 int main(){
 
-  std::cout << "Insert: " << (TestInsert()? "yey" : "ney") << std::endl;
-  std::cout << "Overwrite: " << (TestOverwrite()? "yey" : "ney") << std::endl;
-  std::cout << "Contains: " << (TestContains()? "yey" : "ney") << std::endl;
-  std::cout << "Dereference: " << (TestDeref()? "yey" : "ney") << std::endl;
-  std::cout << "Assignment: " << (TestAssignment()? "yey" : "ney") << std::endl;
-  std::cout << "Clear: " << (TestClear()? "yey" : "ney") << std::endl;
+  std::cout << "Insert:\t" << (TestInsert()? "yey" : "ney") << "\n";
+  std::cout << "Overwrite:\t" << (TestOverwrite()? "yey" : "ney") << "\n";
+  std::cout << "Contains:\t" << (TestContains()? "yey" : "ney") << "\n";
+  std::cout << "Dereference:\t" << (TestDeref()? "yey" : "ney") << "\n";
+  std::cout << "Assignment:\t" << (TestAssignment()? "yey" : "ney") << "\n";
+  std::cout << "Clear:\t" << (TestClear()? "yey" : "ney") << "\n";
+  std::cout << "Erase:\t" << (TestErase()? "yey" : "ney") << "\n";
 
+  std::cout << std::flush;
 
   // Interactive demonstration
   /*

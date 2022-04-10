@@ -173,3 +173,56 @@ bool TestClear(){
   success &= rdx.empty();
   return success;
 }
+
+// Use of erase()
+bool TestErase(){
+  xsm::radix<bool> rdx;
+
+  rdx.insert("well",true);
+  rdx.insert("water",true);
+  rdx.insert("waste",true);
+  rdx.insert("wa",true);
+
+  // Validate insertion
+  bool success = true;
+  success &= rdx.contains("well");
+  success &= rdx.contains("water");
+  success &= rdx.contains("waste");
+  success &= rdx.contains("wa");
+  success &= rdx.size() == 4;
+
+  // Basic erase
+  rdx.erase(rdx.find("wa"));
+  success &= !rdx.contains("wa");
+  success &= rdx.size() == 3;
+
+  rdx.erase(rdx.find("well"));
+  success &= !rdx.contains("well");
+  success &= rdx.size() == 2;
+  
+  rdx.erase(rdx.find("water"));
+  success &= !rdx.contains("water");
+  success &= rdx.size() == 1;
+  
+  rdx.erase(rdx.find("waste"));
+  success &= !rdx.contains("waste");
+  success &= rdx.size() == 0;
+
+  // Correct return iterator
+  rdx.insert("hello", true);
+  rdx.insert("hell", true);
+  rdx.insert("he", true);
+  success &= rdx.size() == 3;
+
+  xsm::radix<bool>::iterator it = rdx.erase(rdx.find("he"));
+  success &= it->first == "hell";
+  it = rdx.erase(it);
+  success &= it->first == "hello";
+
+  success &= rdx.contains("hello");
+  success &= !rdx.contains("hell");
+  success &= !rdx.contains("he");
+  success &= rdx.size() == 1;
+
+  return success;
+}
