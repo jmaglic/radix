@@ -14,11 +14,22 @@ int main(){
 
   std::cout << std::flush;
 
+  
   xsm::radix<bool> rdx;
   rdx.insert("hello",true);
   rdx.insert("hell",true);
   rdx.insert("he",true);
 
+  rdx.print();
+
+  rdx.erase(rdx.find("hell"));
+
+  rdx.print();
+
+  rdx.erase(rdx.find("hello"));
+
+  rdx.print();
+  /*
   for (auto elem : rdx){
     std::cout << elem.first << std::endl;
   }
@@ -27,7 +38,7 @@ int main(){
   std::cout << it->first << std::endl;
   std::advance(it,2);
   std::cout << it->first << std::endl;
-
+*/
 
   // Interactive demonstration
   /*

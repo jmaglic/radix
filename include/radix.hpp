@@ -566,6 +566,13 @@ namespace xsm::detail{
     else {
       const std::string key = StrDiff(m_value_pair.first, m_parent->m_value_pair.first);
       m_parent->m_children.erase(key);
+      // Recursively delete ancestor, if they
+      //  - do not have other children, and
+      //  - are not a leaf node, and
+      //  - are not the root node
+      if (m_parent->IsChildless() && !m_parent->m_is_leaf && m_parent->m_value_pair.first != ""){
+        m_parent->Remove();
+      }
       delete this;
     }
   }
