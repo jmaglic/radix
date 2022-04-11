@@ -17,6 +17,7 @@
 #include <type_traits>
 #include <stdexcept>
 #include <cassert>
+#include <iterator>
 
 // Forward declaration for friend relation
 namespace xsm{
@@ -32,42 +33,47 @@ namespace xsm::detail{
   //////////
   // Node represents a key-value pair
   template <class T> class Node{
-    friend Iterator_impl<T>;
-    friend Iterator_impl<T,const T>;
+    friend typename radix<T>::iterator;
+    friend typename radix<T>::const_iterator;
     friend xsm::radix<T>;
+
+    using node_type = typename radix<T>::node_type;
+    using key_type = typename radix<T>::key_type;
+    using mapped_type = typename radix<T>::mapped_type;
+    using value_type = typename radix<T>::value_type;
     public:
       Node();
-      Node(Node*, const std::string&, const T&, const bool=false);
+      Node(node_type, const key_type&, const mapped_type&, const bool=false);
       ~Node();
       
       // Display
       void print();
     private:
       // Members
-      std::pair<const std::string,T> m_value_pair;
+      value_type m_value_pair;
+      node_type m_parent;
+      std::map<key_type,node_type> m_children;
       bool m_is_leaf;
-      Node* m_parent;
-      std::map<std::string,Node*> m_children;
 
       // Container operations
-      std::pair<Node<T>*,bool> Insert(const std::string&, const T&);
+      std::pair<node_type,bool> Insert(const key_type&, const mapped_type&);
       void Remove();
-      const Node<T>* Retrieve(const std::string&) const;
-      Node<T>* Retrieve(const std::string&);
+      const Node<T>* Retrieve(const key_type&) const;
+      node_type Retrieve(const key_type&);
 
       // Methods used during container manipulation
-      void MakeLeaf(const T&);
-      void AddChild(const std::string&, const T&, const bool=true);
-      void AddChild(const std::string&);
-      void AddChild(const std::string&, Node*);
+      void MakeLeaf(const mapped_type&);
+      void AddChild(const key_type&, const mapped_type&, const bool=true);
+      void AddChild(const key_type&);
+      void AddChild(const key_type&, node_type);
       
       // For iterator operations
       bool IsChildless() const;
       bool IsLeaf() const;
       Node* GetParent() const;
-      void SetParent(Node*);
+      void SetParent(node_type);
       Node* GetFirstChild() const;
-      const std::map<std::string,Node*>& GetChildren() const;
+      const std::map<key_type,node_type>& GetChildren() const;
   };
 
   // Forward declarations to allow for overloaded comparison operators
@@ -80,29 +86,40 @@ namespace xsm::detail{
   // ITERATOR //
   //////////////
   // Custom iterator class
-  template <class T, class ItType> class Iterator_impl {
+  template <class T, class ItType>
+  class Iterator_impl : public std::iterator<std::forward_iterator_tag, typename radix<T>::value_type> {
     friend radix<T>;
-    public:
-      Iterator_impl(Node<T>*);
+    // If ItType is T: ItType2 is const T
+    // If ItType is const T: ItType2 is T
+    typedef typename std::conditional<std::is_const_v<ItType>, T, const T>::type ItType2;
+    friend Iterator_impl<T,ItType2>;
 
+    using node_type = typename radix<T>::node_type;
+    using const_iterator = typename radix<T>::const_iterator;
+    // These typenames cause an error:
+    // using reference = typename radix<T>::reference;
+    // using pointer = typename radix<T>::pointer;
+    public:
+      // Constructor
+      Iterator_impl(node_type);
+
+      // Iterator operations
       Iterator_impl& operator++();
       typename radix<T>::reference operator*() const;
-      typename radix<T>::value_type* operator->() const;
+      typename radix<T>::pointer operator->() const;
 
-      operator typename radix<T>::const_iterator() const;
+      // Conversion from iterator to const_iterator
+      operator const_iterator() const;
       
-      // If ItType is T: ItType2 is const T
-      // If ItType is const T: ItType2 is T
-      typedef typename std::conditional<std::is_const_v<ItType>, T, const T>::type ItType2;
-      friend Iterator_impl<T,ItType2>;
       // Explicit instantiation for template type
       friend bool operator== <> (const Iterator_impl<T,ItType>&, const Iterator_impl<T,ItType>&);
       friend bool operator== <> (const Iterator_impl<T,ItType>&, const Iterator_impl<T,ItType2>&);
       friend bool operator!= <> (const Iterator_impl<T,ItType>&, const Iterator_impl<T,ItType>&);
       friend bool operator!= <> (const Iterator_impl<T,ItType>&, const Iterator_impl<T,ItType2>&);
     private:
+      node_type m_node;
+
       bool Advance();
-      Node<T>* m_node;
   };
 }  
 
@@ -128,6 +145,8 @@ namespace xsm{
       typedef std::size_t size_type;
       typedef value_type& reference;
       typedef const value_type& const_reference;
+      typedef value_type* pointer;
+      typedef const value_type* const_pointer;
       typedef detail::Iterator_impl<T> iterator;
       typedef detail::Iterator_impl<T,const T> const_iterator;
       typedef detail::Node<mapped_type>* node_type;
@@ -369,7 +388,7 @@ namespace xsm::detail{
   // ITERATOR //
   //////////////
   template <class T, class ItType>
-  Iterator_impl<T,ItType>::Iterator_impl(Node<T>* ptr) : m_node(ptr) {}
+  Iterator_impl<T,ItType>::Iterator_impl(node_type ptr) : m_node(ptr) {}
  
   template <class T, class ItType>
   Iterator_impl<T,ItType>& Iterator_impl<T,ItType>::operator++(){
@@ -379,18 +398,18 @@ namespace xsm::detail{
   }
 
   template <class T, class ItType>
-    typename radix<T>::reference Iterator_impl<T,ItType>::operator*() const {
+  typename radix<T>::reference Iterator_impl<T,ItType>::operator*() const {
     return m_node->m_value_pair;
   }
 
   template <class T, class ItType>
-    typename radix<T>::value_type* Iterator_impl<T,ItType>::operator->() const {
+  typename radix<T>::pointer Iterator_impl<T,ItType>::operator->() const {
     return &m_node->m_value_pair;
   }
 
   // conversion iterator to const_iterator
   template<class T, class ItType>
-  Iterator_impl<T,ItType>::operator typename radix<T>::const_iterator() const {
+  Iterator_impl<T,ItType>::operator const_iterator() const {
     return Iterator_impl<T,const T>(m_node);
   }
 
@@ -452,7 +471,7 @@ namespace xsm::detail{
       m_children(std::map<std::string,Node<T>*>()) {}
 
   template <class T>
-  Node<T>::Node(Node* parent, const std::string& key, const T& value, const bool is_leaf) 
+  Node<T>::Node(node_type parent, const key_type& key, const mapped_type& value, const bool is_leaf)
     : m_is_leaf(is_leaf), 
       m_value_pair(std::make_pair(key,value)),
       m_parent(parent), 
@@ -471,7 +490,7 @@ namespace xsm::detail{
   // METHODS
   // Recursively insert a single keyword into the radix tree
   template <class T>
-  std::pair<Node<T>*,bool> Node<T>::Insert(const std::string& keyword, const T& value){
+  std::pair<typename radix<T>::node_type,bool> Node<T>::Insert(const key_type& keyword, const mapped_type& value){
     std::pair<Node<T>*,bool> retval = std::make_pair<Node<T>*,bool>(nullptr,false);
     // Go through all child nodes until you find a node for which either
     // - the new keyword and the existing nodekey share a common prefix, or 
@@ -552,7 +571,7 @@ namespace xsm::detail{
   }
 
   template <class T>
-  const Node<T>* Node<T>::Retrieve(const std::string& key) const {
+  const Node<T>* Node<T>::Retrieve(const key_type& key) const {
     if (key.empty()){
       return this;
     }
@@ -568,19 +587,19 @@ namespace xsm::detail{
   }
 
   template <class T>
-  Node<T>* Node<T>::Retrieve(const std::string& key) {
-    return const_cast<Node<T>*>(std::as_const(*this).Retrieve(key)); 
+  typename radix<T>::node_type Node<T>::Retrieve(const key_type& key) {
+    return const_cast<node_type>(std::as_const(*this).Retrieve(key)); 
   }
   
   template <class T>
-  void Node<T>::MakeLeaf(const T& value){
+  void Node<T>::MakeLeaf(const mapped_type& value){
     m_value_pair.second = value;
     m_is_leaf = true;
   }
   
   // Adds a new node
   template <class T>
-  void Node<T>::AddChild(const std::string& word, const T& value, const bool is_leaf){
+  void Node<T>::AddChild(const key_type& word, const mapped_type& value, const bool is_leaf){
     assert(!m_children.contains(word));
     std::string fullkey = m_value_pair.first + word;
     m_children[word] = new Node(this, fullkey, value, is_leaf);
@@ -588,13 +607,13 @@ namespace xsm::detail{
   
   // Adds a new node 
   template <class T>
-  void Node<T>::AddChild(const std::string& word){
+  void Node<T>::AddChild(const key_type& word){
     AddChild(word, T(), false);
   }
   
   // Adds an existing node
   template <class T>
-  void Node<T>::AddChild(const std::string& word, Node* node){
+  void Node<T>::AddChild(const key_type& word, node_type node){
     if (!m_children.contains(word)){
       m_children[word] = node;
       node->SetParent(this);
@@ -617,7 +636,7 @@ namespace xsm::detail{
   }
   
   template <class T>
-  void Node<T>::SetParent(Node* node){
+  void Node<T>::SetParent(node_type node){
     m_parent = node;
   }
   
@@ -627,7 +646,7 @@ namespace xsm::detail{
   }
   
   template <class T>
-  const std::map<std::string,Node<T>*>& Node<T>::GetChildren() const {
+  const std::map<typename radix<T>::key_type,typename radix<T>::node_type>& Node<T>::GetChildren() const {
     return m_children;
   }
   
