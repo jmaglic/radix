@@ -105,6 +105,7 @@ namespace xsm::detail{
 
       // Iterator operations
       Iterator_impl& operator++();
+      Iterator_impl operator++(int);
       typename radix<T>::reference operator*() const;
       typename radix<T>::pointer operator->() const;
 
@@ -368,12 +369,12 @@ namespace xsm{
   
   template <class T>
   detail::Iterator_impl<T> radix<T>::end() noexcept {
-    return iterator(nullptr);
+    return iterator(m_root);
   }
   
   template <class T>
   detail::Iterator_impl<T,const T> radix<T>::end() const noexcept {
-    return const_iterator(nullptr);
+    return const_iterator(m_root);
   }
   
   template <class T>
@@ -395,6 +396,13 @@ namespace xsm::detail{
     // Advance iterator until you reach a leaf node
     while (Advance()) {}
     return *this;
+  }
+
+  template <class T, class ItType>
+  Iterator_impl<T,ItType> Iterator_impl<T,ItType>::operator++(int){
+    Iterator_impl<T,ItType> temp = *this;
+    ++*this;
+    return temp;
   }
 
   template <class T, class ItType>
@@ -428,11 +436,12 @@ namespace xsm::detail{
       return !m_node->IsLeaf();
     }
 
-    // If node has no children, then go up to parent and remember child
-    std::string prev_child = m_node->m_value_pair.first;
-    m_node = m_node->GetParent();
-    
-    while (m_node != nullptr){
+    // Until we reach the root node
+    while (!m_node->m_value_pair.first.empty()){
+      // If node has no children, then go up to parent and remember child
+      std::string prev_child = m_node->m_value_pair.first;
+      m_node = m_node->GetParent();
+
       // Find next child 
       std::string key = StrDiff(prev_child, m_node->m_value_pair.first);
       auto it = m_node->m_children.find(key);
@@ -441,9 +450,6 @@ namespace xsm::detail{
         m_node = it->second;
         return !m_node->IsLeaf();
       }
-      // If there are no more children, go up to parent
-      prev_child = m_node->m_value_pair.first;
-      m_node = m_node->GetParent();
     }
     // Cannot advance anymore, nullptr reached
     return false;
@@ -570,7 +576,7 @@ namespace xsm::detail{
       //  - do not have other children, and
       //  - are not a leaf node, and
       //  - are not the root node
-      if (m_parent->IsChildless() && !m_parent->m_is_leaf && m_parent->m_value_pair.first != ""){
+      if (m_parent->IsChildless() && !m_parent->m_is_leaf && !m_parent->m_value_pair.first.empty()){
         m_parent->Remove();
       }
       delete this;

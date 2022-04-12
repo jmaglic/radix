@@ -20,15 +20,14 @@ int main(){
   rdx.insert("hell",true);
   rdx.insert("he",true);
 
-  rdx.print();
+  auto it = rdx.begin();
 
-  rdx.erase(rdx.find("hell"));
+  std::cout << it->first << std::endl;
+  std::cout << (it++)->first << std::endl;
+  std::cout << it->first << std::endl;
+  std::cout << (++it)->first << std::endl;
+  std::cout << it->first << std::endl;
 
-  rdx.print();
-
-  rdx.erase(rdx.find("hello"));
-
-  rdx.print();
   /*
   for (auto elem : rdx){
     std::cout << elem.first << std::endl;
