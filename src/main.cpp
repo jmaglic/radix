@@ -11,23 +11,19 @@ int main(){
   std::cout << "Assignment:\t" << (TestAssignment()? "yey" : "ney") << "\n";
   std::cout << "Clear:\t" << (TestClear()? "yey" : "ney") << "\n";
   std::cout << "Erase:\t" << (TestErase()? "yey" : "ney") << "\n";
+  std::cout << "Iterator:\t" << (TestIterator()? "yey" : "ney") << "\n";
 
   std::cout << std::flush;
 
-  
-  xsm::radix<bool> rdx;
-  rdx.insert("hello",true);
-  rdx.insert("hell",true);
-  rdx.insert("he",true);
-
+  /*
   auto it = rdx.begin();
-
   std::cout << it->first << std::endl;
   std::cout << (it++)->first << std::endl;
   std::cout << it->first << std::endl;
   std::cout << (++it)->first << std::endl;
   std::cout << it->first << std::endl;
-
+*/
+  
   /*
   for (auto elem : rdx){
     std::cout << elem.first << std::endl;

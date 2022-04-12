@@ -87,7 +87,7 @@ namespace xsm::detail{
   //////////////
   // Custom iterator class
   template <class T, class ItType>
-  class Iterator_impl : public std::iterator<std::forward_iterator_tag, typename radix<T>::value_type> {
+  class Iterator_impl : public std::iterator<std::bidirectional_iterator_tag, typename radix<T>::value_type> {
     friend radix<T>;
     // If ItType is T: ItType2 is const T
     // If ItType is const T: ItType2 is T
@@ -96,6 +96,9 @@ namespace xsm::detail{
 
     using node_type = typename radix<T>::node_type;
     using const_iterator = typename radix<T>::const_iterator;
+    using key_type = typename radix<T>::key_type;
+    using reverse_iterator = typename radix<T>::reverse_iterator;
+    using const_reverse_iterator = typename radix<T>::const_reverse_iterator;
     // These typenames cause an error:
     // using reference = typename radix<T>::reference;
     // using pointer = typename radix<T>::pointer;
@@ -106,6 +109,9 @@ namespace xsm::detail{
       // Iterator operations
       Iterator_impl& operator++();
       Iterator_impl operator++(int);
+      Iterator_impl& operator--();
+      Iterator_impl operator--(int);
+      //Iterator_impl operator++(int);
       typename radix<T>::reference operator*() const;
       typename radix<T>::pointer operator->() const;
 
@@ -121,6 +127,7 @@ namespace xsm::detail{
       node_type m_node;
 
       bool Advance();
+      bool Regress();
   };
 }  
 
@@ -150,6 +157,8 @@ namespace xsm{
       typedef const value_type* const_pointer;
       typedef detail::Iterator_impl<T> iterator;
       typedef detail::Iterator_impl<T,const T> const_iterator;
+      typedef std::reverse_iterator<iterator> reverse_iterator;
+      typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
       typedef detail::Node<mapped_type>* node_type;
 
       // Capacity
@@ -183,8 +192,16 @@ namespace xsm{
       const_iterator begin() const noexcept;
       iterator end() noexcept;
       const_iterator end() const noexcept;
-      // cbegin
-      // cend
+
+      reverse_iterator rbegin() noexcept;
+      const_reverse_iterator rbegin() const noexcept;
+      reverse_iterator rend() noexcept;
+      const_reverse_iterator rend() const noexcept;
+
+      const_iterator cbegin() const noexcept;
+      const_iterator cend() const noexcept;
+      const_reverse_iterator crbegin() const noexcept;
+      const_reverse_iterator crend() const noexcept;
 
       void print();
 
@@ -364,7 +381,7 @@ namespace xsm{
   
   template <class T>
   detail::Iterator_impl<T,const T> radix<T>::begin() const noexcept {
-    return ++const_iterator(m_root);
+    return cbegin();
   }
   
   template <class T>
@@ -374,7 +391,47 @@ namespace xsm{
   
   template <class T>
   detail::Iterator_impl<T,const T> radix<T>::end() const noexcept {
+    return cend();
+  }
+  
+  template <class T>
+  typename radix<T>::reverse_iterator radix<T>::rbegin() noexcept {
+    return reverse_iterator(end());
+  }
+  
+  template <class T>
+  typename radix<T>::const_reverse_iterator radix<T>::rbegin() const noexcept {
+    return crbegin();
+  }
+  
+  template <class T>
+  typename radix<T>::reverse_iterator radix<T>::rend() noexcept {
+    return reverse_iterator(begin());
+  }
+  
+  template <class T>
+  typename radix<T>::const_reverse_iterator radix<T>::rend() const noexcept {
+    return crend();
+  }
+
+  template <class T>
+  detail::Iterator_impl<T,const T> radix<T>::cbegin() const noexcept {
+    return ++const_iterator(m_root);
+  }
+  
+  template <class T>
+  detail::Iterator_impl<T,const T> radix<T>::cend() const noexcept {
     return const_iterator(m_root);
+  }
+  
+  template <class T>
+  typename radix<T>::const_reverse_iterator radix<T>::crbegin() const noexcept {
+    return const_reverse_iterator(end());
+  }
+  
+  template <class T>
+  typename radix<T>::const_reverse_iterator radix<T>::crend() const noexcept {
+    return const_reverse_iterator(begin());
   }
   
   template <class T>
@@ -402,6 +459,20 @@ namespace xsm::detail{
   Iterator_impl<T,ItType> Iterator_impl<T,ItType>::operator++(int){
     Iterator_impl<T,ItType> temp = *this;
     ++*this;
+    return temp;
+  }
+
+  template <class T, class ItType>
+  Iterator_impl<T,ItType>& Iterator_impl<T,ItType>::operator--(){
+    // Regress iterator until you reach a leaf node
+    while (Regress()) {}
+    return *this;
+  }
+
+  template <class T, class ItType>
+  Iterator_impl<T,ItType> Iterator_impl<T,ItType>::operator--(int){
+    Iterator_impl<T,ItType> temp = *this;
+    --*this;
     return temp;
   }
 
@@ -453,6 +524,26 @@ namespace xsm::detail{
     }
     // Cannot advance anymore, nullptr reached
     return false;
+  }
+
+  template <class T, class ItType>
+  bool Iterator_impl<T,ItType>::Regress(){
+    if (m_node->m_parent){
+      // Check whether this node has younger siblings
+      // younger == sorted before
+      key_type start_key = StrDiff(this->operator->()->first, m_node->m_parent->m_value_pair.first);
+      auto it = m_node->m_parent->m_children.find(start_key);
+      // This node has no younger siblings
+      if (it == m_node->m_parent->m_children.begin()){
+        m_node = m_node->m_parent;
+        return !m_node->IsLeaf();
+      }
+      m_node = (--it)->second;
+    }
+    while (!m_node->m_children.empty()){
+      m_node = m_node->m_children.rbegin()->second;
+    }
+    return !m_node->IsLeaf();
   }
   
   template <class T, class ItType, class ItType2>
