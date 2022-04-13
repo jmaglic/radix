@@ -169,13 +169,17 @@ namespace xsm{
       std::pair<iterator,bool> insert(const key_type&, const mapped_type&);
       std::pair<iterator,bool> insert(const value_type&);
       std::pair<bool,bool> insert(const std::vector<std::string>&, const mapped_type&);
-      // erase
-      // iterator erase(iterator);
+      // insert_or_assign
+      // emplace
+      // try_emplace
+      iterator erase(iterator);
       iterator erase(const_iterator);
-      // iterator erase(const_iterator, const_iterator);
-      // size_type erase(const key_type&);
+      iterator erase(const_iterator, const_iterator);
+      size_type erase(const key_type&);
       void swap(radix<T>&);
       void clear();
+      // extract
+      // merge
 
       // Element access
       mapped_type& at(const key_type&);
@@ -185,6 +189,7 @@ namespace xsm{
       mapped_type& operator[](const key_type&);
 
       // Lookup
+      // count
       bool contains(const key_type&) const;
 
       // Iterator
@@ -307,12 +312,34 @@ namespace xsm{
   }
 
   template <class T>
+  typename radix<T>::iterator radix<T>::erase(iterator it){
+    return erase(const_iterator(it));
+  }
+
+  template <class T>
   typename radix<T>::iterator radix<T>::erase(const_iterator it){
     detail::Node<T>* node = it.m_node;
     ++it;
     node->Remove();
     --m_size;
     return iterator(it.m_node); 
+  }
+
+  template <class T>
+  typename radix<T>::iterator radix<T>::erase(const_iterator first, const_iterator last){
+    while (first != last){
+      first = erase(first);
+    }
+    return iterator(last.m_node);
+  }
+
+  template <class T>
+  typename radix<T>::size_type radix<T>::erase(const key_type& key){
+    if (contains(key)){
+      erase(find(key));
+      return 1;
+    }
+    return 0;
   }
 
   template <class T>
