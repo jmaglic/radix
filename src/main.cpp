@@ -16,12 +16,18 @@ int main(){
   std::cout << std::flush;
 
 
-  xsm::radix<bool> map;
-  std::cout << "Inserted? " << (map.insert(std::make_pair("1",true)).second? "yey" : "ney") << std::endl;
-  std::cout << "Val:? " << (map["1"]? "yey" : "ney") << std::endl;
-  std::cout << "Inserted? " << (map.insert(std::make_pair("1",false)).second? "yey" : "ney") << std::endl;
-  std::cout << "Val:? " << (map["1"]? "yey" : "ney") << std::endl;
+  xsm::radix<bool> rdx;
+  rdx.emplace("hello",true);
+  rdx.emplace("hello",true);
+  rdx.emplace("hell",true);
+  rdx.emplace("heo",true);
+  rdx.emplace("h",true);
+  rdx.emplace("he",true);
+  rdx.emplace("hellow",true);
 
+  for (auto elem : rdx){
+    std::cout << elem.first << std::endl;
+  }
 
 
   /*

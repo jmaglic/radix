@@ -43,6 +43,7 @@ namespace xsm::detail{
     using value_type = typename radix<T>::value_type;
     public:
       Node();
+      Node(node_type, const value_type&, const bool=false);
       Node(node_type, const key_type&, const mapped_type&, const bool=false);
       ~Node();
       
@@ -66,6 +67,7 @@ namespace xsm::detail{
       void AddChild(const key_type&, const mapped_type&, const bool=true);
       void AddChild(const key_type&);
       void AddChild(const key_type&, node_type);
+      void AddChild(const key_type&, value_type&&, const bool=true);
       
       // For iterator operations
       bool IsChildless() const;
@@ -170,9 +172,8 @@ namespace xsm{
       std::pair<iterator,bool> insert(const value_type&);
       std::pair<bool,bool> insert(const std::vector<std::string>&, const mapped_type&);
       // insert_or_assign
-      // emplace
-      //template <class... Args>
-      //std::pair<iterator,bool> emplace(Args&&...);
+      template <class... Args>
+      std::pair<iterator,bool> emplace(Args&&...);
       // try_emplace
       iterator erase(iterator);
       iterator erase(const_iterator);
@@ -311,6 +312,85 @@ namespace xsm{
       any |= success;
     }
     return std::make_pair(all,any);
+  }
+
+  template <class T> template <class... Args>
+  std::pair<detail::Iterator_impl<T>,bool> radix<T>::emplace(Args&&... args){
+    value_type key_value = value_type(std::forward<Args>(args)...);
+    iterator parent = iterator(m_root);
+
+    auto key_start = key_value.first.begin();
+    auto key_end = key_value.first.end();
+
+    bool next_child;
+    // This loop only repeats if we descend one level in the tree
+    do {
+      next_child = false;
+
+      // Loop through all children in iterator, until you find a match within the keys
+      for (auto& entry : parent.m_node->m_children){
+        auto entrykey_start = entry.first.begin();
+        auto entrykey_end = entry.first.end();
+        auto last_match = std::mismatch(key_start, key_end, entrykey_start, entrykey_end);
+        
+        // 1. Complete mismatch -> Check next child
+        if (key_start == last_match.first){continue;}
+
+        // 2. New key and entry key are identical -> Key already exists, or leads to a non-leaf node
+        if (key_end == last_match.first && entrykey_end == last_match.second){
+
+          bool new_insertion = !entry.second->IsLeaf();
+          if (new_insertion){
+            entry.second->MakeLeaf(key_value.second);
+          }
+          return std::make_pair(iterator(entry.second), new_insertion);
+        }
+
+        // 3. One key is prefix of the other -> The prefix key becomes the parent of the other entry
+        else if (key_end == last_match.first || entrykey_end == last_match.second){
+          // New keyword is prefix of the existing nodekey
+          if (key_end == last_match.first){
+            // Add a new node with the prefix to the current node
+            //auto map_it = parent.m_node->AddChild(std::string(key_start, key_end), key_value, true )
+            auto map_it = parent.m_node->m_children.emplace(std::string(key_start,key_end), new detail::Node<T>(parent.m_node, key_value, true)).first;
+            // Old child node becomes child of the new node
+            map_it->second->m_children.emplace(std::string(last_match.second, entrykey_end), entry.second);
+            entry.second->SetParent(map_it->second);
+            // Remove old node from current node
+            parent.m_node->m_children.erase(entry.first);
+
+            return std::make_pair(iterator(map_it->second),true);
+          }
+          else {
+            // Insert new keyword as child of its prefix
+            key_start = last_match.first;
+            parent = iterator(entry.second);
+            next_child = true;
+            break;
+          }
+        }
+
+        // 4. Words partially match but diverge
+        // -> A new node needs to be created whose key is the common prefix of the words.
+        // This node has two children, one representing the new key, the other representing the
+        // entry key
+        else {
+          std::string common_prefix(key_start, last_match.first);
+
+          auto map_it = parent.m_node->m_children.emplace(std::string(key_start, last_match.first), new detail::Node<T>(parent.m_node, std::make_pair(std::string(key_value.first.begin(), last_match.first), T()))).first;
+          map_it->second->m_children.emplace(std::string(last_match.first,key_end), new detail::Node<T>(map_it->second, key_value, true));
+          map_it->second->m_children.emplace(std::string(last_match.second,entrykey_end), entry.second);
+          entry.second->SetParent(map_it->second);
+          parent.m_node->m_children.erase(entry.first); 
+
+          return std::make_pair(iterator(map_it->second),true);
+        }
+      }
+    } while (next_child);
+    
+    // 5. No common prefix has been found in any children -> keyword becomes a new entry
+    auto map_it = parent.m_node->m_children.emplace(std::string(key_start,key_end), new detail::Node<T>(parent.m_node, key_value, true)).first;
+    return std::make_pair(iterator(map_it->second), true);
   }
 
   template <class T>
@@ -597,6 +677,13 @@ namespace xsm::detail{
       m_children(std::map<std::string,Node<T>*>()) {}
 
   template <class T>
+  Node<T>::Node(node_type parent, const value_type& value_pair, const bool is_leaf)
+    : m_is_leaf(is_leaf),
+      m_value_pair(value_pair),
+      m_parent(parent),
+      m_children(std::map<key_type,node_type>()) {}
+
+  template <class T>
   Node<T>::Node(node_type parent, const key_type& key, const mapped_type& value, const bool is_leaf)
     : m_is_leaf(is_leaf), 
       m_value_pair(std::make_pair(key,value)),
@@ -751,6 +838,12 @@ namespace xsm::detail{
       m_children[word] = node;
       node->SetParent(this);
     }
+  }
+
+  template <class T>
+  void Node<T>::AddChild(const key_type& word, value_type&& value, const bool is_leaf){
+    //auto map_it = parent.m_node->m_children.emplace(std::string(key_start,key_end), new detail::Node<T>(parent.m_node, key_value, true)).first;
+
   }
 
   template <class T>
