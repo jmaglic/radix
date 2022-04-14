@@ -16,6 +16,13 @@ int main(){
   std::cout << std::flush;
 
 
+  xsm::radix<bool> map;
+  std::cout << "Inserted? " << (map.insert(std::make_pair("1",true)).second? "yey" : "ney") << std::endl;
+  std::cout << "Val:? " << (map["1"]? "yey" : "ney") << std::endl;
+  std::cout << "Inserted? " << (map.insert(std::make_pair("1",false)).second? "yey" : "ney") << std::endl;
+  std::cout << "Val:? " << (map["1"]? "yey" : "ney") << std::endl;
+
+
 
   /*
   auto it = rdx.begin();

@@ -171,6 +171,8 @@ namespace xsm{
       std::pair<bool,bool> insert(const std::vector<std::string>&, const mapped_type&);
       // insert_or_assign
       // emplace
+      //template <class... Args>
+      //std::pair<iterator,bool> emplace(Args&&...);
       // try_emplace
       iterator erase(iterator);
       iterator erase(const_iterator);
