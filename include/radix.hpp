@@ -286,7 +286,6 @@ namespace xsm{
     return m_size;
   }
   
-  // Main insert function
   template <class T>
   std::pair<detail::Iterator_impl<T>,bool> radix<T>::insert(const key_type& key, const mapped_type& value){
     return emplace(std::move(std::make_pair(key, value)));
@@ -373,11 +372,14 @@ namespace xsm{
         else {
           std::string common_prefix(key_start, last_match.first);
 
+          // New parent
           node_type node_ptr = parent.m_node->AddChild(std::string(key_start, last_match.first));
-          node_ptr->AddChild(std::string(last_match.first,key_end), std::move(key_value), true);
+          // Old entry
           node_ptr->AddChild(std::string(last_match.second,entrykey_end), entry.second);
           entry.second->SetParent(node_ptr);
           parent.m_node->m_children.erase(entry.first); 
+          // New entry
+          node_ptr = node_ptr->AddChild(std::string(last_match.first,key_end), std::move(key_value), true);
 
           m_size++;
           return std::make_pair(iterator(node_ptr),true);
