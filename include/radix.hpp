@@ -172,6 +172,10 @@ namespace xsm{
       // insert_or_assign
       template <class... Args>
       std::pair<iterator,bool> emplace(Args&&...);
+      template <class... Args>
+      iterator emplace_hint(const_iterator, Args&&...);
+      template <class... Args>
+      std::pair<iterator,bool> emplace_child(const_iterator, Args&&...);
       // try_emplace
       iterator erase(iterator);
       iterator erase(const_iterator);
@@ -215,6 +219,12 @@ namespace xsm{
       // Pointer to root node of radix tree
       node_type m_root; 
       size_type m_size;
+
+      std::pair<iterator,bool> AddEntry(
+          value_type&&, 
+          const_iterator, 
+          key_type::const_iterator, 
+          key_type::const_iterator);
   };
 }
  
@@ -315,12 +325,35 @@ namespace xsm{
   }
 
   template <class T> template <class... Args>
-  std::pair<detail::Iterator_impl<T>,bool> radix<T>::emplace(Args&&... args){
+  std::pair<typename radix<T>::iterator,bool> radix<T>::emplace_child(const_iterator parent, Args&&... args){
     value_type&& key_value = value_type(std::forward<Args>(args)...);
-    iterator parent = iterator(m_root);
+    
+    auto last_match = std::mismatch(
+        key_value.first.begin(), key_value.first.end(),
+        parent->first.begin(), parent->first.end());
 
-    auto key_start = key_value.first.begin();
-    auto key_end = key_value.first.end();
+    if (last_match.second == parent->first.end()){
+      return AddEntry(std::move(key_value), parent, last_match.first, key_value.first.end());
+    }
+    else {
+      return std::make_pair(end(), false);
+    }
+  }
+
+  template <class T> template <class... Args>
+  std::pair<typename radix<T>::iterator,bool> radix<T>::emplace(Args&&... args){
+    value_type&& key_value = value_type(std::forward<Args>(args)...);
+    const_iterator parent = const_iterator(m_root);
+
+    return AddEntry(std::move(key_value), parent, key_value.first.begin(), key_value.first.end());
+  }
+
+  template <class T>
+  std::pair<typename radix<T>::iterator,bool> radix<T>::AddEntry(
+      value_type&& key_value, 
+      const_iterator parent, 
+      key_type::const_iterator key_start, 
+      key_type::const_iterator key_end){
 
     bool next_child;
     // This loop only repeats if we descend one level in the tree
@@ -365,7 +398,7 @@ namespace xsm{
           else {
             // Insert new keyword as child of its prefix
             key_start = last_match.first;
-            parent = iterator(entry.second);
+            parent = const_iterator(entry.second);
             next_child = true;
             break;
           }
@@ -397,6 +430,12 @@ namespace xsm{
     node_type node_ptr = parent.m_node->AddChild(std::string(key_start, key_end), std::move(key_value));
     m_size++;
     return std::make_pair(iterator(node_ptr), true);
+  }
+
+  template <class T> template <class... Args>
+  typename radix<T>::iterator radix<T>::emplace_hint(const_iterator hint, Args&&... args){
+
+    return emplace(std::forward<Args>(args)...);
   }
 
   template <class T>
@@ -637,7 +676,7 @@ namespace xsm::detail{
         return !m_node->IsLeaf();
       }
     }
-    // Cannot advance anymore, nullptr reached
+    // Cannot advance anymore
     return false;
   }
 
