@@ -165,8 +165,9 @@ namespace xsm{
       size_type size() const noexcept;
   
       // Modifiers
-      std::pair<iterator,bool> insert(const key_type&, const mapped_type&);
       std::pair<iterator,bool> insert(const value_type&);
+      std::pair<iterator,bool> insert(value_type&&);
+      std::pair<iterator,bool> insert(const key_type&, const mapped_type&);
       std::pair<bool,bool> insert(const std::vector<std::string>&, const mapped_type&);
       // insert_or_assign
       template <class... Args>
@@ -285,15 +286,20 @@ namespace xsm{
   typename radix<T>::size_type radix<T>::size() const noexcept {
     return m_size;
   }
+
+  template <class T>
+  std::pair<detail::Iterator_impl<T>,bool> radix<T>::insert(const value_type& key_value){ 
+    return emplace(std::move(key_value));
+  }
+
+  template <class T>
+  std::pair<detail::Iterator_impl<T>,bool> radix<T>::insert(value_type&& key_value){ 
+    return emplace(key_value);
+  }
   
   template <class T>
   std::pair<detail::Iterator_impl<T>,bool> radix<T>::insert(const key_type& key, const mapped_type& value){
     return emplace(std::move(std::make_pair(key, value)));
-  }
-
-  template <class T>
-  std::pair<detail::Iterator_impl<T>,bool> radix<T>::insert(const value_type& key_value){ 
-    return insert(key_value.first, key_value.second);
   }
   
   template <class T>

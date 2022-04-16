@@ -65,26 +65,20 @@ bool TestEmplace(){
 // Insertion and tree structure
 bool TestInsert(){
   xsm::radix<bool> rdx;
-  // Insert words with different methods
-  std::vector<std::string> words = {"hello", "hell", "here", "hate", "love", "hell"};
-  rdx.insert(std::vector<std::string>{words[0], words[1], words[2]}, true);
-  rdx.insert(std::make_pair(words[3], true));
-  rdx.insert(words[4], true);
-  rdx.insert(words[5], true);
-  // Print the tree structure
-  //rdx.print();
-  // Sort word vector for comparison
-  std::sort(words.begin(), words.end());
-  // Remove duplicate keys
-  words.erase(std::unique(words.begin(), words.end()), words.end());
-
-  size_t i = 0;
-  bool all_correct = true;
-  for (xsm::radix<bool>::iterator it = rdx.begin(); it != rdx.end(); ++it){
-    all_correct &= (it->first == words[i]);
-    ++i;
+  bool success = true;
+  // Insert const lvalue reference
+  {
+    auto [it,inserted] = rdx.insert(std::make_pair("aaa",true));
+    success &= it->first == "aaa";
+    success &= inserted;
   }
-  return all_correct;
+  // Insert rvalue reference
+  {
+    auto [it,inserted] = rdx.insert(std::move(std::make_pair("bbb",true)));
+    success &= it->first == "bbb";
+    success &= inserted;
+  }
+  return success;
 }
 
 // Changing value using at()
