@@ -62,6 +62,7 @@ namespace xsm::detail{
 
       // Methods used during container manipulation
       void MakeLeaf(const mapped_type&);
+      node_type AddChild(const key_type&, node_type);
       node_type AddChild(const key_type&, value_type&&, const bool=true);
       node_type AddChild(const key_type&);
       
@@ -348,7 +349,7 @@ namespace xsm{
             // Add a new node with the prefix to the current node
             node_type node_ptr = parent.m_node->AddChild(std::string(key_start, key_end), std::move(key_value));
             // Old child node becomes child of the new node
-            node_ptr->m_children.emplace(std::string(last_match.second, entrykey_end), entry.second);
+            node_ptr->AddChild(std::string(last_match.second, entrykey_end), entry.second);
             entry.second->SetParent(node_ptr);
             // Remove old node from current node
             parent.m_node->m_children.erase(entry.first);
@@ -373,9 +374,8 @@ namespace xsm{
           std::string common_prefix(key_start, last_match.first);
 
           node_type node_ptr = parent.m_node->AddChild(std::string(key_start, last_match.first));
-          //auto map_it = parent.m_node->m_children.emplace(std::string(key_start, last_match.first), new detail::Node<T>(parent.m_node, std::move(std::make_pair(std::string(key_value.first.begin(), last_match.first), T())))).first;
-          node_ptr->m_children.emplace(std::string(last_match.first,key_end), new detail::Node<T>(node_ptr, std::move(key_value), true));
-          node_ptr->m_children.emplace(std::string(last_match.second,entrykey_end), entry.second);
+          node_ptr->AddChild(std::string(last_match.first,key_end), std::move(key_value), true);
+          node_ptr->AddChild(std::string(last_match.second,entrykey_end), entry.second);
           entry.second->SetParent(node_ptr);
           parent.m_node->m_children.erase(entry.first); 
 
@@ -738,8 +738,13 @@ namespace xsm::detail{
   }
 
   template <class T>
+  typename radix<T>::node_type Node<T>::AddChild(const key_type& word, node_type node){
+    return m_children.emplace(word, node).first->second;
+  }
+
+  template <class T>
   typename radix<T>::node_type Node<T>::AddChild(const key_type& word, value_type&& key_value, const bool is_leaf){
-    return m_children.emplace(word, new Node(this, std::move(key_value), is_leaf)).first->second;
+    return AddChild(word, new Node(this, std::move(key_value), is_leaf));
   }
 
   template <class T>
