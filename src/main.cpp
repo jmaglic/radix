@@ -17,20 +17,7 @@ int main(){
   std::cout << std::flush;
 
 
-  xsm::radix<bool> map;
-  map.emplace("h", true);
-  map.emplace("he", true);
-  map.emplace("hel", true);
-  map.emplace("hell", true);
-  map.emplace("hello", true);
 
-  map.print();
-  auto it_before = map.emplace_child(map.find("hell"),"hey",true);
-
-  auto it_after = map.emplace_child(map.find("hell"),"hellw",true);
-
-  std::cout << (map.contains("helly")? "contains hey" : "noes not contain key") << std::endl;
-  std::cout << (map.contains("hellw")? "contains hellw" : "noes not contain hellw") << std::endl;
 
   /*
   auto it = rdx.begin();
