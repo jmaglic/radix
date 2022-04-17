@@ -316,11 +316,11 @@ namespace xsm{
 
   template <class T> template <class... Args>
   std::pair<detail::Iterator_impl<T>,bool> radix<T>::emplace(Args&&... args){
-    value_type&& key_value = value_type(std::forward<Args>(args)...);
+    node_type node_ptr = new detail::Node<T>(nullptr, value_type(std::forward<Args>(args)...), true);
     iterator parent = iterator(m_root);
 
-    auto key_start = key_value.first.begin();
-    auto key_end = key_value.first.end();
+    auto key_start = node_ptr->m_value_pair.first.begin();
+    auto key_end = node_ptr->m_value_pair.first.end();
 
     bool next_child;
     // This loop only repeats if we descend one level in the tree
@@ -339,12 +339,15 @@ namespace xsm{
         // 2. New key and entry key are identical -> Key already exists, or leads to a non-leaf node
         if (key_end == last_match.first && entrykey_end == last_match.second){
 
-          bool new_insertion = !entry.second->IsLeaf();
-          if (new_insertion){
-            entry.second->MakeLeaf(key_value.second);
+          bool new_entry = !entry.second->IsLeaf();
+          if (new_entry){
+
+            entry.second->MakeLeaf(node_ptr->m_value_pair.second);
+            delete node_ptr;
+
             m_size++;
           }
-          return std::make_pair(iterator(entry.second), new_insertion);
+          return std::make_pair(iterator(entry.second), new_entry);
         }
 
         // 3. One key is prefix of the other -> The prefix key becomes the parent of the other entry
@@ -352,10 +355,9 @@ namespace xsm{
           // New keyword is prefix of the existing nodekey
           if (key_end == last_match.first){
             // Add a new node with the prefix to the current node
-            node_type node_ptr = parent.m_node->AddChild(std::string(key_start, key_end), std::move(key_value));
+            parent.m_node->AddChild(std::string(key_start, key_end), node_ptr);
             // Old child node becomes child of the new node
             node_ptr->AddChild(std::string(last_match.second, entrykey_end), entry.second);
-            entry.second->SetParent(node_ptr);
             // Remove old node from current node
             parent.m_node->m_children.erase(entry.first);
 
@@ -379,13 +381,13 @@ namespace xsm{
           std::string common_prefix(key_start, last_match.first);
 
           // New parent
-          node_type node_ptr = parent.m_node->AddChild(std::string(key_start, last_match.first));
+          node_type parent_ptr = parent.m_node->AddChild(std::string(key_start, last_match.first));
           // Old entry
-          node_ptr->AddChild(std::string(last_match.second,entrykey_end), entry.second);
-          entry.second->SetParent(node_ptr);
+          parent_ptr->AddChild(std::string(last_match.second,entrykey_end), entry.second);
+          entry.second->SetParent(parent_ptr);
           parent.m_node->m_children.erase(entry.first); 
           // New entry
-          node_ptr = node_ptr->AddChild(std::string(last_match.first,key_end), std::move(key_value), true);
+          parent_ptr->AddChild(std::string(last_match.first,key_end), node_ptr);
 
           m_size++;
           return std::make_pair(iterator(node_ptr),true);
@@ -394,7 +396,7 @@ namespace xsm{
     } while (next_child);
     
     // 5. No common prefix has been found in any children -> keyword becomes a new entry
-    node_type node_ptr = parent.m_node->AddChild(std::string(key_start, key_end), std::move(key_value));
+    parent.m_node->AddChild(std::string(key_start, key_end), node_ptr);
     m_size++;
     return std::make_pair(iterator(node_ptr), true);
   }
@@ -747,6 +749,7 @@ namespace xsm::detail{
 
   template <class T>
   typename radix<T>::node_type Node<T>::AddChild(const key_type& word, node_type node){
+    node->SetParent(this);
     return m_children.emplace(word, node).first->second;
   }
 

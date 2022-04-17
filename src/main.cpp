@@ -17,8 +17,6 @@ int main(){
   std::cout << std::flush;
 
 
-
-
   /*
   auto it = rdx.begin();
   std::cout << it->first << std::endl;

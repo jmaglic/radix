@@ -102,6 +102,7 @@ bool TestContains(){
   bool success = true;
   xsm::radix<bool> rdx;
   rdx.insert("hello",true);
+  rdx.insert("hellscape",true);
   
   success &= rdx.contains("hello");
   success &= !rdx.contains("hell");
