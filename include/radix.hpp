@@ -343,10 +343,9 @@ namespace xsm{
           if (new_entry){
 
             entry.second->MakeLeaf(node_ptr->m_value_pair.second);
-            delete node_ptr;
-
             m_size++;
           }
+          delete node_ptr;
           return std::make_pair(iterator(entry.second), new_entry);
         }
 
