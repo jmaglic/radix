@@ -44,6 +44,7 @@ namespace xsm::detail{
     public:
       Node();
       Node(node_type, value_type&&, const bool=false);
+      template <class... Args> Node(node_type, const bool, Args&&...);
       ~Node();
       
       // Display
@@ -63,7 +64,6 @@ namespace xsm::detail{
       // Methods used during container manipulation
       void MakeLeaf(const mapped_type&);
       node_type AddChild(const key_type&, node_type);
-      node_type AddChild(const key_type&, value_type&&, const bool=true);
       node_type AddChild(const key_type&);
       
       // For iterator operations
@@ -316,7 +316,7 @@ namespace xsm{
 
   template <class T> template <class... Args>
   std::pair<detail::Iterator_impl<T>,bool> radix<T>::emplace(Args&&... args){
-    node_type node_ptr = new detail::Node<T>(nullptr, value_type(std::forward<Args>(args)...), true);
+    node_type node_ptr = new detail::Node<T>(nullptr, true, std::forward<Args>(args)...);
     iterator parent = iterator(m_root);
 
     auto key_start = node_ptr->m_value_pair.first.begin();
@@ -690,6 +690,13 @@ namespace xsm::detail{
       m_value_pair(value_pair),
       m_parent(parent),
       m_children(std::map<key_type,node_type>()) {}
+ 
+  template <class T> template <class... Args>
+  Node<T>::Node(node_type parent, const bool is_leaf, Args&&... args)
+    : m_is_leaf(is_leaf),
+      m_value_pair(value_type(std::forward<Args>(args)...)),
+      m_parent(parent),
+      m_children(std::map<key_type,node_type>()) {}
 
   // Each Node is responsible for deleting its children
   template <class T>
@@ -754,13 +761,8 @@ namespace xsm::detail{
   }
 
   template <class T>
-  typename radix<T>::node_type Node<T>::AddChild(const key_type& word, value_type&& key_value, const bool is_leaf){
-    return AddChild(word, new Node(this, std::move(key_value), is_leaf));
-  }
-
-  template <class T>
   typename radix<T>::node_type Node<T>::AddChild(const key_type& part){
-    return AddChild(part, std::move(std::make_pair(m_value_pair.first + part, T())), false);
+    return AddChild(part, new Node(this, false, m_value_pair.first + part, T()));
   }
 
   template <class T>
