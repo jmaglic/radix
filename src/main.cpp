@@ -2,12 +2,9 @@
 #include <map>
 #include "unittest.cpp"
 
-void Break(){}
-
 int main(){
 
   std::cout << "Emplace:\t" << (TestEmplace()? "yey" : "ney") << "\n";
-  Break();
   std::cout << "Insert:\t" << (TestInsert()? "yey" : "ney") << "\n";
   std::cout << "Overwrite:\t" << (TestOverwrite()? "yey" : "ney") << "\n";
   std::cout << "Contains:\t" << (TestContains()? "yey" : "ney") << "\n";

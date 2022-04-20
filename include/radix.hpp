@@ -128,12 +128,16 @@ namespace xsm::detail{
       bool Advance();
       bool Regress();
   };
-}  
+}
 
 namespace xsm{
   ///////////
   // RADIX //
   ///////////
+  //
+  //template<class T> operator<=>(const radix<T>, const radix<T>);
+  //template<class T, class Pred> radix<T>::size_type erase_if(radix<T>, Pred);
+  //
   // Publicly accessible container class
   template <class T> class radix{
     public:
@@ -162,36 +166,70 @@ namespace xsm{
 
       // Capacity
       bool empty() const;
+      //[[nodiscard]] bool empty() const noexcept;
       size_type size() const noexcept;
   
       // Modifiers
       std::pair<iterator,bool> insert(const value_type&);
+      //template<class P> std::pair<iterator, bool> insert(P&&);
       std::pair<iterator,bool> insert(value_type&&);
+      //iterator insert(iterator, const value_type&);
+      //iterator insert(const_iterator, const value_type&);
+      //template<class P> iterator insert(const_iterator, P&&);
+      //iterator insert(const_iterator, value_type&&);
+      //template<class InputIt> void insert(InputIt, InputIt);
+      //void insert(std::initializer_list<value_type>);
+      //insert_return_type insert(node_type&&);
+      //iterator insert(const_iterator, node_type&&);
       std::pair<iterator,bool> insert(const key_type&, const mapped_type&);
       std::pair<bool,bool> insert(const std::vector<std::string>&, const mapped_type&);
       // insert_or_assign
       template <class... Args>
       std::pair<iterator,bool> emplace(Args&&...);
-      // try_emplace
+      //template<class... Args> iterator emplace_hint(const_iterator, Args&&...);
+      //template<class... Args> pair<iterator, bool> try_emplace(const key_type&, Args&&...);
+      //template<class... Args> pair<iterator, bool> try_emplace(key_type&&, Args&&...);
+      //template<class... Args> pair<iterator, bool> try_emplace(const iterator, const key_type&, Args&&...);
+      //template<class... Args> pair<iterator, bool> try_emplace(const_iterator, key_type&&, Args&&...);
       iterator erase(iterator);
       iterator erase(const_iterator);
       iterator erase(const_iterator, const_iterator);
       size_type erase(const key_type&);
+      //template<class K> size_type erase(K&&);
       void swap(radix<T>&);
+      //node_type extract(const_iterator);
+      //node_type extract(const key_type&);
+      //void merge(radix<T>&);
+      //void merge(radix<T>&&);
       void clear();
-      // extract
-      // merge
 
       // Element access
       mapped_type& at(const key_type&);
       const mapped_type& at(const key_type&) const;
       iterator find(const key_type&);
       const_iterator find(const key_type&) const;
+      //template<class K> iterator find(const K&);
+      //template<class K> const_iterator find(const K&) const;
+      //std::pair<iterator,iterator> equal_range(const key_type&);
+      //std::pair<const_iterator,const_iterator> equal_range(const key_type&) const;
+      //template<class K> std::pair<iterator,iterator> equal_range(const K&);
+      //template<class K> std::pair<const_iterator,const_iterator> equal_range(const K&) const;
+      //iterator lower_bound(const key_type&);
+      //const_iterator lower_bound(const key_type&) const;
+      //template<class K> iterator lower_bound(const K&);
+      //template<class K> const_iterator lower_bound(const K&) const;
+      //iterator upper_bound(const key_type&);
+      //const_iterator upper_bound(const key_type&) const;
+      //template<class K> iterator upper_bound(const K&);
+      //template<class K> const_iterator upper_bound(const K&) const;
       mapped_type& operator[](const key_type&);
+      //mapped_type& operator[](key_type&&);
 
       // Lookup
-      // count
+      //size_type count(const key_type&) const;
+      //template<class K> size_type count(const K&) const;
       bool contains(const key_type&) const;
+      //template<class K> bool contains(const K&) const;
 
       // Iterator
       iterator begin() noexcept;
