@@ -89,7 +89,8 @@ namespace xsm::detail{
   //////////////
   // Custom iterator class
   template <class T, class Compare, class ItType>
-  class Iterator_impl : public std::iterator<std::bidirectional_iterator_tag, typename radix<T,Compare>::value_type> {
+  class Iterator_impl {
+
     friend radix<T,Compare>;
     // If ItType is T: ItType2 is const T
     // If ItType is const T: ItType2 is T
@@ -102,9 +103,11 @@ namespace xsm::detail{
     using reverse_iterator = typename radix<T,Compare>::reverse_iterator;
     using const_reverse_iterator = typename radix<T,Compare>::const_reverse_iterator;
     // These typenames cause an error:
-    // using reference = typename radix<T,Compare>::reference;
-    // using pointer = typename radix<T,Compare>::pointer;
     public:
+      using value_type = typename radix<T,Compare>::value_type;
+      using difference_type = typename radix<T,Compare>::difference_type;
+      using reference = typename radix<T,Compare>::reference;
+      using pointer = typename radix<T,Compare>::pointer;
       // Constructor
       Iterator_impl(node_type);
 
@@ -114,8 +117,8 @@ namespace xsm::detail{
       Iterator_impl& operator--();
       Iterator_impl operator--(int);
       //Iterator_impl operator++(int);
-      typename radix<T,Compare>::reference operator*() const;
-      typename radix<T,Compare>::pointer operator->() const;
+      reference operator*() const;
+      pointer operator->() const;
 
       // Conversion from iterator to const_iterator
       operator const_iterator() const;
@@ -157,6 +160,7 @@ namespace xsm{
       typedef T mapped_type;
       typedef std::pair<const key_type, mapped_type> value_type;
       typedef std::size_t size_type;
+      typedef std::ptrdiff_t difference_type;
       typedef Compare key_compare;
       typedef value_type& reference;
       typedef const value_type& const_reference;
