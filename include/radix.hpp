@@ -109,6 +109,7 @@ namespace xsm::detail{
       using reference = typename radix<T,Compare>::reference;
       using pointer = typename radix<T,Compare>::pointer;
       // Constructor
+      Iterator_impl();
       Iterator_impl(node_type);
 
       // Iterator operations
@@ -607,6 +608,9 @@ namespace xsm::detail{
   //////////////
   // ITERATOR //
   //////////////
+  template <class T, class Compare, class ItType>
+  Iterator_impl<T,Compare,ItType>::Iterator_impl() : m_node(nullptr) {}
+  
   template <class T, class Compare, class ItType>
   Iterator_impl<T,Compare,ItType>::Iterator_impl(node_type ptr) : m_node(ptr) {}
  
