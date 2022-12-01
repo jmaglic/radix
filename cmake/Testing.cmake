@@ -2,9 +2,14 @@ enable_testing()
 
 set(RADIX_TEST_DIR ${CMAKE_SOURCE_DIR}/test)
 
-add_executable(radix_emplace ${RADIX_TEST_DIR}/radix_emplace.cpp)
-add_test(NAME radix_emplace COMMAND ./radix_emplace)
+set(TEST_NAMES
+  radix_emplace
+  radix_insert)
 
-add_executable(radix_insert ${RADIX_TEST_DIR}/radix_insert.cpp)
-add_test(NAME radix_insert COMMAND ./radix_insert)
+foreach(TN IN ITEMS ${TEST_NAMES})
+
+  add_executable(${TN} ${RADIX_TEST_DIR}/${TN}.cpp)
+  add_test(NAME ${TN} COMMAND ${TN})
+
+endforeach()
 
