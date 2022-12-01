@@ -1,6 +1,3 @@
-#include <vector>
-#include <array>
-#include <algorithm>
 #include "radix.hpp"
 
 int main() {
