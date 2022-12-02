@@ -17,6 +17,7 @@ set(TEST_NAMES
 foreach(TN IN ITEMS ${TEST_NAMES})
 
   add_executable(${TN} ${RADIX_TEST_DIR}/${TN}.cpp)
+  set_target_properties(${TN} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/testbin)
   add_test(NAME ${TN} COMMAND ${TN})
 
 endforeach()
