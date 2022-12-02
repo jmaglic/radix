@@ -1,7 +1,10 @@
 #include <iostream>
 #include <map>
 
+#include "radix.hpp"
+
 int main(){
+  
 
   struct IsEven {};
   struct IsOdd {};

@@ -18,6 +18,7 @@
 #include <stdexcept>
 #include <cassert>
 #include <iterator>
+#include <functional>
 
 // Forward declaration for friend relation
 namespace xsm{
