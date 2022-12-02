@@ -11,7 +11,8 @@ set(TEST_NAMES
   radix_assign
   radix_clear
   radix_erase
-  radix_iterator)
+  radix_iterator
+  radix_iterator_type)
 
 foreach(TN IN ITEMS ${TEST_NAMES})
 
