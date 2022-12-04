@@ -10,12 +10,9 @@ include_directories(include)
 
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
-# List of source files
-set(SOURCES
-  src/main.cpp
-)
+add_executable(dev_app src/main.cpp)
 
-add_executable(app ${SOURCES})
+add_executable(insert_demo src/insert_demo.cpp)
 
 if (BUILD_TESTING)
   include(Testing)

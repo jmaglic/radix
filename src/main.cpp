@@ -62,17 +62,5 @@ int main(){
   std::cout << it->first << std::endl;
 */
 
-  // Interactive demonstration
-  xsm::radix<bool> rdx;
-  bool exit = false;
-  while (!exit) {
-    std::string word;
-    std::cout << "Enter: ";
-    std::cin >> word;
-
-    bool success = rdx.insert(word,true).second;
-    std::cout << "Insert " << (success? "succeeded" : "failed") << "\n";
-    rdx.print();
-  }
 }
 
