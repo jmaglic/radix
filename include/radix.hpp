@@ -600,8 +600,9 @@ namespace xsm{
   
   template <class T, class Compare>
   void radix<T,Compare>::print(){
+    std::cout << "ROOT";
     m_root->print();
-    std::cout << std::endl;
+    std::cout << "\n" << std::flush;
   }
 }
 
@@ -847,12 +848,13 @@ namespace xsm::detail{
   
   template <class T, class Compare>
   void Node<T,Compare>::print(){
+    std::cout << " ("<< (m_is_leaf? "+" : "-") << ")";
+    std::cout << " <";
     for (auto& entry : m_children){
-      std::cout << entry.first << " <";
+      std::cout << entry.first;
       entry.second->print();
-      std::cout << "> ";
     }
-    std::cout << (m_is_leaf? "+" : "-");
+    std::cout << "> ";
   }
 }
 
