@@ -46,6 +46,13 @@ int main() {
     success &= it->second;
     success &= emplaced;
   }
+  // Use pair's converting move constructor
+  {
+    auto [it,emplaced] = rdx.emplace(std::make_pair("here", true));
+    success &= it->first == "here";
+    success &= it->second;
+    success &= emplaced;
+  }
   return success? 0 : -1;
 }
 
