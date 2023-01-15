@@ -19,6 +19,7 @@
 #include <cassert>
 #include <iterator>
 #include <functional>
+#include <utility>
 
 // Forward declaration for friend relation
 namespace xsm{
@@ -181,7 +182,7 @@ namespace xsm{
   
       // Modifiers
       std::pair<iterator,bool> insert(const value_type&);
-      //template<class P> std::pair<iterator, bool> insert(P&&);
+      template<class P> std::pair<iterator, bool> insert(P&&);
       std::pair<iterator,bool> insert(value_type&&);
       //iterator insert(iterator, const value_type&);
       //iterator insert(const_iterator, const value_type&);
@@ -338,6 +339,11 @@ namespace xsm{
   template <class T, class Compare>
   std::pair<detail::Iterator_impl<T,Compare>,bool> radix<T,Compare>::insert(const value_type& key_value){ 
     return emplace(std::move(key_value));
+  }
+  
+  template <class T, class Compare> template <class P>
+  std::pair<detail::Iterator_impl<T,Compare>,bool> radix<T,Compare>::insert(P&& value){
+    return emplace(std::forward<P>(value));
   }
 
   template <class T, class Compare>

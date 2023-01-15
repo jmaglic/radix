@@ -6,6 +6,8 @@
 int main(){
   
 
+
+  /*
   struct IsEven {};
   struct IsOdd {};
 
@@ -37,7 +39,7 @@ int main(){
   //std::cout << map.lower_bound(IsEven())->first << std::endl;
   //std::cout << map.upper_bound(IsEven())->first << std::endl;
 
-  
+  */
 
 
 

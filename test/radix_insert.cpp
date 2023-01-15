@@ -15,5 +15,17 @@ int main() {
     success &= it->first == "bbb";
     success &= inserted;
   }
+  {
+    // insert(P&&)
+    std::string key = "anystring";
+    int val = 5;
+
+    std::pair<std::string, int>&& p = std::make_pair(key, val);
+
+    xsm::radix<int> rdx;
+
+    auto [it,inserted] = rdx.insert(p);
+    assert(inserted && it->first == key && it->second == val);
+  }
   return success? 0 : -1;
 }
