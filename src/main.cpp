@@ -5,7 +5,21 @@
 
 int main(){
   
+  std::map<std::string,bool> map;
 
+  map.emplace("a",true);
+  map.emplace("b",true);
+  map.emplace("c",true);
+  auto [it_d, non] = map.emplace("d",true);
+  map.emplace("f",true);
+
+  auto it = map.lower_bound("e");
+
+  std::cout << it->first << std::endl;
+
+  auto newit = map.emplace_hint(it, "e", true);
+
+  std::cout << newit->first << std::endl;
 
   /*
   struct IsEven {};

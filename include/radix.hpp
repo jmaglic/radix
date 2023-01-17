@@ -184,7 +184,6 @@ namespace xsm{
       std::pair<iterator,bool> insert(const value_type&);
       template<class P> std::pair<iterator, bool> insert(P&&);
       std::pair<iterator,bool> insert(value_type&&);
-      //iterator insert(iterator, const value_type&);
       //iterator insert(const_iterator, const value_type&);
       //template<class P> iterator insert(const_iterator, P&&);
       //iterator insert(const_iterator, value_type&&);
@@ -197,7 +196,7 @@ namespace xsm{
       // insert_or_assign
       template <class... Args>
       std::pair<iterator,bool> emplace(Args&&...);
-      //template<class... Args> iterator emplace_hint(const_iterator, Args&&...);
+      template<class... Args> iterator emplace_hint(const_iterator, Args&&...);
       //template<class... Args> pair<iterator, bool> try_emplace(const key_type&, Args&&...);
       //template<class... Args> pair<iterator, bool> try_emplace(key_type&&, Args&&...);
       //template<class... Args> pair<iterator, bool> try_emplace(const iterator, const key_type&, Args&&...);
@@ -452,6 +451,11 @@ namespace xsm{
     parent.m_node->AddChild(std::string(key_start, key_end), node_ptr);
     m_size++;
     return std::make_pair(iterator(node_ptr), true);
+  }
+
+  template <class T, class Compare> template<class... Args>
+  typename radix<T,Compare>::iterator radix<T,Compare>::emplace_hint(const_iterator pos, Args&&... args){
+    // TODO
   }
 
   template <class T, class Compare>
