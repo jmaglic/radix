@@ -1,30 +1,10 @@
 #include <iostream>
 #include <map>
 #include <vector>
-#include "commonwords.hpp"
-#include "benchmark.hpp"
 
 #include "radix.hpp"
 
-void emplace_benchmark(){
-
-  auto [common_words, import_success] = commonwords::readWords();
-  if (!import_success){
-    commonwords::failedImport();
-  }
-  
-  xsm::radix<bool> rdx;
-
-  for (const std::string word : common_words){
-    rdx.emplace(word, true);
-  }
-
-}
-
 int main(){
-
-
-  benchmark::time(&emplace_benchmark, "emplace");
 
   /*
   struct IsEven {};

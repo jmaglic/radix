@@ -19,3 +19,7 @@ if (BUILD_TESTING)
   include(Testing)
 endif()
 
+if (RADIX_BUILD_BENCHMARK)
+  include(Benchmark)
+endif()
+
