@@ -263,6 +263,9 @@ namespace xsm{
       // Pointer to root node of radix tree
       node_type m_root; 
       size_type m_size;
+
+      template <class... Args>
+      std::pair<iterator,bool> NodeInTree(node_type, const_iterator);
   };
 }
  
@@ -368,9 +371,7 @@ namespace xsm{
   }
 
   template <class T, class Compare> template <class... Args>
-  std::pair<detail::Iterator_impl<T,Compare>,bool> radix<T,Compare>::emplace(Args&&... args){
-    node_type node_ptr = new detail::Node<T,Compare>(nullptr, true, std::forward<Args>(args)...);
-    iterator parent = iterator(m_root);
+  std::pair<detail::Iterator_impl<T,Compare>,bool> radix<T,Compare>::NodeInTree(node_type node_ptr, const_iterator parent){
 
     auto key_start = node_ptr->m_value_pair.first.begin();
     auto key_end = node_ptr->m_value_pair.first.end();
@@ -452,10 +453,40 @@ namespace xsm{
     m_size++;
     return std::make_pair(iterator(node_ptr), true);
   }
+  
+  template <class T, class Compare> template <class... Args>
+  std::pair<detail::Iterator_impl<T,Compare>,bool> radix<T,Compare>::emplace(Args&&... args){
+    
+    node_type node_ptr = new detail::Node<T,Compare>(nullptr, true, std::forward<Args>(args)...);
+    return NodeInTree(node_ptr, iterator(m_root));
+    
+  }
 
   template <class T, class Compare> template<class... Args>
   typename radix<T,Compare>::iterator radix<T,Compare>::emplace_hint(const_iterator pos, Args&&... args){
-    // TODO
+    
+    node_type node_ptr = new detail::Node<T,Compare>(nullptr, true, std::forward<Args>(args)...);
+    const_iterator parent = --pos;
+
+    auto key_start = node_ptr->m_value_pair.first.begin();
+    auto key_end = node_ptr->m_value_pair.first.end();
+
+    bool correct_parent_found = false;
+
+    while(!correct_parent_found){
+
+      auto parentkey_start = parent.m_node->m_value_pair.first.begin();
+      auto parentkey_end = parent.m_node->m_value_pair.first.end();
+  
+      auto last_match = std::mismatch(parentkey_start, parentkey_end, key_start, key_end);
+  
+      correct_parent_found = last_match.first == parentkey_end;
+  
+      if (!correct_parent_found){
+        parent = iterator(parent.m_node->m_parent);
+      }
+    }
+    return NodeInTree(node_ptr, parent).first;
   }
 
   template <class T, class Compare>

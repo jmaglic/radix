@@ -1,26 +1,60 @@
 #include <iostream>
 #include <map>
+#include <chrono>
+#include <vector>
+#include "commonwords.hpp"
 
 #include "radix.hpp"
 
 int main(){
+
+  auto [common_words, import_success] = importCommonWords();
+
+  for (auto const& w : common_words){
+    std::cout << w << std::endl;
+  }
+
+/*
+  std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+
+  xsm::radix<bool> rdx;
+
+  std::ifstream infile("../build/eng10k");
+
+  std::string line;
+  if (infile.is_open()){
+    while (std::getline(infile, line)) {
+      rdx.emplace(line,true);
+    }
+  }
+  else {
+    std::cout << "Could not open" << std::endl;
+  }
+  infile.close();
+
+  std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+
+  std::cout << "Time difference = " << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() << "[µs]" << std::endl;
   
-  std::map<std::string,bool> map;
 
-  map.emplace("a",true);
-  map.emplace("b",true);
-  map.emplace("c",true);
-  auto [it_d, non] = map.emplace("d",true);
-  map.emplace("f",true);
 
-  auto it = map.lower_bound("e");
+  std::chrono::steady_clock::time_point begin_hint = std::chrono::steady_clock::now();
+  
+  xsm::radix<bool> rdx_hint;
+  //std::map<std::string,bool> rdx_hint;
 
-  std::cout << it->first << std::endl;
+  rdx_hint.emplace("a", true);
 
-  auto newit = map.emplace_hint(it, "e", true);
+  for (auto const& x : rdx){
+    std::cout << x.first << std::endl;
+    rdx_hint.emplace_hint(rdx_hint.end(), x.first, true);
+  }
 
-  std::cout << newit->first << std::endl;
+  std::chrono::steady_clock::time_point end_hint = std::chrono::steady_clock::now();
 
+  std::cout << "Time difference = " 
+    << std::chrono::duration_cast<std::chrono::microseconds>(end_hint - begin_hint).count() << "[µs]" << std::endl;
+*/
   /*
   struct IsEven {};
   struct IsOdd {};
