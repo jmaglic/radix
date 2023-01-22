@@ -8,13 +8,9 @@
 
 int main(){
 
-  auto [common_words, import_success] = importCommonWords();
+  auto [common_words, import_success] = commonwords::readWords();
 
-  for (auto const& w : common_words){
-    std::cout << w << std::endl;
-  }
-
-/*
+  
   std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
 
   xsm::radix<bool> rdx;
@@ -54,7 +50,6 @@ int main(){
 
   std::cout << "Time difference = " 
     << std::chrono::duration_cast<std::chrono::microseconds>(end_hint - begin_hint).count() << "[µs]" << std::endl;
-*/
   /*
   struct IsEven {};
   struct IsOdd {};

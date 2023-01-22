@@ -1,7 +1,26 @@
+#include "commonwords.hpp"
 #include "radix.hpp"
 
 int main() {
+
+  // Emplace 10000 words
+  {
+    xsm::radix<bool> rdx;
+    auto [common_words, import_success] = commonwords::readWords();
+    if (!import_success){
+      commonwords::failedImport();
+    }
+
+    for (const std::string& word : common_words){
+      auto [it, emplaced] = rdx.emplace(word, true);
+      assert(emplaced);
+      assert(it->first == word);
+      assert(it->second);
+    }
+  }
+
   xsm::radix<bool> rdx;
+
   bool success = true;
   // Emplace entry
   {
