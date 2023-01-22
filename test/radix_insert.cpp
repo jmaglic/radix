@@ -1,6 +1,24 @@
+#include "commonwords.hpp"
 #include "radix.hpp"
 
 int main() {
+
+  // Insert 10000 words
+  {
+    xsm::radix<bool> rdx;
+    auto [common_words, import_success] = commonwords::readWords();
+    if (!import_success){
+      commonwords::failedImport();
+    }
+
+    for (const std::string& word : common_words){
+      auto [it, inserted] = rdx.insert(std::make_pair(word, true));
+      assert(inserted);
+      assert(it->first == word);
+      assert(it->second);
+    }
+  }
+
   xsm::radix<bool> rdx;
   bool success = true;
   // Insert const lvalue reference
