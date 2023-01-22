@@ -1,55 +1,31 @@
 #include <iostream>
 #include <map>
-#include <chrono>
 #include <vector>
 #include "commonwords.hpp"
+#include "benchmark.hpp"
 
 #include "radix.hpp"
 
-int main(){
+void emplace_benchmark(){
 
   auto [common_words, import_success] = commonwords::readWords();
-
+  if (!import_success){
+    commonwords::failedImport();
+  }
   
-  std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-
   xsm::radix<bool> rdx;
 
-  std::ifstream infile("../build/eng10k");
-
-  std::string line;
-  if (infile.is_open()){
-    while (std::getline(infile, line)) {
-      rdx.emplace(line,true);
-    }
-  }
-  else {
-    std::cout << "Could not open" << std::endl;
-  }
-  infile.close();
-
-  std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-
-  std::cout << "Time difference = " << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() << "[µs]" << std::endl;
-  
-
-
-  std::chrono::steady_clock::time_point begin_hint = std::chrono::steady_clock::now();
-  
-  xsm::radix<bool> rdx_hint;
-  //std::map<std::string,bool> rdx_hint;
-
-  rdx_hint.emplace("a", true);
-
-  for (auto const& x : rdx){
-    std::cout << x.first << std::endl;
-    rdx_hint.emplace_hint(rdx_hint.end(), x.first, true);
+  for (const std::string word : common_words){
+    rdx.emplace(word, true);
   }
 
-  std::chrono::steady_clock::time_point end_hint = std::chrono::steady_clock::now();
+}
 
-  std::cout << "Time difference = " 
-    << std::chrono::duration_cast<std::chrono::microseconds>(end_hint - begin_hint).count() << "[µs]" << std::endl;
+int main(){
+
+
+  benchmark::time(&emplace_benchmark, "emplace");
+
   /*
   struct IsEven {};
   struct IsOdd {};

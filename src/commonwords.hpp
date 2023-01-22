@@ -1,3 +1,6 @@
+#ifndef commonwords_hpp
+#define commonwords_hpp
+
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -25,3 +28,5 @@ namespace commonwords{
     std::cout << msg << std::endl;
   }
 }
+
+#endif
