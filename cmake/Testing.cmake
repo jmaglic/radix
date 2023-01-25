@@ -1,10 +1,11 @@
 enable_testing()
 
-set(RADIX_TEST_DIR ${CMAKE_SOURCE_DIR}/test)
+set(RADIX_TEST_DIR ${CMAKE_SOURCE_DIR}/test/unit)
 
 set(TEST_NAMES
   radix_emplace
   radix_insert
+  radix_insert_hint
   radix_overwrite
   radix_contains
   radix_dereference

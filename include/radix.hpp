@@ -265,7 +265,7 @@ namespace xsm{
       size_type m_size;
 
       template <class... Args>
-      std::pair<iterator,bool> NodeInTree(node_type, const_iterator);
+      std::pair<iterator,bool> NodeInTree(node_type, const_iterator, std::string::const_iterator);
   };
 }
  
@@ -376,9 +376,9 @@ namespace xsm{
   }
 
   template <class T, class Compare> template <class... Args>
-  std::pair<detail::Iterator_impl<T,Compare>,bool> radix<T,Compare>::NodeInTree(node_type node_ptr, const_iterator parent){
+  std::pair<detail::Iterator_impl<T,Compare>,bool> radix<T,Compare>::NodeInTree(node_type node_ptr, const_iterator parent, std::string::const_iterator key_start){
 
-    auto key_start = node_ptr->m_value_pair.first.begin();
+    //auto key_start = node_ptr->m_value_pair.first.begin();
     auto key_end = node_ptr->m_value_pair.first.end();
 
     bool next_child;
@@ -388,6 +388,7 @@ namespace xsm{
 
       // Loop through all children in iterator, until you find a match within the keys
       for (auto& entry : parent.m_node->m_children){
+
         auto entrykey_start = entry.first.begin();
         auto entrykey_end = entry.first.end();
         auto last_match = std::mismatch(key_start, key_end, entrykey_start, entrykey_end);
@@ -463,7 +464,7 @@ namespace xsm{
   std::pair<detail::Iterator_impl<T,Compare>,bool> radix<T,Compare>::emplace(Args&&... args){
     
     node_type node_ptr = new detail::Node<T,Compare>(nullptr, true, std::forward<Args>(args)...);
-    return NodeInTree(node_ptr, iterator(m_root));
+    return NodeInTree(node_ptr, iterator(m_root), node_ptr->m_value_pair.first.begin());
     
   }
 
@@ -490,8 +491,12 @@ namespace xsm{
       if (!correct_parent_found){
         parent = iterator(parent.m_node->m_parent);
       }
+      else {
+        key_start = last_match.second;
+      }
     }
-    return NodeInTree(node_ptr, parent).first;
+
+    return NodeInTree(node_ptr, parent, key_start).first;
   }
 
   template <class T, class Compare>
