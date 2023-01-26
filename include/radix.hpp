@@ -150,14 +150,6 @@ namespace xsm{
   // Publicly accessible container class
   template <class T, class Compare=std::less<std::string>> class radix{
     public:
-      radix();
-      radix(const radix&);
-      radix(radix&&) noexcept;
-      ~radix();
-
-      radix<T,Compare>& operator=(const radix<T,Compare>&);
-      radix<T,Compare>& operator=(radix<T,Compare>&&) noexcept;
-
       // Aliases
       typedef std::string key_type;
       typedef T mapped_type;
@@ -174,6 +166,16 @@ namespace xsm{
       typedef std::reverse_iterator<iterator> reverse_iterator;
       typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
       typedef detail::Node<mapped_type,key_compare>* node_type;
+
+      // Constructors and related
+      radix();
+      radix(const radix&);
+      radix(radix&&) noexcept;
+      ~radix();
+      radix(std::initializer_list<value_type>);
+
+      radix<T,Compare>& operator=(const radix<T,Compare>&);
+      radix<T,Compare>& operator=(radix<T,Compare>&&) noexcept;
 
       // Capacity
       bool empty() const;
@@ -301,6 +303,11 @@ namespace xsm{
     m_size = rdx.size();
     rdx.m_root = new detail::Node<T,Compare>();
     rdx.m_size = 0;
+  }
+
+  template <class T, class Compare>
+  radix<T,Compare>::radix(std::initializer_list<typename radix<T,Compare>::value_type> init) : m_root(new detail::Node<T,Compare>()), m_size(0){
+    insert(init);
   }
   
   // Destructor
