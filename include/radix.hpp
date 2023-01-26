@@ -350,7 +350,7 @@ namespace xsm{
 
   template <class T, class Compare>
   std::pair<detail::Iterator_impl<T,Compare>,bool> radix<T,Compare>::insert(value_type&& key_value){ 
-    return emplace(key_value);
+    return emplace(std::forward<value_type>(key_value));
   }
 
   template <class T, class Compare>

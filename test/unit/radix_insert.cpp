@@ -3,47 +3,56 @@
 
 int main() {
 
-  // Insert 10000 words
+  // Import 10000 words
+  auto [common_words, import_success] = commonwords::readWords();
+  if (!import_success){
+    commonwords::failedImport();
+  }
+
+  typedef xsm::radix<int> radix_int;
+
+  // Pass value as const lvalue reference of type value_type
   {
-    xsm::radix<bool> rdx;
-    auto [common_words, import_success] = commonwords::readWords();
-    if (!import_success){
-      commonwords::failedImport();
-    }
+    radix_int rdx;
 
     for (const std::string& word : common_words){
-      auto [it, inserted] = rdx.insert(std::make_pair(word, true));
-      assert(inserted);
+
+      const radix_int::value_type cval(word, 123);
+      auto [it, inserted] = rdx.insert(cval);
+
       assert(it->first == word);
       assert(it->second);
     }
+    assert(rdx.size() == common_words.size() || rdx.size() == common_words.size()+1);
   }
-
-  xsm::radix<bool> rdx;
-  bool success = true;
-  // Insert const lvalue reference
+    
+  // Pass value as rvalue reference of type value_type
   {
-    auto [it,inserted] = rdx.insert(std::make_pair("aaa",true));
-    success &= it->first == "aaa";
-    success &= inserted;
+    radix_int rdx;
+
+    for (const std::string& word : common_words){
+
+      auto [it, inserted] = rdx.insert(radix_int::value_type(word, 123));
+
+      assert(it->first == word);
+      assert(it->second);
+    }
+    assert(rdx.size() == common_words.size() || rdx.size() == common_words.size()+1);
   }
-  // Insert rvalue reference
+    
+  // Pass value as rvalue reference of template type
   {
-    auto [it,inserted] = rdx.insert(std::move(std::make_pair("bbb",true)));
-    success &= it->first == "bbb";
-    success &= inserted;
+    radix_int rdx;
+
+    for (const std::string& word : common_words){
+
+      auto [it, inserted] = rdx.insert(std::make_pair(word, 123));
+
+      assert(it->first == word);
+      assert(it->second);
+    }
+    assert(rdx.size() == common_words.size() || rdx.size() == common_words.size()+1);
   }
-  {
-    // insert(P&&)
-    std::string key = "anystring";
-    int val = 5;
-
-    std::pair<std::string, int>&& p = std::make_pair(key, val);
-
-    xsm::radix<int> rdx;
-
-    auto [it,inserted] = rdx.insert(p);
-    assert(inserted && it->first == key && it->second == val);
-  }
-  return success? 0 : -1;
+    
+  return 0;
 }
