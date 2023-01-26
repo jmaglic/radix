@@ -1,3 +1,5 @@
+#include <cassert>
+#include <algorithm>
 #include "commonwords.hpp"
 #include "radix.hpp"
 
@@ -52,6 +54,31 @@ int main() {
       assert(it->second);
     }
     assert(rdx.size() == common_words.size() || rdx.size() == common_words.size()+1);
+  }
+
+  // Insert from array
+  {
+    typedef xsm::radix<bool> radix_bool;
+  
+    radix_bool rdx;
+  
+    std::pair<std::string,bool> value_array[3];
+  
+    std::string key_list[] = {"hey", "hello", "hi"};
+  
+    for (size_t i = 0; i < std::size(value_array); ++i){
+      value_array[i] = std::make_pair(key_list[i], true);
+    }
+  
+    rdx.insert(std::begin(value_array), std::end(value_array));
+  
+    std::sort(std::begin(value_array), std::end(value_array));
+  
+    size_t i = 0;
+    for (auto e : rdx){
+      assert(e.first == value_array[i].first);
+      ++i;
+    }
   }
     
   return 0;

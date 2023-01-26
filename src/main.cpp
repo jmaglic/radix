@@ -6,7 +6,6 @@
 
 int main(){
 
-
   /*
   struct IsEven {};
   struct IsOdd {};
