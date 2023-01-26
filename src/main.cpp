@@ -6,11 +6,6 @@
 
 int main(){
 
-  xsm::radix<bool> rdx;
-
-  auto [it, suc] = rdx.emplace("hello", true);
-
-  rdx.insert(it, std::make_pair("hi", true));
 
   /*
   struct IsEven {};

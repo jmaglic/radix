@@ -11,16 +11,54 @@ int main() {
     commonwords::failedImport();
   }
 
-  // Insert 10000 words using the previous insert as hint
-  {
-    xsm::radix<int> rdx;
+  typedef xsm::radix<int> radix_int;
 
-    // Insert first word manually, because of issues with providing a hint when rdx is empty
+  // Pass value as const lvalue reference of type value_type
+  {
+    radix_int rdx;
+
+    // Insert first word manually to get first hint iterator
     auto [it, insert_success] = rdx.insert(std::make_pair("first", 12));
 
     for (const std::string& word : common_words){
 
-      it = rdx.insert(it, std::make_pair(word, 260));
+      const radix_int::value_type cval(word, 123);
+      it = rdx.insert(it, cval);
+
+      assert(it->first == word);
+      assert(it->second);
+    }
+    assert(rdx.size() == common_words.size() || rdx.size() == common_words.size()+1);
+  }
+    
+  // Pass value as rvalue reference of type value_type
+  {
+    radix_int rdx;
+
+    // Insert first word manually to get first hint iterator
+    auto [it, insert_success] = rdx.insert(std::make_pair("first", 12));
+
+    for (const std::string& word : common_words){
+
+      it = rdx.insert(it, radix_int::value_type(word, 123));
+
+      assert(it->first == word);
+      assert(it->second);
+    }
+    assert(rdx.size() == common_words.size() || rdx.size() == common_words.size()+1);
+  }
+    
+  // Pass value as rvalue reference of template type
+  {
+    radix_int rdx;
+
+    // Insert first word manually to get first hint iterator
+    auto [it, insert_success] = rdx.insert(std::make_pair("first", 12));
+
+    for (const std::string& word : common_words){
+
+      it = rdx.insert(it, std::make_pair(word, 123));
+
       assert(it->first == word);
       assert(it->second);
     }

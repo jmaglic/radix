@@ -185,8 +185,8 @@ namespace xsm{
       template<class P> std::pair<iterator, bool> insert(P&&);
       std::pair<iterator,bool> insert(value_type&&);
       iterator insert(const_iterator, const value_type&);
-      //template<class P> iterator insert(const_iterator, P&&);
-      //iterator insert(const_iterator, value_type&&);
+      template<class P> iterator insert(const_iterator, P&&);
+      iterator insert(const_iterator, value_type&&);
       //template<class InputIt> void insert(InputIt, InputIt);
       //void insert(std::initializer_list<value_type>);
       //insert_return_type insert(node_type&&);
@@ -356,6 +356,16 @@ namespace xsm{
   template <class T, class Compare>
   typename radix<T,Compare>::iterator radix<T,Compare>::insert(const_iterator pos, const value_type& key_value){
     return emplace_hint(pos, key_value);
+  }
+
+  template <class T, class Compare> template<class P> 
+  typename radix<T,Compare>::iterator radix<T,Compare>::insert(const_iterator pos, P&& value){
+    return emplace_hint(pos, std::forward<P>(value));
+  }
+
+  template <class T, class Compare>
+  typename radix<T,Compare>::iterator radix<T,Compare>::insert(const_iterator pos, value_type&& key_value){
+    return emplace_hint(pos, std::forward<value_type>(key_value));
   }
   
   template <class T, class Compare>
