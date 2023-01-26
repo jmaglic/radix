@@ -188,7 +188,7 @@ namespace xsm{
       template<class P> iterator insert(const_iterator, P&&);
       iterator insert(const_iterator, value_type&&);
       template<class InputIt> void insert(InputIt, InputIt);
-      //void insert(std::initializer_list<value_type>);
+      void insert(std::initializer_list<value_type>);
       //insert_return_type insert(node_type&&);
       //iterator insert(const_iterator, node_type&&);
       std::pair<iterator,bool> insert(const key_type&, const mapped_type&); // TODO: Reevaluate
@@ -373,6 +373,13 @@ namespace xsm{
     while (it != end){
       insert(*it);
       ++it;
+    }
+  }
+
+  template <class T, class Compare>
+  void radix<T,Compare>::insert(std::initializer_list<value_type> init_list){
+    for (auto e : init_list){
+      insert(e);
     }
   }
   

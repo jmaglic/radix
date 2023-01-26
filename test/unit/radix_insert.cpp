@@ -80,6 +80,33 @@ int main() {
       ++i;
     }
   }
+
+  // Insert from initialiser list
+  {
+    xsm::radix<int> rdx; 
+
+    std::string key_list[] = {"what", "a", "cool", "way", "to", "initialise", "my", "map"};
+
+    rdx.insert({ 
+      { key_list[0], 12 }, 
+      { key_list[1], 4 }, 
+      { key_list[2], 9 }, 
+      { key_list[3], -42 }, 
+      { key_list[4], 129 }, 
+      { key_list[5], 0 }, 
+      { key_list[6], 2 }, 
+      { key_list[7], 4 } 
+    });
+
+    std::sort(std::begin(key_list), std::end(key_list));
+
+    size_t i = 0;
+    for (auto e : rdx){
+      assert(e.first == key_list[i]);
+      ++i;
+    }
+  }
     
   return 0;
 }
+
