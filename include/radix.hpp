@@ -195,7 +195,10 @@ namespace xsm{
       //iterator insert(const_iterator, node_type&&);
       std::pair<iterator,bool> insert(const key_type&, const mapped_type&); // TODO: Reevaluate
       std::pair<bool,bool> insert(const std::vector<std::string>&, const mapped_type&); // TODO: Reevaluate
-      // insert_or_assign
+      // template< class M > std::pair<iterator, bool> insert_or_assign( const Key& k, M&& obj );
+      // template< class M > std::pair<iterator, bool> insert_or_assign( Key&& k, M&& obj );
+      // template< class M > iterator insert_or_assign( const_iterator hint, const Key& k, M&& obj );
+      // template< class M > iterator insert_or_assign( const_iterator hint, Key&& k, M&& obj );
       template <class... Args>
       std::pair<iterator,bool> emplace(Args&&...);
       template<class... Args> iterator emplace_hint(const_iterator, Args&&...);
@@ -209,8 +212,8 @@ namespace xsm{
       size_type erase(const key_type&);
       //template<class K> size_type erase(K&&);
       void swap(radix<T,Compare>&);
-      //node_type extract(const_iterator);
-      //node_type extract(const key_type&);
+      node_type extract(const_iterator);
+      node_type extract(const key_type&);
       //void merge(radix<T,Compare>&);
       //void merge(radix<T,Compare>&&);
       void clear();
@@ -576,6 +579,27 @@ namespace xsm{
       m_size = rdx.m_size;
       rdx.m_size = temp;
     }
+  }
+
+  template <class T, class Compare>
+  typename radix<T,Compare>::node_type radix<T,Compare>::extract(const_iterator it){
+    key_type key = it->first;
+    std::cout << key << std::endl;
+
+
+    return node_type();
+  }
+
+  template <class T, class Compare>
+  typename radix<T,Compare>::node_type radix<T,Compare>::extract(const key_type& key){
+    if (contains(key)){
+
+    }
+    else {
+
+    }
+
+    return node_type();
   }
 
   template <class T, class Compare>

@@ -6,6 +6,34 @@
 
 int main(){
 
+  //typedef std::map<std::string, int> radix;
+  typedef xsm::radix<int> radix;
+
+  radix rdx;
+
+  auto [it, suc] = rdx.emplace("a", 12);
+  rdx.emplace("b", 13);
+  rdx.emplace("ba", 14);
+  rdx.emplace("bb", 15);
+  rdx.emplace("c", 16);
+  rdx.emplace("ca", 17);
+  rdx.emplace("cb", 18);
+  rdx.emplace("cc", 19);
+
+  std::cout << "Contents" << std::endl;
+  for (auto e : rdx){
+    std::cout << e.first << std::endl;
+  }
+
+  auto nh_a = rdx.extract(it);
+  auto nh_b = rdx.extract(std::string("b"));
+  auto nh_c = rdx.extract("c");
+
+  std::cout << "Contents" << std::endl;
+  for (auto e : rdx){
+    std::cout << e.first << std::endl;
+  }
+
   /*
   struct IsEven {};
   struct IsOdd {};
