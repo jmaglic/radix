@@ -6,8 +6,8 @@
 
 int main(){
 
-  //typedef std::map<std::string, int> radix;
-  typedef xsm::radix<int> radix;
+  typedef std::map<std::string, int> radix;
+  //typedef xsm::radix<int> radix;
 
   radix rdx;
 
@@ -33,6 +33,24 @@ int main(){
   for (auto e : rdx){
     std::cout << e.first << std::endl;
   }
+
+  rdx.insert(std::move(nh_a));
+
+  std::cout << "Contents" << std::endl;
+  for (auto e : rdx){
+    std::cout << e.first << std::endl;
+  }
+
+  // Call node move constructor
+  auto nh_movecon(std::move(nh_b));
+  std::cout << "Moved node handle: " << nh_movecon.key() << std::endl;
+
+  rdx.insert(std::move(nh_movecon));
+
+  auto nh_moveassign = radix::node_type();
+  nh_moveassign = std::move(nh_c);
+  std::cout << "Move assigned handle: " << nh_moveassign.key() << std::endl;
+  //std::cout << "Copy constructed handle: " << nh_c.key() << std::endl; SEG FAULT
 
   /*
   struct IsEven {};

@@ -50,7 +50,10 @@ namespace xsm::detail{
       Node();
       Node(node_type, value_type&&, const bool=false);
       template <class... Args> Node(node_type, const bool, Args&&...);
+      Node(const Node&);
+      Node(Node&&) noexcept;
       ~Node();
+      Node& operator=(Node&&) noexcept;
       
       // Display
       void print();
@@ -288,6 +291,12 @@ namespace xsm{
   // Constructor
   template <class T, class Compare>
   radix<T,Compare>::radix() : m_root(new detail::Node<T,Compare>()), m_size(0) {}
+
+  // Constructor from initaliser list
+  template <class T, class Compare>
+  radix<T,Compare>::radix(std::initializer_list<typename radix<T,Compare>::value_type> init) : m_root(new detail::Node<T,Compare>()), m_size(0){
+    insert(init);
+  }
   
   // Copy constructor
   template <class T, class Compare>
@@ -306,11 +315,6 @@ namespace xsm{
     m_size = rdx.size();
     rdx.m_root = new detail::Node<T,Compare>();
     rdx.m_size = 0;
-  }
-
-  template <class T, class Compare>
-  radix<T,Compare>::radix(std::initializer_list<typename radix<T,Compare>::value_type> init) : m_root(new detail::Node<T,Compare>()), m_size(0){
-    insert(init);
   }
   
   // Destructor
@@ -834,7 +838,7 @@ namespace xsm::detail{
   //////////
   // NODE //
   //////////
-  // CONSTRUCTORS
+  // Constructors
   template <class T, class Compare>
   Node<T,Compare>::Node()
     : m_is_leaf(false), 
@@ -856,6 +860,7 @@ namespace xsm::detail{
       m_parent(parent),
       m_children(child_map()) {}
 
+  // Destructor
   // Each Node is responsible for deleting its children
   template <class T, class Compare>
   Node<T,Compare>::~Node(){
@@ -864,8 +869,35 @@ namespace xsm::detail{
     }
   }
 
-  // TODO: Copy and move?
+  // Move constructor
+  template <class T, class Compare>
+  Node<T,Compare>::Node(Node&& node) noexcept {
+    std::cout << "Node move constructor" << std::endl;
+
+    // Assuming that the user only has access to nodes outside of tree
+    assert(node.m_parent == nullptr);
+    assert(node.m_children.size() == 0);
+
+    m_value_pair = std::move(node.m_value_pair);
+    m_is_leaf = std::move(node.m_is_leaf);
+
+  }
   
+  // Move assignment operator
+  template <class T, class Compare>
+  Node<T,Compare>& Node<T,Compare>::operator=(Node&& node) noexcept {
+    std::cout << "Node move assignment" << std::endl;
+
+    // Assuming that the user only has access to nodes outside of tree
+    assert(node.m_parent == nullptr);
+    assert(node.m_children.size() == 0);
+
+    m_value_pair = std::move(node.m_value_pair);
+    m_is_leaf = std::move(node.m_is_leaf);
+    
+    return *this;
+  }
+
   template <class T, class Compare>
   void Node<T,Compare>::Remove(){
     if (!IsChildless()){
