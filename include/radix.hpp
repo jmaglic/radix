@@ -98,6 +98,44 @@ namespace xsm::detail{
   template <class T, class Compare, class ItType, class ItType2=ItType>
   bool operator!=(const Iterator_impl<T,Compare,ItType>&, const Iterator_impl<T,Compare,ItType2>&);
 
+  /////////////////
+  // NODE HANDLE //
+  /////////////////
+  template <class T, class Compare>
+  class Node_handle{
+    friend radix<T,Compare>;
+
+    using key_type = typename radix<T,Compare>::key_type;
+    using mapped_type = typename radix<T,Compare>::mapped_type;
+    using value_type = typename radix<T,Compare>::value_type;
+    //using allocator_type
+
+    public:
+      constexpr Node_handle() noexcept; // TODO
+      Node_handle(Node_handle&&) noexcept; // TODO
+      Node_handle& operator=(Node_handle&&); // TODO
+      ~Node_handle(); // TODO
+
+      [[nodiscard]] bool empty() const noexcept; // TODO
+      explicit operator bool() const noexcept; // TODO
+      //allocator_type get_allocator() const; 
+     
+      value_type& value() const;
+      key_type& key() const;
+      mapped_type& mapped() const;
+
+      /*void swap(Node_handle&) noexcept(
+          std::allocator_traits<allocator_type>::propagate_on_container_swap::value ||
+          std::allocator_traits<allocator_type>::is_always_equal::value);
+      */
+
+    private:
+      Node<T,Compare>* m_node_ptr;
+
+  };
+
+  //friend void swap(Node_handle& x, Node_handle& y) noexcept(noexcept(x.swap(y)));
+
   //////////////
   // ITERATOR //
   //////////////

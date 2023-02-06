@@ -50,6 +50,10 @@ int main(){
   auto nh_moveassign = radix::node_type();
   nh_moveassign = std::move(nh_c);
   std::cout << "Move assigned handle: " << nh_moveassign.key() << std::endl;
+
+
+
+
   //std::cout << "Copy constructed handle: " << nh_c.key() << std::endl; SEG FAULT
  
   /* ISSUE WITH STD::MAP
