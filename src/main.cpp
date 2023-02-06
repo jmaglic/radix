@@ -12,6 +12,14 @@ int main(){
 
   radix::node_type nh;
 
+  if (nh.empty()){
+    std::cout << "Empty" << std::endl;
+  }
+
+  if (!nh){
+    std::cout << "Empty" << std::endl;
+  }
+
 
 
   // RADIX EXTRACT

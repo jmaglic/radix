@@ -117,13 +117,13 @@ namespace xsm::detail{
       Node_handle& operator=(Node_handle&&); // TODO
       ~Node_handle();
 
-      [[nodiscard]] bool empty() const noexcept; // TODO
-      explicit operator bool() const noexcept; // TODO
+      [[nodiscard]] bool empty() const noexcept;
+      explicit operator bool() const noexcept;
       //allocator_type get_allocator() const; 
      
-      value_type& value() const;
-      key_type& key() const;
-      mapped_type& mapped() const;
+      value_type& value() const; // TODO
+      key_type& key() const; // TODO
+      mapped_type& mapped() const; // TODO
 
       /*void swap(Node_handle&) noexcept(
           std::allocator_traits<allocator_type>::propagate_on_container_swap::value ||
@@ -1083,6 +1083,16 @@ namespace xsm::detail{
     if (m_node_ptr && !m_node_ptr->GetParent()){
       delete m_node_ptr;
     }
+  }
+
+  template <class T, class Compare>
+  [[nodiscard]] bool Node_handle<T,Compare>::empty() const noexcept {
+    return !m_node_ptr;
+  }
+      
+  template <class T, class Compare>
+  Node_handle<T,Compare>::operator bool() const noexcept {
+    return m_node_ptr;
   }
 
 }
