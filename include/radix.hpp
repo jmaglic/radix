@@ -54,6 +54,15 @@ namespace xsm::detail{
       Node(Node&&) noexcept;
       ~Node();
       Node& operator=(Node&&) noexcept;
+
+      // TODO: Move these to new class Node_wrapper
+      // bool empty() const noexcept;
+      // explicit operator bool() const noexcept;
+      // allocator_type get_allocator() const;
+      // value_type& value() const;
+      key_type& key() const;
+      // mapped_type& mapped() const;
+      // void swap(Node& nh) noexcept(std::allocator_traits<allocator_type>::propagate_on_container_swap::value || std::allocator_traits<allocator_type>::is_always_equal::value);
       
       // Display
       void print();
@@ -107,7 +116,7 @@ namespace xsm::detail{
     using key_type = typename radix<T,Compare>::key_type;
     using reverse_iterator = typename radix<T,Compare>::reverse_iterator;
     using const_reverse_iterator = typename radix<T,Compare>::const_reverse_iterator;
-    // These typenames cause an error:
+    
     public:
       using value_type = typename radix<T,Compare>::value_type;
       using difference_type = typename radix<T,Compare>::difference_type;
@@ -169,6 +178,8 @@ namespace xsm{
       typedef std::reverse_iterator<iterator> reverse_iterator;
       typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
       typedef detail::Node<mapped_type,key_compare>* node_type;
+      
+      //typedef detail::Node<mapped_type,key_compare>* node_ptr; TODO: Redefine node_type
 
       // Constructors and related
       radix();
@@ -587,9 +598,31 @@ namespace xsm{
 
   template <class T, class Compare>
   typename radix<T,Compare>::node_type radix<T,Compare>::extract(const_iterator it){
-    key_type key = it->first;
-    std::cout << key << std::endl;
+    std::cout << "Key to extract:" << it->first << std::endl;
 
+    node_type target = it.m_node;
+
+    if (target->GetChildren().size() == 1){
+      //node_type t_parent = target->GetParent();
+      // Parent adopts child
+      //target.getParent().AddChild( ### , target.GetChildren().begin()->second);
+
+    }
+    else if (target->GetChildren().size() > 1){
+      // replace node with is_leaf=false node
+      // (swap)
+
+    }
+
+    // Compare keys with parent, find suffix
+    // remove target from parent
+//      target.GetParent().GetChildren().erase()
+    // remove parent
+    // target is ready to be returned
+
+    // This causes a problem, when the iterator doesn't point to an element in this radix
+    // but this is the same behaviour as in std::map
+    --m_size;
 
     return node_type();
   }
@@ -597,13 +630,11 @@ namespace xsm{
   template <class T, class Compare>
   typename radix<T,Compare>::node_type radix<T,Compare>::extract(const key_type& key){
     if (contains(key)){
-
+      return extract(find(key));
     }
     else {
-
+      return node_type();
     }
-
-    return node_type();
   }
 
   template <class T, class Compare>
@@ -877,9 +908,10 @@ namespace xsm::detail{
     // Assuming that the user only has access to nodes outside of tree
     assert(node.m_parent == nullptr);
     assert(node.m_children.size() == 0);
+    assert(node.m_is_leaf);
 
     m_value_pair = std::move(node.m_value_pair);
-    m_is_leaf = std::move(node.m_is_leaf);
+    m_is_leaf = true;
 
   }
   
@@ -891,11 +923,17 @@ namespace xsm::detail{
     // Assuming that the user only has access to nodes outside of tree
     assert(node.m_parent == nullptr);
     assert(node.m_children.size() == 0);
+    assert(node.m_is_leaf);
 
     m_value_pair = std::move(node.m_value_pair);
-    m_is_leaf = std::move(node.m_is_leaf);
+    m_is_leaf = true;
     
     return *this;
+  }
+
+  template <class T, class Compare>
+  typename Node<T,Compare>::key_type& Node<T,Compare>::key() const {
+    return m_value_pair.first;
   }
 
   template <class T, class Compare>

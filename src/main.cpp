@@ -51,6 +51,28 @@ int main(){
   nh_moveassign = std::move(nh_c);
   std::cout << "Move assigned handle: " << nh_moveassign.key() << std::endl;
   //std::cout << "Copy constructed handle: " << nh_c.key() << std::endl; SEG FAULT
+ 
+  /* ISSUE WITH STD::MAP
+  radix rdx2nd;
+  rdx2nd.insert({{"cool", 1}, {"story", 29}});
+  auto it2nd = rdx2nd.find("cool");
+
+  printf("Size -- rdx: %lu -- rdx2nd: %lu\n", rdx.size(), rdx2nd.size());
+  auto what = rdx.extract(it2nd);
+  printf("Size -- rdx: %lu -- rdx2nd: %lu\n", rdx.size(), rdx2nd.size());
+
+
+  std::cout << "Contents rdx" << std::endl;
+  for (auto e : rdx){
+    std::cout << e.first << std::endl;
+  }
+
+  std::cout << "Contents rdx2nd" << std::endl;
+  for (auto e : rdx2nd){
+    std::cout << e.first << std::endl;
+  }
+*/
+
 
   /*
   struct IsEven {};
