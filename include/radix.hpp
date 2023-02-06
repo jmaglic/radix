@@ -37,19 +37,20 @@ namespace xsm::detail{
   template <class T, class Compare> class Node{
     friend typename radix<T,Compare>::iterator;
     friend typename radix<T,Compare>::const_iterator;
+    friend typename radix<T,Compare>::node_type;
     friend xsm::radix<T,Compare>;
 
-    using node_type = typename radix<T,Compare>::node_type;
+    using node_ptr = typename radix<T,Compare>::node_ptr;
     using key_type = typename radix<T,Compare>::key_type;
     using mapped_type = typename radix<T,Compare>::mapped_type;
     using value_type = typename radix<T,Compare>::value_type;
     using key_compare = typename radix<T,Compare>::key_compare;
 
-    typedef std::map<key_type,node_type,key_compare> child_map;
+    typedef std::map<key_type,node_ptr,key_compare> child_map;
     public:
       Node();
-      Node(node_type, value_type&&, const bool=false);
-      template <class... Args> Node(node_type, const bool, Args&&...);
+      Node(node_ptr, value_type&&, const bool=false);
+      template <class... Args> Node(node_ptr, const bool, Args&&...);
       Node(const Node&);
       Node(Node&&) noexcept;
       ~Node();
@@ -69,25 +70,25 @@ namespace xsm::detail{
     private:
       // Members
       value_type m_value_pair;
-      node_type m_parent;
+      node_ptr m_parent;
       child_map m_children;
       bool m_is_leaf;
 
       // Container operations
       void Remove();
       const Node<T,Compare>* Retrieve(const key_type&) const;
-      node_type Retrieve(const key_type&);
+      node_ptr Retrieve(const key_type&);
 
       // Methods used during container manipulation
       void MakeLeaf(const mapped_type&);
-      node_type AddChild(const key_type&, node_type);
-      node_type AddChild(const key_type&);
+      node_ptr AddChild(const key_type&, node_ptr);
+      node_ptr AddChild(const key_type&);
       
       // For iterator operations
       bool IsChildless() const;
       bool IsLeaf() const;
       Node* GetParent() const;
-      void SetParent(node_type);
+      void SetParent(node_ptr);
       Node* GetFirstChild() const;
       const child_map& GetChildren() const;
   };
@@ -105,16 +106,16 @@ namespace xsm::detail{
   class Node_handle{
     friend radix<T,Compare>;
 
-    using key_type = typename radix<T,Compare>::key_type;
-    using mapped_type = typename radix<T,Compare>::mapped_type;
-    using value_type = typename radix<T,Compare>::value_type;
-    //using allocator_type
-
     public:
-      constexpr Node_handle() noexcept; // TODO
+      using key_type = typename radix<T,Compare>::key_type;
+      using mapped_type = typename radix<T,Compare>::mapped_type;
+      using value_type = typename radix<T,Compare>::value_type;
+      //using allocator_type
+      
+      constexpr Node_handle() noexcept = default;
       Node_handle(Node_handle&&) noexcept; // TODO
       Node_handle& operator=(Node_handle&&); // TODO
-      ~Node_handle(); // TODO
+      ~Node_handle();
 
       [[nodiscard]] bool empty() const noexcept; // TODO
       explicit operator bool() const noexcept; // TODO
@@ -130,8 +131,7 @@ namespace xsm::detail{
       */
 
     private:
-      Node<T,Compare>* m_node_ptr;
-
+      Node<T,Compare>* m_node_ptr = nullptr;
   };
 
   //friend void swap(Node_handle& x, Node_handle& y) noexcept(noexcept(x.swap(y)));
@@ -149,7 +149,7 @@ namespace xsm::detail{
     typedef typename std::conditional<std::is_const_v<ItType>, T, const T>::type ItType2;
     friend Iterator_impl<T,Compare,ItType2>;
 
-    using node_type = typename radix<T,Compare>::node_type;
+    using node_ptr = typename radix<T,Compare>::node_ptr;
     using const_iterator = typename radix<T,Compare>::const_iterator;
     using key_type = typename radix<T,Compare>::key_type;
     using reverse_iterator = typename radix<T,Compare>::reverse_iterator;
@@ -162,7 +162,7 @@ namespace xsm::detail{
       using pointer = typename radix<T,Compare>::pointer;
       // Constructor
       Iterator_impl();
-      Iterator_impl(node_type);
+      Iterator_impl(node_ptr);
 
       // Iterator operations
       Iterator_impl& operator++();
@@ -182,7 +182,7 @@ namespace xsm::detail{
       friend bool operator!= <> (const Iterator_impl<T,Compare,ItType>&, const Iterator_impl<T,Compare,ItType>&);
       friend bool operator!= <> (const Iterator_impl<T,Compare,ItType>&, const Iterator_impl<T,Compare,ItType2>&);
     private:
-      node_type m_node;
+      node_ptr m_node;
 
       bool Advance();
       bool Regress();
@@ -215,9 +215,10 @@ namespace xsm{
       typedef detail::Iterator_impl<mapped_type,key_compare,const mapped_type> const_iterator;
       typedef std::reverse_iterator<iterator> reverse_iterator;
       typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
-      typedef detail::Node<mapped_type,key_compare>* node_type;
+      typedef detail::Node_handle<mapped_type,key_compare> node_type;
+      typedef detail::Node<mapped_type,key_compare>* node_ptr; // TODO: Remove eventually
       
-      //typedef detail::Node<mapped_type,key_compare>* node_ptr; TODO: Redefine node_type
+      //typedef detail::Node<mapped_type,key_compare>* node_ptr; TODO: Redefine node_ptr
 
       // Constructors and related
       radix();
@@ -243,8 +244,8 @@ namespace xsm{
       iterator insert(const_iterator, value_type&&);
       template<class InputIt> void insert(InputIt, InputIt);
       void insert(std::initializer_list<value_type>);
-      //insert_return_type insert(node_type&&);
-      //iterator insert(const_iterator, node_type&&);
+      //insert_return_type insert(node_ptr&&);
+      //iterator insert(const_iterator, node_ptr&&);
       std::pair<iterator,bool> insert(const key_type&, const mapped_type&); // TODO: Reevaluate
       std::pair<bool,bool> insert(const std::vector<std::string>&, const mapped_type&); // TODO: Reevaluate
       // template< class M > std::pair<iterator, bool> insert_or_assign( const Key& k, M&& obj );
@@ -264,8 +265,8 @@ namespace xsm{
       size_type erase(const key_type&);
       //template<class K> size_type erase(K&&);
       void swap(radix<T,Compare>&);
-      node_type extract(const_iterator);
-      node_type extract(const key_type&);
+      node_ptr extract(const_iterator);
+      node_ptr extract(const key_type&);
       //void merge(radix<T,Compare>&);
       //void merge(radix<T,Compare>&&);
       void clear();
@@ -318,11 +319,11 @@ namespace xsm{
 
     private:
       // Pointer to root node of radix tree
-      node_type m_root; 
+      node_ptr m_root; 
       size_type m_size;
 
       template <class... Args>
-      std::pair<iterator,bool> NodeInTree(node_type, const_iterator, std::string::const_iterator);
+      std::pair<iterator,bool> NodeInTree(node_ptr, const_iterator, std::string::const_iterator);
   };
 }
  
@@ -464,10 +465,10 @@ namespace xsm{
   }
 
   template <class T, class Compare> template <class... Args>
-  std::pair<detail::Iterator_impl<T,Compare>,bool> radix<T,Compare>::NodeInTree(node_type node_ptr, const_iterator parent, std::string::const_iterator key_start){
+  std::pair<detail::Iterator_impl<T,Compare>,bool> radix<T,Compare>::NodeInTree(node_ptr node, const_iterator parent, std::string::const_iterator key_start){
 
-    //auto key_start = node_ptr->m_value_pair.first.begin();
-    auto key_end = node_ptr->m_value_pair.first.end();
+    //auto key_start = node->m_value_pair.first.begin();
+    auto key_end = node->m_value_pair.first.end();
 
     bool next_child;
     // This loop only repeats if we descend one level in the tree
@@ -490,10 +491,10 @@ namespace xsm{
           bool new_entry = !entry.second->IsLeaf();
           if (new_entry){
 
-            entry.second->MakeLeaf(node_ptr->m_value_pair.second);
+            entry.second->MakeLeaf(node->m_value_pair.second);
             m_size++;
           }
-          delete node_ptr;
+          delete node;
           return std::make_pair(iterator(entry.second), new_entry);
         }
 
@@ -502,14 +503,14 @@ namespace xsm{
           // New keyword is prefix of the existing nodekey
           if (key_end == last_match.first){
             // Add a new node with the prefix to the current node
-            parent.m_node->AddChild(std::string(key_start, key_end), node_ptr);
+            parent.m_node->AddChild(std::string(key_start, key_end), node);
             // Old child node becomes child of the new node
-            node_ptr->AddChild(std::string(last_match.second, entrykey_end), entry.second);
+            node->AddChild(std::string(last_match.second, entrykey_end), entry.second);
             // Remove old node from current node
             parent.m_node->m_children.erase(entry.first);
 
             m_size++;
-            return std::make_pair(iterator(node_ptr),true);
+            return std::make_pair(iterator(node),true);
           }
           else {
             // Insert new keyword as child of its prefix
@@ -528,42 +529,42 @@ namespace xsm{
           std::string common_prefix(key_start, last_match.first);
 
           // New parent
-          node_type parent_ptr = parent.m_node->AddChild(std::string(key_start, last_match.first));
+          node_ptr parent_ptr = parent.m_node->AddChild(std::string(key_start, last_match.first));
           // Old entry
           parent_ptr->AddChild(std::string(last_match.second,entrykey_end), entry.second);
           entry.second->SetParent(parent_ptr);
           parent.m_node->m_children.erase(entry.first); 
           // New entry
-          parent_ptr->AddChild(std::string(last_match.first,key_end), node_ptr);
+          parent_ptr->AddChild(std::string(last_match.first,key_end), node);
 
           m_size++;
-          return std::make_pair(iterator(node_ptr),true);
+          return std::make_pair(iterator(node),true);
         }
       }
     } while (next_child);
     
     // 5. No common prefix has been found in any children -> keyword becomes a new entry
-    parent.m_node->AddChild(std::string(key_start, key_end), node_ptr);
+    parent.m_node->AddChild(std::string(key_start, key_end), node);
     m_size++;
-    return std::make_pair(iterator(node_ptr), true);
+    return std::make_pair(iterator(node), true);
   }
   
   template <class T, class Compare> template <class... Args>
   std::pair<detail::Iterator_impl<T,Compare>,bool> radix<T,Compare>::emplace(Args&&... args){
     
-    node_type node_ptr = new detail::Node<T,Compare>(nullptr, true, std::forward<Args>(args)...);
-    return NodeInTree(node_ptr, iterator(m_root), node_ptr->m_value_pair.first.begin());
+    node_ptr node = new detail::Node<T,Compare>(nullptr, true, std::forward<Args>(args)...);
+    return NodeInTree(node, iterator(m_root), node->m_value_pair.first.begin());
     
   }
 
   template <class T, class Compare> template<class... Args>
   typename radix<T,Compare>::iterator radix<T,Compare>::emplace_hint(const_iterator pos, Args&&... args){
     
-    node_type node_ptr = new detail::Node<T,Compare>(nullptr, true, std::forward<Args>(args)...);
+    node_ptr node = new detail::Node<T,Compare>(nullptr, true, std::forward<Args>(args)...);
     const_iterator parent = --pos;
 
-    auto key_start = node_ptr->m_value_pair.first.begin();
-    auto key_end = node_ptr->m_value_pair.first.end();
+    auto key_start = node->m_value_pair.first.begin();
+    auto key_end = node->m_value_pair.first.end();
 
     bool correct_parent_found = false;
 
@@ -584,7 +585,7 @@ namespace xsm{
       }
     }
 
-    return NodeInTree(node_ptr, parent, key_start).first;
+    return NodeInTree(node, parent, key_start).first;
   }
 
   template <class T, class Compare>
@@ -635,13 +636,13 @@ namespace xsm{
   }
 
   template <class T, class Compare>
-  typename radix<T,Compare>::node_type radix<T,Compare>::extract(const_iterator it){
+  typename radix<T,Compare>::node_ptr radix<T,Compare>::extract(const_iterator it){
     std::cout << "Key to extract:" << it->first << std::endl;
 
-    node_type target = it.m_node;
+    node_ptr target = it.m_node;
 
     if (target->GetChildren().size() == 1){
-      //node_type t_parent = target->GetParent();
+      //node_ptr t_parent = target->GetParent();
       // Parent adopts child
       //target.getParent().AddChild( ### , target.GetChildren().begin()->second);
 
@@ -662,16 +663,16 @@ namespace xsm{
     // but this is the same behaviour as in std::map
     --m_size;
 
-    return node_type();
+    return node_ptr();
   }
 
   template <class T, class Compare>
-  typename radix<T,Compare>::node_type radix<T,Compare>::extract(const key_type& key){
+  typename radix<T,Compare>::node_ptr radix<T,Compare>::extract(const key_type& key){
     if (contains(key)){
       return extract(find(key));
     }
     else {
-      return node_type();
+      return node_ptr();
     }
   }
 
@@ -794,7 +795,7 @@ namespace xsm::detail{
   Iterator_impl<T,Compare,ItType>::Iterator_impl() : m_node(nullptr) {}
   
   template <class T, class Compare, class ItType>
-  Iterator_impl<T,Compare,ItType>::Iterator_impl(node_type ptr) : m_node(ptr) {}
+  Iterator_impl<T,Compare,ItType>::Iterator_impl(node_ptr ptr) : m_node(ptr) {}
  
   template <class T, class Compare, class ItType>
   Iterator_impl<T,Compare,ItType>& Iterator_impl<T,Compare,ItType>::operator++(){
@@ -916,14 +917,14 @@ namespace xsm::detail{
       m_children(child_map()) {}
 
   template <class T, class Compare>
-  Node<T,Compare>::Node(node_type parent, value_type&& value_pair, const bool is_leaf)
+  Node<T,Compare>::Node(node_ptr parent, value_type&& value_pair, const bool is_leaf)
     : m_is_leaf(is_leaf),
       m_value_pair(value_pair),
       m_parent(parent),
       m_children(child_map()) {}
  
   template <class T, class Compare> template <class... Args>
-  Node<T,Compare>::Node(node_type parent, const bool is_leaf, Args&&... args)
+  Node<T,Compare>::Node(node_ptr parent, const bool is_leaf, Args&&... args)
     : m_is_leaf(is_leaf),
       m_value_pair(value_type(std::forward<Args>(args)...)),
       m_parent(parent),
@@ -1010,8 +1011,8 @@ namespace xsm::detail{
   }
 
   template <class T, class Compare>
-  typename radix<T,Compare>::node_type Node<T,Compare>::Retrieve(const key_type& key) {
-    return const_cast<node_type>(std::as_const(*this).Retrieve(key)); 
+  typename radix<T,Compare>::node_ptr Node<T,Compare>::Retrieve(const key_type& key) {
+    return const_cast<node_ptr>(std::as_const(*this).Retrieve(key)); 
   }
   
   template <class T, class Compare>
@@ -1021,13 +1022,13 @@ namespace xsm::detail{
   }
 
   template <class T, class Compare>
-  typename radix<T,Compare>::node_type Node<T,Compare>::AddChild(const key_type& word, node_type node){
+  typename radix<T,Compare>::node_ptr Node<T,Compare>::AddChild(const key_type& word, node_ptr node){
     node->SetParent(this);
     return m_children.emplace(word, node).first->second;
   }
 
   template <class T, class Compare>
-  typename radix<T,Compare>::node_type Node<T,Compare>::AddChild(const key_type& part){
+  typename radix<T,Compare>::node_ptr Node<T,Compare>::AddChild(const key_type& part){
     return AddChild(part, new Node(this, false, m_value_pair.first + part, T()));
   }
 
@@ -1047,7 +1048,7 @@ namespace xsm::detail{
   }
   
   template <class T, class Compare>
-  void Node<T,Compare>::SetParent(node_type node){
+  void Node<T,Compare>::SetParent(node_ptr node){
     m_parent = node;
   }
   
@@ -1071,6 +1072,19 @@ namespace xsm::detail{
     }
     std::cout << "> ";
   }
+
+  /////////////////
+  // NODE HANDLE //
+  /////////////////
+  template <class T, class Compare>
+  Node_handle<T,Compare>::~Node_handle(){
+    // If node is orphan, then delete
+    // Otherwise, node will be deleted by its parent
+    if (m_node_ptr && !m_node_ptr->GetParent()){
+      delete m_node_ptr;
+    }
+  }
+
 }
 
 #endif /* radix_hpp */

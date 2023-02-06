@@ -6,6 +6,17 @@
 
 int main(){
 
+  // NODE HANDLE
+  
+  typedef xsm::radix<int> radix;
+
+  radix::node_type nh;
+
+
+
+  // RADIX EXTRACT
+
+  if (false) {
   typedef std::map<std::string, int> radix;
   //typedef xsm::radix<int> radix;
 
@@ -51,8 +62,7 @@ int main(){
   nh_moveassign = std::move(nh_c);
   std::cout << "Move assigned handle: " << nh_moveassign.key() << std::endl;
 
-
-
+  }
 
   //std::cout << "Copy constructed handle: " << nh_c.key() << std::endl; SEG FAULT
  
