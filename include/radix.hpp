@@ -121,9 +121,9 @@ namespace xsm::detail{
       explicit operator bool() const noexcept;
       //allocator_type get_allocator() const; 
      
-      value_type& value() const; // TODO
-      key_type& key() const; // TODO
-      mapped_type& mapped() const; // TODO
+      value_type& value() const; 
+      key_type& key() const;
+      mapped_type& mapped() const;
 
       /*void swap(Node_handle&) noexcept(
           std::allocator_traits<allocator_type>::propagate_on_container_swap::value ||
@@ -1093,6 +1093,21 @@ namespace xsm::detail{
   template <class T, class Compare>
   Node_handle<T,Compare>::operator bool() const noexcept {
     return m_node_ptr;
+  }
+      
+  template <class T, class Compare>
+  typename Node_handle<T,Compare>::value_type& Node_handle<T,Compare>::value() const {
+    return m_node_ptr->m_value_pair;
+  }
+                                                           
+  template <class T, class Compare>
+  typename Node_handle<T,Compare>::key_type& Node_handle<T,Compare>::key() const {
+    return m_node_ptr->m_value_pair.first;
+  }
+                                                                               
+  template <class T, class Compare>
+  typename Node_handle<T,Compare>::mapped_type& Node_handle<T,Compare>::mapped() const {
+    return m_node_ptr->m_value_pair.second;
   }
 
 }
