@@ -56,15 +56,6 @@ namespace xsm::detail{
       ~Node();
       Node& operator=(Node&&) noexcept;
 
-      // TODO: Move these to new class Node_wrapper
-      // bool empty() const noexcept;
-      // explicit operator bool() const noexcept;
-      // allocator_type get_allocator() const;
-      // value_type& value() const;
-      key_type& key() const;
-      // mapped_type& mapped() const;
-      // void swap(Node& nh) noexcept(std::allocator_traits<allocator_type>::propagate_on_container_swap::value || std::allocator_traits<allocator_type>::is_always_equal::value);
-      
       // Display
       void print();
     private:
@@ -968,11 +959,6 @@ namespace xsm::detail{
     m_is_leaf = true;
     
     return *this;
-  }
-
-  template <class T, class Compare>
-  typename Node<T,Compare>::key_type& Node<T,Compare>::key() const {
-    return m_value_pair.first;
   }
 
   template <class T, class Compare>
