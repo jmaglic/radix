@@ -33,6 +33,8 @@ int main(){
 
   auto ex_nh = rdx.extract("he");
 
+  // TODO: Test rdx.extract("");
+  // May cause deletion of the entire tree?
 
   // RADIX EXTRACT
 

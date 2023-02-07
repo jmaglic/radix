@@ -1076,9 +1076,9 @@ namespace xsm::detail{
   /////////////////
   template <class T, class Compare>
   Node_handle<T,Compare>::~Node_handle(){
-    // If node is orphan, then delete
+    // If node is orphan and has no children, then delete
     // Otherwise, node will be deleted by its parent
-    if (m_node_ptr && !m_node_ptr->GetParent()){
+    if (m_node_ptr && !m_node_ptr->GetParent() && !CountChildren()){
       delete m_node_ptr;
     }
   }
