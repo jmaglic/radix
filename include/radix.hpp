@@ -123,6 +123,11 @@ namespace xsm::detail{
 
     private:
       Node<T,Compare>* m_node_ptr = nullptr;
+
+      // Constructor from raw pointer
+      Node_handle(Node<T,Compare>*);
+
+      size_t CountChildren() const;
   };
 
   //friend void swap(Node_handle& x, Node_handle& y) noexcept(noexcept(x.swap(y)));
@@ -160,7 +165,6 @@ namespace xsm::detail{
       Iterator_impl operator++(int);
       Iterator_impl& operator--();
       Iterator_impl operator--(int);
-      //Iterator_impl operator++(int);
       reference operator*() const;
       pointer operator->() const;
 
@@ -256,8 +260,8 @@ namespace xsm{
       size_type erase(const key_type&);
       //template<class K> size_type erase(K&&);
       void swap(radix<T,Compare>&);
-      node_ptr extract(const_iterator);
-      node_ptr extract(const key_type&);
+      node_type extract(const_iterator);
+      node_type extract(const key_type&);
       //void merge(radix<T,Compare>&);
       //void merge(radix<T,Compare>&&);
       void clear();
@@ -627,20 +631,28 @@ namespace xsm{
   }
 
   template <class T, class Compare>
-  typename radix<T,Compare>::node_ptr radix<T,Compare>::extract(const_iterator it){
-    std::cout << "Key to extract:" << it->first << std::endl;
+  typename radix<T,Compare>::node_type radix<T,Compare>::extract(const_iterator it){
+    std::cout << "Key to extract: " << it->first << std::endl;
 
-    node_ptr target = it.m_node;
+    node_type target(it.m_node);
 
-    if (target->GetChildren().size() == 1){
+    printf("Extraction target has %zu children.\n", target.CountChildren());
+
+    if (target.CountChildren() == 1){
+      //target.GiveUpChild();
       //node_ptr t_parent = target->GetParent();
       // Parent adopts child
       //target.getParent().AddChild( ### , target.GetChildren().begin()->second);
 
+      //target.Isolate() -> remove parent and children, vice versa
+
     }
-    else if (target->GetChildren().size() > 1){
+    else if (target.CountChildren() > 1){
+      // target.SwapOutLeaf();
       // replace node with is_leaf=false node
       // (swap)
+      //
+      //target.Isolate() -> remove parent and children, vice versa
 
     }
 
@@ -654,16 +666,16 @@ namespace xsm{
     // but this is the same behaviour as in std::map
     --m_size;
 
-    return node_ptr();
+    return node_type();
   }
 
   template <class T, class Compare>
-  typename radix<T,Compare>::node_ptr radix<T,Compare>::extract(const key_type& key){
+  typename radix<T,Compare>::node_type radix<T,Compare>::extract(const key_type& key){
     if (contains(key)){
       return extract(find(key));
     }
     else {
-      return node_ptr();
+      return node_type();
     }
   }
 
@@ -1072,6 +1084,9 @@ namespace xsm::detail{
   }
 
   template <class T, class Compare>
+  Node_handle<T,Compare>::Node_handle(Node<T,Compare>* node) : m_node_ptr(node) {}
+
+  template <class T, class Compare>
   [[nodiscard]] bool Node_handle<T,Compare>::empty() const noexcept {
     return !m_node_ptr;
   }
@@ -1094,6 +1109,11 @@ namespace xsm::detail{
   template <class T, class Compare>
   typename Node_handle<T,Compare>::mapped_type& Node_handle<T,Compare>::mapped() const {
     return m_node_ptr->m_value_pair.second;
+  }
+
+  template <class T, class Compare>
+  size_t Node_handle<T,Compare>::CountChildren() const {
+    return m_node_ptr->GetChildren().size();
   }
 
 }
