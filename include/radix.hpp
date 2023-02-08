@@ -82,6 +82,7 @@ namespace xsm::detail{
     node_ptr AddChild(const key_type&);
     node_ptr GiveUpChild();
     void RemoveParent();
+    void Adopt(node_ptr);
     
     // For iterator operations
     bool IsChildless() const;
@@ -136,9 +137,6 @@ namespace xsm::detail{
       // Constructor from raw pointer
       Node_handle(Node<T,Compare>*);
 
-      node_type GetParent() const; 
-      const child_map& GetChildren() const;
-      void AdoptChild(node_type&&);
   };
 
   //friend void swap(Node_handle& x, Node_handle& y) noexcept(noexcept(x.swap(y)));
@@ -656,6 +654,8 @@ namespace xsm{
 
       std::cout << "Orphan node with key: " << orphan->m_value_pair.first << std::endl;
 
+      target->GetParent()->Adopt(orphan); 
+
       /*
       target.GetParent().AdoptChild(std::move(orphan));
 
@@ -687,7 +687,6 @@ namespace xsm{
       // Target loses child and parent
       // Ready to be returned
 
-      //target.GiveUpChild();
       //node_ptr t_parent = target->GetParent();
       // Parent adopts child
       //target.getParent().AddChild( ### , target.GetChildren().begin()->second);
@@ -1085,7 +1084,8 @@ namespace xsm::detail{
   
   template <class T, class Compare>
   typename Node<T,Compare>::node_ptr Node<T,Compare>::GiveUpChild(){
-    // Extract child from child map
+    // Extracts the first child of this node, severs the relation between child and this node,
+    // and returns the orphaned node pointer
     auto first_child_it = m_children.begin();
     auto nh = m_children.extract(first_child_it);
 
@@ -1099,7 +1099,12 @@ namespace xsm::detail{
   void Node<T,Compare>::RemoveParent(){
     m_parent = nullptr;
   }
-  
+
+  template <class T, class Compare>
+  void Node<T,Compare>::Adopt(node_ptr){
+    //TODO
+    std::cout << "Adopt" << std::endl;
+  }
 
   template <class T, class Compare>
   bool Node<T,Compare>::IsChildless() const {
@@ -1189,22 +1194,6 @@ namespace xsm::detail{
   template <class T, class Compare>
   typename Node_handle<T,Compare>::mapped_type& Node_handle<T,Compare>::mapped() const {
     return m_node_ptr->m_value_pair.second;
-  }
-
-  template <class T, class Compare>
-  typename Node_handle<T,Compare>::node_type Node_handle<T,Compare>::GetParent() const {
-    return Node_handle(m_node_ptr->GetParent());
-  }
-
-  template <class T, class Compare>
-  const typename Node_handle<T,Compare>::child_map& Node_handle<T,Compare>::GetChildren() const {
-    return m_node_ptr->GetChildren();
-  }
-
-  template <class T, class Compare>
-  void Node_handle<T,Compare>::AdoptChild(node_type&& node){
-    //TODO
-    std::cout << "Adopt Child" << std::endl;
   }
 
 }
