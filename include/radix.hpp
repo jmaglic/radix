@@ -83,14 +83,18 @@ namespace xsm::detail{
     node_ptr GiveUpChild();
     void RemoveParent();
     void Adopt(node_ptr);
+    void Emancipate();
     
     // For iterator operations
     bool IsChildless() const;
     bool IsLeaf() const;
+
+    // Get and set
     Node* GetParent() const;
     void SetParent(node_ptr);
     Node* GetFirstChild() const;
     const child_map& GetChildren() const;
+    const key_type& GetKey() const;
   };
 
   // Forward declarations to allow for overloaded comparison operators
@@ -650,48 +654,13 @@ namespace xsm{
 
     if (target->CountChildren() == 1){
 
+      // Child is adopted by parent
       node_ptr orphan = target->GiveUpChild();
-
       std::cout << "Orphan node with key: " << orphan->m_value_pair.first << std::endl;
-
       target->GetParent()->Adopt(orphan); 
-
-      /*
-      target.GetParent().AdoptChild(std::move(orphan));
-
-      std::cout << "Children" << std::endl;
-      for (auto e: target.GetParent().GetChildren()){
-        std::cout << e.first << std::endl;
-      }
-
-      std::string str = detail::StrDiff(target.key(), it.m_node->GetParent()->m_value_pair.first);
-
-      std::cout << str << std::endl;
-      */
-
-      /*target.GetParent().RemoveChild(target);
-      ...
-      std::string unwanted_child_key = detail::StrDiff(target.key(), it.m_node->GetParent()->m_value_pair.first);
-      m_children.erase(m_children.find(unwanted_child_key))
-
-      target.GetParent().AddChild(target.GetFirstChild())
-      ...
-      StrDiff...
-      Child gets new parent
-
-      target.RemoveParent*/
-
-      // Get the parent
-      // Get the child
-      // Parent adopts child (reciprocal)
-      // Target loses child and parent
-      // Ready to be returned
-
-      //node_ptr t_parent = target->GetParent();
-      // Parent adopts child
-      //target.getParent().AddChild( ### , target.GetChildren().begin()->second);
-
-      //target.Isolate() -> remove parent and children, vice versa
+      
+      // Cut ties with parent
+      target->Emancipate();
 
     }
     else if (target->CountChildren() > 1){
@@ -713,7 +682,7 @@ namespace xsm{
     // but this is the same behaviour as in std::map
     --m_size;
 
-    return node_type();
+    return node_type(target);
   }
 
   template <class T, class Compare>
@@ -1101,9 +1070,17 @@ namespace xsm::detail{
   }
 
   template <class T, class Compare>
-  void Node<T,Compare>::Adopt(node_ptr){
-    //TODO
-    std::cout << "Adopt" << std::endl;
+  void Node<T,Compare>::Adopt(node_ptr child){
+    const key_type str = StrDiff(child->GetKey(), GetKey());
+    AddChild(str, child);
+  }
+
+  template <class T, class Compare>
+  void Node<T,Compare>::Emancipate(){
+    // Cut ties with parent
+    const key_type keydiff = StrDiff(GetKey(), m_parent->GetKey());
+    m_parent->m_children.erase(m_parent->m_children.find(keydiff));
+    RemoveParent();
   }
 
   template <class T, class Compare>
@@ -1134,6 +1111,11 @@ namespace xsm::detail{
   template <class T, class Compare>
   const typename Node<T,Compare>::child_map& Node<T,Compare>::GetChildren() const {
     return m_children;
+  }
+
+  template <class T, class Compare>
+  const typename Node<T,Compare>::key_type& Node<T,Compare>::GetKey() const {
+    return m_value_pair.first;
   }
   
   template <class T, class Compare>

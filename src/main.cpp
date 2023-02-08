@@ -33,6 +33,8 @@ int main(){
 
   auto ex_nh = rdx.extract("hel");
 
+  std::cout << "Extracted node with key: " << ex_nh.key() << std::endl;
+
   // TODO: Test rdx.extract("");
   // May cause deletion of the entire tree?
 
