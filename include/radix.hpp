@@ -648,8 +648,8 @@ namespace xsm{
 
     if (target.CountChildren() == 1){
 
-      node_type child = target.GiveUpChild();
-      target.GetParent().AdoptChild(std::move(child));
+      node_type orphan = target.GiveUpChild();
+      target.GetParent().AdoptChild(std::move(orphan));
 
       std::cout << "Children" << std::endl;
       for (auto e: target.GetParent().GetChildren()){
