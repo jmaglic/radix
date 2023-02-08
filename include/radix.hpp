@@ -74,11 +74,14 @@ namespace xsm::detail{
     void Remove();
     const Node<T,Compare>* Retrieve(const key_type&) const;
     node_ptr Retrieve(const key_type&);
+    size_t CountChildren() const;
 
     // Methods used during container manipulation
     void MakeLeaf(const mapped_type&);
     node_ptr AddChild(const key_type&, node_ptr);
     node_ptr AddChild(const key_type&);
+    node_ptr GiveUpChild();
+    void RemoveParent();
     
     // For iterator operations
     bool IsChildless() const;
@@ -133,12 +136,9 @@ namespace xsm::detail{
       // Constructor from raw pointer
       Node_handle(Node<T,Compare>*);
 
-      size_t CountChildren() const;
       node_type GetParent() const; 
       const child_map& GetChildren() const;
-      node_type GiveUpChild();
       void AdoptChild(node_type&&);
-      void RemoveParent();
   };
 
   //friend void swap(Node_handle& x, Node_handle& y) noexcept(noexcept(x.swap(y)));
@@ -646,13 +646,17 @@ namespace xsm{
   typename radix<T,Compare>::node_type radix<T,Compare>::extract(const_iterator it){
     std::cout << "Key to extract: " << it->first << std::endl;
 
-    node_type target(it.m_node); // TODO: Constructor from iterator
+    node_ptr target = it.m_node;
 
-    printf("Extraction target has %zu children.\n", target.CountChildren());
+    printf("Extraction target has %zu children.\n", target->CountChildren());
 
-    if (target.CountChildren() == 1){
+    if (target->CountChildren() == 1){
 
-      node_type orphan = target.GiveUpChild();
+      node_ptr orphan = target->GiveUpChild();
+
+      std::cout << "Orphan node with key: " << orphan->m_value_pair.first << std::endl;
+
+      /*
       target.GetParent().AdoptChild(std::move(orphan));
 
       std::cout << "Children" << std::endl;
@@ -663,6 +667,7 @@ namespace xsm{
       std::string str = detail::StrDiff(target.key(), it.m_node->GetParent()->m_value_pair.first);
 
       std::cout << str << std::endl;
+      */
 
       /*target.GetParent().RemoveChild(target);
       ...
@@ -690,7 +695,7 @@ namespace xsm{
       //target.Isolate() -> remove parent and children, vice versa
 
     }
-    else if (target.CountChildren() > 1){
+    else if (target->CountChildren() > 1){
       // target.SwapOutLeaf();
       // replace node with is_leaf=false node
       // (swap)
@@ -1055,6 +1060,11 @@ namespace xsm::detail{
   typename Node<T,Compare>::node_ptr Node<T,Compare>::Retrieve(const key_type& key) {
     return const_cast<node_ptr>(std::as_const(*this).Retrieve(key)); 
   }
+
+  template <class T, class Compare>
+  size_t Node<T,Compare>::CountChildren() const {
+    return m_children.size();
+  }
   
   template <class T, class Compare>
   void Node<T,Compare>::MakeLeaf(const mapped_type& value){
@@ -1072,6 +1082,24 @@ namespace xsm::detail{
   typename Node<T,Compare>::node_ptr Node<T,Compare>::AddChild(const key_type& part){
     return AddChild(part, new Node(this, false, m_value_pair.first + part, T()));
   }
+  
+  template <class T, class Compare>
+  typename Node<T,Compare>::node_ptr Node<T,Compare>::GiveUpChild(){
+    // Extract child from child map
+    auto first_child_it = m_children.begin();
+    auto nh = m_children.extract(first_child_it);
+
+    node_ptr orphan = nh.mapped();
+
+    orphan->RemoveParent();
+    return orphan;
+  }
+
+  template <class T, class Compare>
+  void Node<T,Compare>::RemoveParent(){
+    m_parent = nullptr;
+  }
+  
 
   template <class T, class Compare>
   bool Node<T,Compare>::IsChildless() const {
@@ -1121,7 +1149,7 @@ namespace xsm::detail{
   Node_handle<T,Compare>::~Node_handle(){
     // If node is orphan and has no children, then delete
     // Otherwise, node will be deleted by its parent
-    if (m_node_ptr && !m_node_ptr->GetParent() && !CountChildren()){
+    if (m_node_ptr && !m_node_ptr->GetParent() && !m_node_ptr->CountChildren()){
       delete m_node_ptr;
     }
   }
@@ -1164,11 +1192,6 @@ namespace xsm::detail{
   }
 
   template <class T, class Compare>
-  size_t Node_handle<T,Compare>::CountChildren() const {
-    return m_node_ptr->GetChildren().size();
-  }
-
-  template <class T, class Compare>
   typename Node_handle<T,Compare>::node_type Node_handle<T,Compare>::GetParent() const {
     return Node_handle(m_node_ptr->GetParent());
   }
@@ -1179,26 +1202,9 @@ namespace xsm::detail{
   }
 
   template <class T, class Compare>
-  typename Node_handle<T,Compare>::node_type Node_handle<T,Compare>::GiveUpChild(){
-    // Extract child from child map
-    auto first_child_it = m_node_ptr->m_children.begin();
-    auto nh = m_node_ptr->m_children.extract(first_child_it);
-    // Create Node_handle
-    node_type orphan(nh.mapped());
-
-    orphan.RemoveParent();
-    return orphan;
-  }
-  
-  template <class T, class Compare>
   void Node_handle<T,Compare>::AdoptChild(node_type&& node){
     //TODO
     std::cout << "Adopt Child" << std::endl;
-  }
-
-  template <class T, class Compare>
-  void Node_handle<T,Compare>::RemoveParent(){
-    m_node_ptr->m_parent = nullptr;
   }
 
 }
