@@ -37,53 +37,56 @@ namespace xsm::detail{
   //////////
   // Node represents a key-value pair
   template <class T, class Compare> class Node{
+
+    // Friends
     friend typename radix<T,Compare>::iterator;
     friend typename radix<T,Compare>::const_iterator;
     friend typename radix<T,Compare>::node_type;
     friend xsm::radix<T,Compare>;
 
+    // Typedefs
     using node_ptr = typename radix<T,Compare>::node_ptr;
     using key_type = typename radix<T,Compare>::key_type;
     using mapped_type = typename radix<T,Compare>::mapped_type;
     using value_type = typename radix<T,Compare>::value_type;
     using key_compare = typename radix<T,Compare>::key_compare;
-
     typedef std::map<key_type,node_ptr,key_compare> child_map;
-    public:
-      Node();
-      Node(node_ptr, value_type&&, const bool=false);
-      template <class... Args> Node(node_ptr, const bool, Args&&...);
-      Node(const Node&);
-      Node(Node&&) noexcept;
-      ~Node();
-      Node& operator=(Node&&) noexcept;
 
-      // Display
-      void print();
-    private:
-      // Members
-      value_type m_value_pair;
-      node_ptr m_parent;
-      child_map m_children;
-      bool m_is_leaf;
+    // Members
+    value_type m_value_pair;
+    node_ptr m_parent;
+    child_map m_children;
+    bool m_is_leaf;
 
-      // Container operations
-      void Remove();
-      const Node<T,Compare>* Retrieve(const key_type&) const;
-      node_ptr Retrieve(const key_type&);
+    // Constructors and related
+    Node();
+    Node(node_ptr, value_type&&, const bool=false);
+    template <class... Args> Node(node_ptr, const bool, Args&&...);
+    Node(const Node&);
+    Node(Node&&) noexcept;
+    ~Node();
+    Node& operator=(Node&&) noexcept;
+   
+    // Display
+    void print(); // TODO just for testing
 
-      // Methods used during container manipulation
-      void MakeLeaf(const mapped_type&);
-      node_ptr AddChild(const key_type&, node_ptr);
-      node_ptr AddChild(const key_type&);
-      
-      // For iterator operations
-      bool IsChildless() const;
-      bool IsLeaf() const;
-      Node* GetParent() const;
-      void SetParent(node_ptr);
-      Node* GetFirstChild() const;
-      const child_map& GetChildren() const;
+    // Container operations
+    void Remove();
+    const Node<T,Compare>* Retrieve(const key_type&) const;
+    node_ptr Retrieve(const key_type&);
+
+    // Methods used during container manipulation
+    void MakeLeaf(const mapped_type&);
+    node_ptr AddChild(const key_type&, node_ptr);
+    node_ptr AddChild(const key_type&);
+    
+    // For iterator operations
+    bool IsChildless() const;
+    bool IsLeaf() const;
+    Node* GetParent() const;
+    void SetParent(node_ptr);
+    Node* GetFirstChild() const;
+    const child_map& GetChildren() const;
   };
 
   // Forward declarations to allow for overloaded comparison operators
