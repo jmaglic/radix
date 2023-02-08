@@ -24,14 +24,14 @@ int main(){
 
   rdx.emplace("hello", 2);
   rdx.emplace("hi", 3);
-  rdx.emplace("hey", 4);
-  rdx.emplace("he", 4);
+  rdx.emplace("hel", 4);
+  rdx.emplace("h", 4);
   
   for (auto e : rdx) {
     std::cout << e.first << std::endl;
   }
 
-  auto ex_nh = rdx.extract("he");
+  auto ex_nh = rdx.extract("hel");
 
   // TODO: Test rdx.extract("");
   // May cause deletion of the entire tree?

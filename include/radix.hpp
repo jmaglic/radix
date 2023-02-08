@@ -27,6 +27,8 @@ namespace xsm{
 }
 
 namespace xsm::detail{
+  std::string StrDiff(const std::string&, const std::string&);
+
   // Forward declaration for friend relation
   template <class T, class Compare, class ItType=T> class Iterator_impl;
 
@@ -113,7 +115,7 @@ namespace xsm::detail{
       //allocator_type get_allocator() const; 
      
       value_type& value() const; 
-      key_type& key() const;
+      const key_type& key() const;
       mapped_type& mapped() const;
 
       /*void swap(Node_handle&) noexcept(
@@ -122,12 +124,16 @@ namespace xsm::detail{
       */
 
     private:
+      using child_map = typename Node<T,Compare>::child_map;
+
       Node<T,Compare>* m_node_ptr = nullptr;
 
       // Constructor from raw pointer
       Node_handle(Node<T,Compare>*);
 
       size_t CountChildren() const;
+      Node_handle<T,Compare> GetParent() const; 
+      const child_map& GetChildren() const;
   };
 
   //friend void swap(Node_handle& x, Node_handle& y) noexcept(noexcept(x.swap(y)));
@@ -639,6 +645,34 @@ namespace xsm{
     printf("Extraction target has %zu children.\n", target.CountChildren());
 
     if (target.CountChildren() == 1){
+
+      std::cout << "Children" << std::endl;
+      for (auto e: target.GetParent().GetChildren()){
+        std::cout << e.first << std::endl;
+      }
+
+      std::string str = detail::StrDiff(target.key(), it.m_node->GetParent()->m_value_pair.first);
+
+      std::cout << str << std::endl;
+
+      /*target.GetParent().RemoveChild(target);
+      ...
+      std::string unwanted_child_key = detail::StrDiff(target.key(), it.m_node->GetParent()->m_value_pair.first);
+      m_children.erase(m_children.find(unwanted_child_key))
+
+      target.GetParent().AddChild(target.GetFirstChild())
+      ...
+      StrDiff...
+      Child gets new parent
+
+      target.RemoveParent*/
+
+      // Get the parent
+      // Get the child
+      // Parent adopts child (reciprocal)
+      // Target loses child and parent
+      // Ready to be returned
+
       //target.GiveUpChild();
       //node_ptr t_parent = target->GetParent();
       // Parent adopts child
@@ -1102,7 +1136,7 @@ namespace xsm::detail{
   }
                                                            
   template <class T, class Compare>
-  typename Node_handle<T,Compare>::key_type& Node_handle<T,Compare>::key() const {
+  const typename Node_handle<T,Compare>::key_type& Node_handle<T,Compare>::key() const {
     return m_node_ptr->m_value_pair.first;
   }
                                                                                
@@ -1114,6 +1148,16 @@ namespace xsm::detail{
   template <class T, class Compare>
   size_t Node_handle<T,Compare>::CountChildren() const {
     return m_node_ptr->GetChildren().size();
+  }
+
+  template <class T, class Compare>
+  Node_handle<T,Compare> Node_handle<T,Compare>::GetParent() const {
+    return Node_handle(m_node_ptr->GetParent());
+  }
+
+  template <class T, class Compare>
+  const typename Node_handle<T,Compare>::child_map& Node_handle<T,Compare>::GetChildren() const {
+    return m_node_ptr->GetChildren();
   }
 
 }
