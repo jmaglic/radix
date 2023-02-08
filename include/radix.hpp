@@ -45,11 +45,11 @@ namespace xsm::detail{
     friend xsm::radix<T,Compare>;
 
     // Typedefs
-    using node_ptr = typename radix<T,Compare>::node_ptr;
     using key_type = typename radix<T,Compare>::key_type;
     using mapped_type = typename radix<T,Compare>::mapped_type;
     using value_type = typename radix<T,Compare>::value_type;
     using key_compare = typename radix<T,Compare>::key_compare;
+    typedef Node<T,Compare>* node_ptr;
     typedef std::map<key_type,node_ptr,key_compare> child_map;
 
     // Members
@@ -156,11 +156,11 @@ namespace xsm::detail{
     typedef typename std::conditional<std::is_const_v<ItType>, T, const T>::type ItType2;
     friend Iterator_impl<T,Compare,ItType2>;
 
-    using node_ptr = typename radix<T,Compare>::node_ptr;
     using const_iterator = typename radix<T,Compare>::const_iterator;
     using key_type = typename radix<T,Compare>::key_type;
     using reverse_iterator = typename radix<T,Compare>::reverse_iterator;
     using const_reverse_iterator = typename radix<T,Compare>::const_reverse_iterator;
+    using node_ptr = typename Node<T,Compare>::node_ptr;
     
     public:
       using value_type = typename radix<T,Compare>::value_type;
@@ -222,7 +222,6 @@ namespace xsm{
       typedef std::reverse_iterator<iterator> reverse_iterator;
       typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
       typedef detail::Node_handle<mapped_type,key_compare> node_type;
-      typedef detail::Node<mapped_type,key_compare>* node_ptr; // TODO: Remove eventually
       
       //typedef detail::Node<mapped_type,key_compare>* node_ptr; TODO: Redefine node_ptr
 
@@ -250,8 +249,8 @@ namespace xsm{
       iterator insert(const_iterator, value_type&&);
       template<class InputIt> void insert(InputIt, InputIt);
       void insert(std::initializer_list<value_type>);
-      //insert_return_type insert(node_ptr&&);
-      //iterator insert(const_iterator, node_ptr&&);
+      //insert_return_type insert(node_type&&);
+      //iterator insert(const_iterator, node_type&&);
       std::pair<iterator,bool> insert(const key_type&, const mapped_type&); // TODO: Reevaluate
       std::pair<bool,bool> insert(const std::vector<std::string>&, const mapped_type&); // TODO: Reevaluate
       // template< class M > std::pair<iterator, bool> insert_or_assign( const Key& k, M&& obj );
@@ -324,6 +323,8 @@ namespace xsm{
       void print();
 
     private:
+      using node_ptr = typename detail::Node<mapped_type,key_compare>::node_ptr;
+      
       // Pointer to root node of radix tree
       node_ptr m_root; 
       size_type m_size;
@@ -1051,7 +1052,7 @@ namespace xsm::detail{
   }
 
   template <class T, class Compare>
-  typename radix<T,Compare>::node_ptr Node<T,Compare>::Retrieve(const key_type& key) {
+  typename Node<T,Compare>::node_ptr Node<T,Compare>::Retrieve(const key_type& key) {
     return const_cast<node_ptr>(std::as_const(*this).Retrieve(key)); 
   }
   
@@ -1062,13 +1063,13 @@ namespace xsm::detail{
   }
 
   template <class T, class Compare>
-  typename radix<T,Compare>::node_ptr Node<T,Compare>::AddChild(const key_type& word, node_ptr node){
+  typename Node<T,Compare>::node_ptr Node<T,Compare>::AddChild(const key_type& word, node_ptr node){
     node->SetParent(this);
     return m_children.emplace(word, node).first->second;
   }
 
   template <class T, class Compare>
-  typename radix<T,Compare>::node_ptr Node<T,Compare>::AddChild(const key_type& part){
+  typename Node<T,Compare>::node_ptr Node<T,Compare>::AddChild(const key_type& part){
     return AddChild(part, new Node(this, false, m_value_pair.first + part, T()));
   }
 

@@ -21,6 +21,9 @@ to the user as the typedef xsm::radix::node_type. Node_handle objects are provid
 xsm::radix::extract() and are retrieved when the user calls xsm::radix::insert(). In addition, the
 user may construct empty Node_handle objects.
 
+For now, Node_handle is only used as a pointer handle for the user. Pointer operations are managed
+by the Node class.
+
 Node_handle uses some of radix's typedefs. 
 
 ```c++
