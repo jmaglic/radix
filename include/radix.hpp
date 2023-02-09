@@ -80,6 +80,9 @@ namespace xsm::detail{
     void MakeLeaf(const mapped_type&);
     node_ptr AddChild(const key_type&, node_ptr);
     node_ptr AddChild(const key_type&);
+  
+    // Methods for node extraction
+    node_ptr Extract();
     node_ptr GiveUpChild();
     void RemoveParent();
     void Adopt(node_ptr);
@@ -644,53 +647,16 @@ namespace xsm{
 
   template <class T, class Compare>
   typename radix<T,Compare>::node_type radix<T,Compare>::extract(const_iterator it){
-    std::cout << "Key to extract: " << it->first << std::endl;
 
-    node_ptr target = it.m_node;
+    node_ptr extracted = it.m_node->Extract();
 
-    printf("Extraction target has %zu children.\n", target->CountChildren());
-
-    if (target->CountChildren() == 1){
-
-      // Child is adopted by parent
-      node_ptr orphan = target->GiveUpChild();
-      target->GetParent()->Adopt(orphan); 
-      
-
-    }
-    else if (target->CountChildren() > 1){
-
-      // Create new node with same key as target but empty element
-      node_ptr empty_node = new detail::Node(target, false, target->GetKey(), mapped_type());
-
-      // Let parent adopt new node
-      target->m_parent->Adopt(empty_node);
-
-      // Transfer children from target to new node
-      auto it = target->m_children.begin();
-
-      while (it != target->m_children.end()) {
-        // Increment iterator, store old iterator
-        auto extract_it = it++;
-        // Extract child from map
-        auto nh = target->m_children.extract(extract_it);
-        // Empty node adopts child
-        nh.mapped()->SetParent(empty_node);
-        // Child is inserted in empty node's map
-        empty_node->m_children.insert(std::move(nh));
-      }
-    }
-
-    // Cut ties with parent
-    target->Emancipate();
-
-    // This causes a problem, when the iterator doesn't point to an element in this radix
+    // Decrementing the counter causes an issue when the iterator doesn't point to an element in this radix
     // but this is the same behaviour as in std::map
     --m_size;
 
-    assert(target->m_children.empty() && !target->m_parent);
+    assert(extracted->m_children.empty() && !extracted->m_parent);
 
-    return node_type(target);
+    return node_type(extracted);
   }
 
   template <class T, class Compare>
@@ -1057,6 +1023,44 @@ namespace xsm::detail{
   template <class T, class Compare>
   typename Node<T,Compare>::node_ptr Node<T,Compare>::AddChild(const key_type& part){
     return AddChild(part, new Node(this, false, m_value_pair.first + part, T()));
+  }
+
+
+  template <class T, class Compare>
+  typename Node<T,Compare>::node_ptr Node<T,Compare>::Extract(){
+
+    if (CountChildren() == 1){
+      // Child is adopted by parent
+      node_ptr orphan = GiveUpChild();
+      GetParent()->Adopt(orphan); 
+    }
+    else if (CountChildren() > 1){
+
+      // Create new node with same key as target but empty element
+      node_ptr empty_node = new detail::Node(this, false, GetKey(), mapped_type());
+
+      // Let parent adopt new node
+      m_parent->Adopt(empty_node);
+
+      // Transfer children from target to new node
+      auto it = m_children.begin();
+
+      while (it != m_children.end()) {
+        // Increment iterator, store old iterator
+        auto extract_it = it++;
+        // Extract child from map
+        auto nh = m_children.extract(extract_it);
+        // Empty node adopts child
+        nh.mapped()->SetParent(empty_node);
+        // Child is inserted in empty node's map
+        empty_node->m_children.insert(std::move(nh));
+      }
+    }
+
+    // Cut ties with parent
+    Emancipate();
+    
+    return this;
   }
   
   template <class T, class Compare>
