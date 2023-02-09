@@ -124,7 +124,7 @@ namespace xsm::detail{
       explicit operator bool() const noexcept;
       //allocator_type get_allocator() const; 
      
-      const key_type& key() const; // TODO Make non-const return value
+      const key_type& key() const;
       mapped_type& mapped() const;
 
       /*void swap(Node_handle&) noexcept(
@@ -224,8 +224,6 @@ namespace xsm{
       typedef std::reverse_iterator<iterator> reverse_iterator;
       typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
       typedef detail::Node_handle<mapped_type,key_compare> node_type;
-      
-      //typedef detail::Node<mapped_type,key_compare>* node_ptr; TODO: Redefine node_ptr
 
       // Constructors and related
       radix();
@@ -656,31 +654,41 @@ namespace xsm{
 
       // Child is adopted by parent
       node_ptr orphan = target->GiveUpChild();
-      std::cout << "Orphan node with key: " << orphan->m_value_pair.first << std::endl;
       target->GetParent()->Adopt(orphan); 
       
-      // Cut ties with parent
-      target->Emancipate();
 
     }
     else if (target->CountChildren() > 1){
-      // target.SwapOutLeaf();
-      // replace node with is_leaf=false node
-      // (swap)
-      //
-      //target.Isolate() -> remove parent and children, vice versa
 
+      // Create new node with same key as target but empty element
+      node_ptr empty_node = new detail::Node(target, false, target->GetKey(), mapped_type());
+
+      // Let parent adopt new node
+      target->m_parent->Adopt(empty_node);
+
+      // Transfer children from target to new node
+      auto it = target->m_children.begin();
+
+      while (it != target->m_children.end()) {
+        // Increment iterator, store old iterator
+        auto extract_it = it++;
+        // Extract child from map
+        auto nh = target->m_children.extract(extract_it);
+        // Empty node adopts child
+        nh.mapped()->SetParent(empty_node);
+        // Child is inserted in empty node's map
+        empty_node->m_children.insert(std::move(nh));
+      }
     }
 
-    // Compare keys with parent, find suffix
-    // remove target from parent
-//      target.GetParent().GetChildren().erase()
-    // remove parent
-    // target is ready to be returned
+    // Cut ties with parent
+    target->Emancipate();
 
     // This causes a problem, when the iterator doesn't point to an element in this radix
     // but this is the same behaviour as in std::map
     --m_size;
+
+    assert(target->m_children.empty() && !target->m_parent);
 
     return node_type(target);
   }
@@ -1167,7 +1175,7 @@ namespace xsm::detail{
   Node_handle<T,Compare>::operator bool() const noexcept {
     return m_node_ptr;
   }
-      
+  
   template <class T, class Compare>
   const typename Node_handle<T,Compare>::key_type& Node_handle<T,Compare>::key() const {
     return m_node_ptr->m_value_pair.first;

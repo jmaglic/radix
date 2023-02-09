@@ -35,6 +35,11 @@ int main(){
 
   std::cout << "Extracted node with key: " << ex_nh.key() << std::endl;
 
+  ex_nh = rdx.extract("h");
+  std::cout << "Extracted node with key: " << ex_nh.key() << std::endl;
+
+  ex_nh = rdx.extract("");
+
   // TODO: Test rdx.extract("");
   // May cause deletion of the entire tree?
 
