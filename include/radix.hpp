@@ -1067,18 +1067,23 @@ namespace xsm::detail{
   template <class T, class Compare>
   typename Node<T,Compare>::node_ptr Node<T,Compare>::Extract(){
 
+    // Store parent ptr so that this node can emancipate
+    node_ptr parent = GetParent();
+    // Cut ties with parent
+    Emancipate();
+
     if (CountChildren() == 1){
       // Child is adopted by parent
       node_ptr orphan = GiveUpChild();
-      GetParent()->Adopt(orphan); 
+      parent->Adopt(orphan); 
     }
     else if (CountChildren() > 1){
 
       // Create new node with same key as target but empty element
-      node_ptr empty_node = new detail::Node(this, false, GetKey(), mapped_type());
+      node_ptr empty_node = new detail::Node(parent, false, GetKey(), mapped_type());
 
       // Let parent adopt new node
-      m_parent->Adopt(empty_node);
+      parent->Adopt(empty_node);
 
       // Transfer children from target to new node
       auto it = m_children.begin();
@@ -1094,9 +1099,6 @@ namespace xsm::detail{
         empty_node->m_children.insert(std::move(nh));
       }
     }
-
-    // Cut ties with parent
-    Emancipate();
     
     return this;
   }
