@@ -83,6 +83,7 @@ namespace xsm::detail{
   
     // Methods for node extraction
     node_ptr Extract();
+    void SubstituteWith(node_ptr);
     node_ptr GiveUpChild();
     void RemoveParent();
     void Adopt(node_ptr);
@@ -533,7 +534,8 @@ namespace xsm{
   }
 
   template <class T, class Compare>
-  std::pair<typename radix<T,Compare>::iterator,bool> radix<T,Compare>::NodeInTree(node_ptr node, const_iterator parent, key_type::const_iterator key_start){
+  std::pair<typename radix<T,Compare>::iterator,bool> radix<T,Compare>::NodeInTree(
+      node_ptr node, const_iterator parent, key_type::const_iterator key_start){
 
     auto key_end = node->m_value_pair.first.end();
 
@@ -554,11 +556,12 @@ namespace xsm{
 
         // 2. New key and entry key are identical -> Key already exists, or leads to a non-leaf node
         if (key_end == last_match.first && entrykey_end == last_match.second){
-
+          
           bool new_entry = !entry.second->IsLeaf();
           if (new_entry){
-
+            
             entry.second->MakeLeaf(node->m_value_pair.second);
+            //entry.second->SubstituteWith(node);
             m_size++;
           }
           delete node;
@@ -1066,40 +1069,54 @@ namespace xsm::detail{
   template <class T, class Compare>
   typename Node<T,Compare>::node_ptr Node<T,Compare>::Extract(){
 
+    if (CountChildren() == 0){
+      // Store parent ptr so that this node can emancipate
+      node_ptr parent = GetParent();
+      // Cut ties with parent
+      Emancipate();
+    }
+    else if (CountChildren() == 1){
+      // Store parent ptr so that this node can emancipate
+      node_ptr parent = GetParent();
+      // Cut ties with parent
+      Emancipate();
+      
+      // Child is adopted by parent
+      node_ptr orphan = GiveUpChild();
+      parent->Adopt(orphan); 
+    }
+    else {
+      // Create new node with same key as target but empty element
+      node_ptr empty_node = new Node(nullptr, false, GetKey(), mapped_type());
+      
+      SubstituteWith(empty_node);
+    }
+    return this;
+  }
+
+  template <class T, class Compare>
+  void Node<T,Compare>::SubstituteWith(node_ptr empty_node){
     // Store parent ptr so that this node can emancipate
     node_ptr parent = GetParent();
     // Cut ties with parent
     Emancipate();
 
-    if (CountChildren() == 1){
-      // Child is adopted by parent
-      node_ptr orphan = GiveUpChild();
-      parent->Adopt(orphan); 
+    // Let parent adopt new node
+    parent->Adopt(empty_node);
+
+    // Transfer children from target to new node
+    auto it = m_children.begin();
+
+    while (it != m_children.end()) {
+      // Increment iterator, store old iterator
+      auto extract_it = it++;
+      // Extract child from map
+      auto nh = m_children.extract(extract_it);
+      // Empty node adopts child
+      nh.mapped()->SetParent(empty_node);
+      // Child is inserted in empty node's map
+      empty_node->m_children.insert(std::move(nh));
     }
-    else if (CountChildren() > 1){
-
-      // Create new node with same key as target but empty element
-      node_ptr empty_node = new detail::Node(parent, false, GetKey(), mapped_type());
-
-      // Let parent adopt new node
-      parent->Adopt(empty_node);
-
-      // Transfer children from target to new node
-      auto it = m_children.begin();
-
-      while (it != m_children.end()) {
-        // Increment iterator, store old iterator
-        auto extract_it = it++;
-        // Extract child from map
-        auto nh = m_children.extract(extract_it);
-        // Empty node adopts child
-        nh.mapped()->SetParent(empty_node);
-        // Child is inserted in empty node's map
-        empty_node->m_children.insert(std::move(nh));
-      }
-    }
-    
-    return this;
   }
   
   template <class T, class Compare>
@@ -1185,6 +1202,7 @@ namespace xsm::detail{
   /////////////////
   template <class T, class Compare>
   Node_handle<T,Compare>::~Node_handle(){
+    // TODO Consider restricting Node handle's access to the Node destructor
     // If node is orphan and has no children, then delete
     // Otherwise, node will be deleted by its parent
     if (m_node_ptr && !m_node_ptr->GetParent() && !m_node_ptr->CountChildren()){
