@@ -535,7 +535,6 @@ namespace xsm{
   template <class T, class Compare>
   std::pair<typename radix<T,Compare>::iterator,bool> radix<T,Compare>::NodeInTree(node_ptr node, const_iterator parent, key_type::const_iterator key_start){
 
-    //auto key_start = node->m_value_pair.first.begin();
     auto key_end = node->m_value_pair.first.end();
 
     bool next_child;
@@ -1201,7 +1200,9 @@ namespace xsm::detail{
   
   template <class T, class Compare>
   Node_handle<T,Compare>& Node_handle<T,Compare>::operator=(Node_handle<T,Compare>&& node){
-    delete m_node_ptr;
+    if (m_node_ptr && !m_node_ptr->GetParent() && !m_node_ptr->CountChildren()){
+      delete m_node_ptr;
+    }
     m_node_ptr = node.m_node_ptr;
     node.m_node_ptr = nullptr;
     return *this;    
