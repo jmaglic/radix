@@ -253,7 +253,8 @@ namespace xsm{
       template<class InputIt> void insert(InputIt, InputIt);
       void insert(std::initializer_list<value_type>);
       //insert_return_type insert(node_type&&);
-      //iterator insert(const_iterator, node_type&&);
+      iterator insert(node_type&&); // TODO replace return type
+      iterator insert(const_iterator, node_type&&);
       std::pair<iterator,bool> insert(const key_type&, const mapped_type&); // TODO: Reevaluate
       std::pair<bool,bool> insert(const std::vector<std::string>&, const mapped_type&); // TODO: Reevaluate
       // template< class M > std::pair<iterator, bool> insert_or_assign( const Key& k, M&& obj );
@@ -332,8 +333,8 @@ namespace xsm{
       node_ptr m_root; 
       size_type m_size;
 
-      template <class... Args>
-      std::pair<iterator,bool> NodeInTree(node_ptr, const_iterator, std::string::const_iterator);
+      key_type::const_iterator ProcessHint(const_iterator&, node_ptr);
+      std::pair<iterator,bool> NodeInTree(node_ptr, const_iterator, key_type::const_iterator);
   };
 }
  
@@ -474,8 +475,65 @@ namespace xsm{
     return std::make_pair(all,any);
   }
 
-  template <class T, class Compare> template <class... Args>
-  std::pair<detail::Iterator_impl<T,Compare>,bool> radix<T,Compare>::NodeInTree(node_ptr node, const_iterator parent, std::string::const_iterator key_start){
+  template <class T, class Compare>
+  typename radix<T,Compare>::iterator radix<T,Compare>::insert(node_type&& node){
+    if (node.empty()){
+      return end();
+    }
+    iterator it;
+    bool inserted;
+    std::tie(it,inserted) = NodeInTree(node.m_node_ptr, iterator(m_root), node.m_node_ptr->m_value_pair.first.begin());
+    if (inserted){
+      // Move assignment
+      node = node_type();
+    }
+    return it;
+  }
+
+  template <class T, class Compare>
+  typename radix<T,Compare>::iterator radix<T,Compare>::insert(const_iterator pos, node_type&& node){
+    if (node.empty()){
+      return end();
+    }
+    iterator it;
+    bool inserted;
+    std::tie(it,inserted) = NodeInTree(node.m_node_ptr, pos, ProcessHint(pos,node.m_node_ptr));
+    if (inserted){
+      // Move assignment
+      node = node_type();
+    }
+    return it;
+  }
+
+  template <class T, class Compare>
+  typename radix<T,Compare>::key_type::const_iterator radix<T,Compare>::ProcessHint(const_iterator& parent, node_ptr node){
+    
+    auto key_start = node->m_value_pair.first.begin();
+    auto key_end = node->m_value_pair.first.end();
+
+    bool correct_parent_found = false;
+
+    while(!correct_parent_found){
+
+      auto parentkey_start = parent.m_node->m_value_pair.first.begin();
+      auto parentkey_end = parent.m_node->m_value_pair.first.end();
+  
+      auto last_match = std::mismatch(parentkey_start, parentkey_end, key_start, key_end);
+  
+      correct_parent_found = last_match.first == parentkey_end;
+  
+      if (!correct_parent_found){
+        parent = iterator(parent.m_node->m_parent);
+      }
+      else {
+        key_start = last_match.second;
+      }
+    }
+    return key_start;
+  }
+
+  template <class T, class Compare>
+  std::pair<typename radix<T,Compare>::iterator,bool> radix<T,Compare>::NodeInTree(node_ptr node, const_iterator parent, key_type::const_iterator key_start){
 
     //auto key_start = node->m_value_pair.first.begin();
     auto key_end = node->m_value_pair.first.end();
@@ -571,29 +629,9 @@ namespace xsm{
   typename radix<T,Compare>::iterator radix<T,Compare>::emplace_hint(const_iterator pos, Args&&... args){
     
     node_ptr node = new detail::Node<T,Compare>(nullptr, true, std::forward<Args>(args)...);
+
     const_iterator parent = --pos;
-
-    auto key_start = node->m_value_pair.first.begin();
-    auto key_end = node->m_value_pair.first.end();
-
-    bool correct_parent_found = false;
-
-    while(!correct_parent_found){
-
-      auto parentkey_start = parent.m_node->m_value_pair.first.begin();
-      auto parentkey_end = parent.m_node->m_value_pair.first.end();
-  
-      auto last_match = std::mismatch(parentkey_start, parentkey_end, key_start, key_end);
-  
-      correct_parent_found = last_match.first == parentkey_end;
-  
-      if (!correct_parent_found){
-        parent = iterator(parent.m_node->m_parent);
-      }
-      else {
-        key_start = last_match.second;
-      }
-    }
+    key_type::const_iterator key_start = ProcessHint(parent, node);
 
     return NodeInTree(node, parent, key_start).first;
   }

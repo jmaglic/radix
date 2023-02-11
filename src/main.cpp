@@ -6,48 +6,58 @@
 
 int main(){
 
-  // NODE HANDLE
-  
-  typedef xsm::radix<int> radix;
+  {
+    // NODE HANDLE
+    
+    typedef xsm::radix<int> radix;
 
-  radix::node_type nh;
+    radix::node_type nh;
 
-  if (nh.empty()){
-    std::cout << "Empty" << std::endl;
+    if (nh.empty()){
+      std::cout << "Empty" << std::endl;
+    }
+
+    if (!nh){
+      std::cout << "Empty" << std::endl;
+    }
+
+    radix rdx;
+
+    rdx.emplace("hello", 2);
+    rdx.emplace("hi", 3);
+    rdx.emplace("hel", 4);
+    rdx.emplace("h", 4);
+    
+    for (auto e : rdx) {
+      std::cout << e.first << std::endl;
+    }
+
+    auto ex_nh = rdx.extract("hel");
+
+    std::cout << "Extracted node with key: " << ex_nh.key() << std::endl;
+
+    for (auto e : rdx) {
+      std::cout << e.first << std::endl;
+    }
+
+    ex_nh = rdx.extract("h");
+    std::cout << "Extracted node with key: " << ex_nh.key() << std::endl;
+
+    ex_nh = rdx.extract("");
+
+    for (auto e : rdx) {
+      std::cout << e.first << std::endl;
+    }
   }
-
-  if (!nh){
-    std::cout << "Empty" << std::endl;
-  }
-
-  radix rdx;
-
-  rdx.emplace("hello", 2);
-  rdx.emplace("hi", 3);
-  rdx.emplace("hel", 4);
-  rdx.emplace("h", 4);
-  
-  for (auto e : rdx) {
-    std::cout << e.first << std::endl;
-  }
-
-  auto ex_nh = rdx.extract("hel");
-
-  std::cout << "Extracted node with key: " << ex_nh.key() << std::endl;
-
-  ex_nh = rdx.extract("h");
-  std::cout << "Extracted node with key: " << ex_nh.key() << std::endl;
-
-  ex_nh = rdx.extract("");
 
   // TODO: Test rdx.extract("");
   // May cause deletion of the entire tree?
 
   // RADIX EXTRACT
 
-  if (false) {
-  typedef std::map<std::string, int> radix;
-  //typedef xsm::radix<int> radix;
+  if (true) {
+  //typedef std::map<std::string, int> radix;
+  typedef xsm::radix<int> radix;
 
   radix rdx;
 
