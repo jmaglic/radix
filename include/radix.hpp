@@ -56,7 +56,7 @@ namespace xsm::detail{
     value_type m_value_pair;
     node_ptr m_parent;
     child_map m_children;
-    bool m_is_leaf;
+    bool m_is_leaf; // TODO Make const
 
     // Constructors and related
     Node();
@@ -77,7 +77,7 @@ namespace xsm::detail{
     size_t CountChildren() const;
 
     // Methods used during container manipulation
-    void MakeLeaf(const mapped_type&);
+    void MakeLeaf(const mapped_type&); // TODO Remove
     node_ptr AddChild(const key_type&, node_ptr);
     node_ptr AddChild(const key_type&);
   
@@ -545,7 +545,7 @@ namespace xsm{
       next_child = false;
 
       // Loop through all children in iterator, until you find a match within the keys
-      for (auto& entry : parent.m_node->m_children){
+      for (std::pair<const key_type,node_ptr>& entry : parent.m_node->m_children){
 
         auto entrykey_start = entry.first.begin();
         auto entrykey_end = entry.first.end();
@@ -559,12 +559,15 @@ namespace xsm{
           
           bool new_entry = !entry.second->IsLeaf();
           if (new_entry){
-            
-            entry.second->MakeLeaf(node->m_value_pair.second);
-            //entry.second->SubstituteWith(node);
+           
+            // Need to copy the pointer, because entry.second will be changed by SubstituteWith()
+            node_ptr non_leaf_ptr = entry.second;
+            non_leaf_ptr->SubstituteWith(node);
+
             m_size++;
+            delete non_leaf_ptr;
+            return std::make_pair(iterator(node), new_entry);
           }
-          delete node;
           return std::make_pair(iterator(entry.second), new_entry);
         }
 

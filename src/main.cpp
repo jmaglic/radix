@@ -56,8 +56,8 @@ int main(){
   // RADIX EXTRACT
 
   if (true) {
-  //typedef std::map<std::string, int> radix;
-  typedef xsm::radix<int> radix;
+  typedef std::map<std::string, int> radix;
+  //typedef xsm::radix<int> radix;
 
   radix rdx;
 
