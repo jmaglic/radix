@@ -56,8 +56,8 @@ int main(){
   // RADIX EXTRACT
 
   if (true) {
-  typedef std::map<std::string, int> radix;
-  //typedef xsm::radix<int> radix;
+  //typedef std::map<std::string, int> radix;
+  typedef xsm::radix<int> radix;
 
   radix rdx;
 
@@ -100,6 +100,15 @@ int main(){
   auto nh_moveassign = radix::node_type();
   nh_moveassign = std::move(nh_c);
   std::cout << "Move assigned handle: " << nh_moveassign.key() << std::endl;
+  std::cout << "Move assigned handle: " << nh_moveassign.mapped() << std::endl;
+
+  rdx.emplace("c", 13);
+  // Fail insert
+  rdx.insert(std::move(nh_moveassign));
+
+  std::cout << rdx["c"] << std::endl;
+
+  std::cout << (nh_moveassign.empty()? "Empty" : "WHAT") << std::endl;
 
   }
 

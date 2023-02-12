@@ -557,8 +557,8 @@ namespace xsm{
         // 2. New key and entry key are identical -> Key already exists, or leads to a non-leaf node
         if (key_end == last_match.first && entrykey_end == last_match.second){
           
-          bool new_entry = !entry.second->IsLeaf();
-          if (new_entry){
+          if (!entry.second->IsLeaf()){
+            // Unlink non-leaf node and substitute with leaf node
            
             // Need to copy the pointer, because entry.second will be changed by SubstituteWith()
             node_ptr non_leaf_ptr = entry.second;
@@ -566,9 +566,13 @@ namespace xsm{
 
             m_size++;
             delete non_leaf_ptr;
-            return std::make_pair(iterator(node), new_entry);
+            return std::make_pair(iterator(node), true);
           }
-          return std::make_pair(iterator(entry.second), new_entry);
+          else {
+            // Insertion unsuccessful, return iterator to existing element
+            delete node;
+            return std::make_pair(iterator(entry.second), false);
+          }
         }
 
         // 3. One key is prefix of the other -> The prefix key becomes the parent of the other entry
@@ -627,7 +631,6 @@ namespace xsm{
     
     node_ptr node = new detail::Node<T,Compare>(nullptr, true, std::forward<Args>(args)...);
     return NodeInTree(node, iterator(m_root), node->m_value_pair.first.begin());
-    
   }
 
   template <class T, class Compare> template<class... Args>
