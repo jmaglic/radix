@@ -1008,6 +1008,7 @@ namespace xsm::detail{
 
   template <class T, class Compare>
   void Node<T,Compare>::Remove(){
+    // TODO: This will keep the mapped object in the map and only make it inaccessible
     if (!IsChildless()){
       m_is_leaf = false;
     }
