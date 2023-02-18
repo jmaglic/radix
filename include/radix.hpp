@@ -536,6 +536,7 @@ namespace xsm{
   template <class T, class Compare>
   std::pair<typename radix<T,Compare>::iterator,bool> radix<T,Compare>::NodeInTree(
       node_ptr node, const_iterator parent, key_type::const_iterator key_start){
+    // TODO: Consider replacing node_ptr with node_type, to avoid deletion issues
 
     auto key_end = node->m_value_pair.first.end();
 
@@ -1025,6 +1026,8 @@ namespace xsm::detail{
       if (m_parent->IsChildless() && !m_parent->m_is_leaf && !m_parent->m_value_pair.first.empty()){
         m_parent->Remove();
       }
+      // TODO: Instead of deleteing node, return node handle. when the node handle's scope ends then 
+      // the node will be deleted
       delete this;
     }
   }

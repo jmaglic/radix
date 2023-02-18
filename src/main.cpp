@@ -55,7 +55,7 @@ int main(){
 
   // RADIX EXTRACT
 
-  if (true) {
+  if (false) {
   //typedef std::map<std::string, int> radix;
   typedef xsm::radix<int> radix;
 
@@ -112,7 +112,47 @@ int main(){
 
   }
 
-  //std::cout << "Copy constructed handle: " << nh_c.key() << std::endl; SEG FAULT
+  // Node handle is not empty
+
+  if (true) {
+    //typedef std::map<std::string, int> radix;
+    typedef xsm::radix<int> radix;
+
+    radix rdx({{"hello", 1}, {"hell", 2}, {"hellscape", 3}});
+
+    std::cout << "Contents" << std::endl;
+    for (auto e : rdx){
+      std::cout << e.first << std::endl;
+    }
+
+    auto nh = rdx.extract(rdx.find("hell"));
+
+    std::cout << "Node handle" << std::endl;
+    std::cout << nh.key() << ": " << nh.mapped() << std::endl;
+
+    auto moved_nh = radix::node_type();
+    moved_nh = std::move(nh);
+
+    std::cout << "Old Node handle" << std::endl;
+    std::cout << (nh.empty()? "Empty" : "Huh?") << std::endl;
+    //std::cout << nh.key() << ": " << nh.mapped() << std::endl;
+
+    std::cout << "New Node handle" << std::endl;
+    std::cout << moved_nh.key() << ": " << moved_nh.mapped() << std::endl;
+
+    rdx.emplace("hell", 31);
+
+    rdx.insert(std::move(moved_nh));
+
+    std::cout << "Old Node handle" << std::endl;
+    //std::cout << nh.key() << ": " << nh.mapped() << std::endl;
+    std::cout << (nh.empty()? "Empty" : "Huh?") << std::endl;
+
+    std::cout << "New Node handle" << std::endl;
+    std::cout << (moved_nh.empty()? "Empty" : "Huh?") << std::endl;
+    //std::cout << moved_nh.key() << ": " << moved_nh.mapped() << std::endl;
+  }
+
  
   /* ISSUE WITH STD::MAP
   radix rdx2nd;
