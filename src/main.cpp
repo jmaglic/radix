@@ -7,116 +7,111 @@
 int main(){
 
   {
-    // NODE HANDLE
+    // Node handle manipulation
     
     typedef xsm::radix<int> radix;
 
+    // Default constructor
+
     radix::node_type nh;
+    assert(nh.empty());
+    assert(!nh);
 
-    if (nh.empty()){
-      std::cout << "Empty" << std::endl;
-    }
+    // Get node handle from radix::extract
 
-    if (!nh){
-      std::cout << "Empty" << std::endl;
-    }
+    radix rdx({{"hello", 2}, {"hi", 3}, {"hel", 4}, {"h", 12}});
+   
+    auto nh_ex = rdx.extract("hel");
+
+    assert(nh_ex.key() == "hel");
+    assert(nh_ex.mapped() == 4);
+
+    // Move assignment
+
+    nh = std::move(nh_ex);
+
+    assert(nh_ex.empty());
+    assert(nh.key() == "hel");
+    assert(nh.mapped() == 4);
+
+    // Move construction
+    
+    nh_ex = rdx.extract("hi");
+
+    assert(nh_ex.key() == "hi");
+    assert(nh_ex.mapped() == 3);
+
+    radix::node_type nh_constructed(std::move(nh_ex));
+
+    assert(nh_ex.empty());
+    assert(nh_constructed.key() == "hi");
+    assert(nh_constructed.mapped() == 3);
+
+  }
+
+  {
+    // 
+    //typedef std::map<std::string, int> radix;
+    typedef xsm::radix<int> radix;
 
     radix rdx;
 
-    rdx.emplace("hello", 2);
-    rdx.emplace("hi", 3);
-    rdx.emplace("hel", 4);
-    rdx.emplace("h", 4);
-    
-    for (auto e : rdx) {
+    auto [it, suc] = rdx.emplace("a", 12);
+    rdx.emplace("b", 13);
+    rdx.emplace("ba", 14);
+    rdx.emplace("bb", 15);
+    rdx.emplace("c", 16);
+    rdx.emplace("ca", 17);
+    rdx.emplace("cb", 18);
+    rdx.emplace("cc", 19);
+
+    std::cout << "Contents" << std::endl;
+    for (auto e : rdx){
       std::cout << e.first << std::endl;
     }
 
-    auto ex_nh = rdx.extract("hel");
+    auto nh_a = rdx.extract(it);
+    auto nh_b = rdx.extract(std::string("b"));
+    auto nh_c = rdx.extract("c");
 
-    std::cout << "Extracted node with key: " << ex_nh.key() << std::endl;
-
-    for (auto e : rdx) {
+    std::cout << "Contents" << std::endl;
+    for (auto e : rdx){
       std::cout << e.first << std::endl;
     }
 
-    ex_nh = rdx.extract("h");
-    std::cout << "Extracted node with key: " << ex_nh.key() << std::endl;
+    rdx.insert(std::move(nh_a));
 
-    ex_nh = rdx.extract("");
-
-    for (auto e : rdx) {
+    std::cout << "Contents" << std::endl;
+    for (auto e : rdx){
       std::cout << e.first << std::endl;
     }
-  }
 
-  // TODO: Test rdx.extract("");
-  // May cause deletion of the entire tree?
+    // Call node move constructor
+    auto nh_movecon(std::move(nh_b));
+    std::cout << "Moved node handle: " << nh_movecon.key() << std::endl;
 
-  // RADIX EXTRACT
+    rdx.insert(std::move(nh_movecon));
 
-  if (false) {
-  //typedef std::map<std::string, int> radix;
-  typedef xsm::radix<int> radix;
+    auto nh_moveassign = radix::node_type();
+    nh_moveassign = std::move(nh_c);
+    std::cout << "Move assigned handle: " << nh_moveassign.key() << std::endl;
+    std::cout << "Move assigned handle: " << nh_moveassign.mapped() << std::endl;
 
-  radix rdx;
+    rdx.emplace("c", 13);
+    // Fail insert
+    rdx.insert(std::move(nh_moveassign));
 
-  auto [it, suc] = rdx.emplace("a", 12);
-  rdx.emplace("b", 13);
-  rdx.emplace("ba", 14);
-  rdx.emplace("bb", 15);
-  rdx.emplace("c", 16);
-  rdx.emplace("ca", 17);
-  rdx.emplace("cb", 18);
-  rdx.emplace("cc", 19);
+    std::cout << rdx["c"] << std::endl;
 
-  std::cout << "Contents" << std::endl;
-  for (auto e : rdx){
-    std::cout << e.first << std::endl;
-  }
-
-  auto nh_a = rdx.extract(it);
-  auto nh_b = rdx.extract(std::string("b"));
-  auto nh_c = rdx.extract("c");
-
-  std::cout << "Contents" << std::endl;
-  for (auto e : rdx){
-    std::cout << e.first << std::endl;
-  }
-
-  rdx.insert(std::move(nh_a));
-
-  std::cout << "Contents" << std::endl;
-  for (auto e : rdx){
-    std::cout << e.first << std::endl;
-  }
-
-  // Call node move constructor
-  auto nh_movecon(std::move(nh_b));
-  std::cout << "Moved node handle: " << nh_movecon.key() << std::endl;
-
-  rdx.insert(std::move(nh_movecon));
-
-  auto nh_moveassign = radix::node_type();
-  nh_moveassign = std::move(nh_c);
-  std::cout << "Move assigned handle: " << nh_moveassign.key() << std::endl;
-  std::cout << "Move assigned handle: " << nh_moveassign.mapped() << std::endl;
-
-  rdx.emplace("c", 13);
-  // Fail insert
-  rdx.insert(std::move(nh_moveassign));
-
-  std::cout << rdx["c"] << std::endl;
-
-  std::cout << (nh_moveassign.empty()? "Empty" : "WHAT") << std::endl;
+    std::cout << (nh_moveassign.empty()? "Empty" : "WHAT") << std::endl;
 
   }
 
   // Node handle is not empty
 
   if (true) {
-    //typedef std::map<std::string, int> radix;
-    typedef xsm::radix<int> radix;
+    typedef std::map<std::string, int> radix;
+    //typedef xsm::radix<int> radix;
 
     radix rdx({{"hello", 1}, {"hell", 2}, {"hellscape", 3}});
 
@@ -153,6 +148,24 @@ int main(){
     //std::cout << moved_nh.key() << ": " << moved_nh.mapped() << std::endl;
   }
 
+
+  //{
+  //  // Test extracting root node
+
+  //  //typedef xsm::radix<int> radix;
+  //  typedef std::map<std::string, int> radix;
+
+  //  radix rdx({{"", 1}, {"whop", 2}});
+
+  //  auto nh = rdx.extract("");
+
+  //  for (auto e : rdx){
+  //    std::cout << e.first << std::endl;
+  //  }
+
+  //  std::cout << nh.key() << nh.mapped() << std::endl;
+
+  //}
  
   /* ISSUE WITH STD::MAP
   radix rdx2nd;

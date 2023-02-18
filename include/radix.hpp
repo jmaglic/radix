@@ -335,7 +335,7 @@ namespace xsm{
       size_type m_size;
 
       key_type::const_iterator ProcessHint(const_iterator&, node_ptr);
-      std::pair<iterator,bool> NodeInTree(node_ptr, const_iterator, key_type::const_iterator);
+      std::pair<iterator,bool> NodeInTree(node_type&&, const_iterator, key_type::const_iterator);
   };
 }
  
@@ -483,11 +483,9 @@ namespace xsm{
     }
     iterator it;
     bool inserted;
-    std::tie(it,inserted) = NodeInTree(node.m_node_ptr, iterator(m_root), node.m_node_ptr->m_value_pair.first.begin());
-    if (inserted){
-      // Move assignment
-      node = node_type();
-    }
+    std::tie(it,std::ignore) = NodeInTree(std::move(node), iterator(m_root), node.m_node_ptr->m_value_pair.first.begin());
+    // Move assignment
+    node = node_type();
     return it;
   }
 
@@ -498,11 +496,9 @@ namespace xsm{
     }
     iterator it;
     bool inserted;
-    std::tie(it,inserted) = NodeInTree(node.m_node_ptr, pos, ProcessHint(pos,node.m_node_ptr));
-    if (inserted){
-      // Move assignment
-      node = node_type();
-    }
+    std::tie(it,std::ignore) = NodeInTree(std::move(node), pos, ProcessHint(pos,node.m_node_ptr));
+    // Move assignment
+    node = node_type();
     return it;
   }
 
@@ -535,10 +531,10 @@ namespace xsm{
 
   template <class T, class Compare>
   std::pair<typename radix<T,Compare>::iterator,bool> radix<T,Compare>::NodeInTree(
-      node_ptr node, const_iterator parent, key_type::const_iterator key_start){
+      node_type&& nh, const_iterator parent, key_type::const_iterator key_start){
     // TODO: Consider replacing node_ptr with node_type, to avoid deletion issues
 
-    auto key_end = node->m_value_pair.first.end();
+    auto key_end = nh.key().end();
 
     bool next_child;
     // This loop only repeats if we descend one level in the tree
@@ -562,16 +558,14 @@ namespace xsm{
             // Unlink non-leaf node and substitute with leaf node
            
             // Need to copy the pointer, because entry.second will be changed by SubstituteWith()
-            node_ptr non_leaf_ptr = entry.second;
-            non_leaf_ptr->SubstituteWith(node);
+            node_type non_leaf_handle(entry.second);
+            non_leaf_handle.m_node_ptr->SubstituteWith(nh.m_node_ptr);
 
             m_size++;
-            delete non_leaf_ptr;
-            return std::make_pair(iterator(node), true);
+            return std::make_pair(iterator(nh.m_node_ptr), true);
           }
           else {
             // Insertion unsuccessful, return iterator to existing element
-            delete node;
             return std::make_pair(iterator(entry.second), false);
           }
         }
@@ -581,14 +575,14 @@ namespace xsm{
           // New keyword is prefix of the existing nodekey
           if (key_end == last_match.first){
             // Add a new node with the prefix to the current node
-            parent.m_node->AddChild(std::string(key_start, key_end), node);
+            parent.m_node->AddChild(std::string(key_start, key_end), nh.m_node_ptr);
             // Old child node becomes child of the new node
-            node->AddChild(std::string(last_match.second, entrykey_end), entry.second);
+            nh.m_node_ptr->AddChild(std::string(last_match.second, entrykey_end), entry.second);
             // Remove old node from current node
             parent.m_node->m_children.erase(entry.first);
 
             m_size++;
-            return std::make_pair(iterator(node),true);
+            return std::make_pair(iterator(nh.m_node_ptr),true);
           }
           else {
             // Insert new keyword as child of its prefix
@@ -613,25 +607,25 @@ namespace xsm{
           entry.second->SetParent(parent_ptr);
           parent.m_node->m_children.erase(entry.first); 
           // New entry
-          parent_ptr->AddChild(std::string(last_match.first,key_end), node);
+          parent_ptr->AddChild(std::string(last_match.first,key_end), nh.m_node_ptr);
 
           m_size++;
-          return std::make_pair(iterator(node),true);
+          return std::make_pair(iterator(nh.m_node_ptr),true);
         }
       }
     } while (next_child);
     
     // 5. No common prefix has been found in any children -> keyword becomes a new entry
-    parent.m_node->AddChild(std::string(key_start, key_end), node);
+    parent.m_node->AddChild(std::string(key_start, key_end), nh.m_node_ptr);
     m_size++;
-    return std::make_pair(iterator(node), true);
+    return std::make_pair(iterator(nh.m_node_ptr), true);
   }
   
   template <class T, class Compare> template <class... Args>
   std::pair<detail::Iterator_impl<T,Compare>,bool> radix<T,Compare>::emplace(Args&&... args){
     
     node_ptr node = new detail::Node<T,Compare>(nullptr, true, std::forward<Args>(args)...);
-    return NodeInTree(node, iterator(m_root), node->m_value_pair.first.begin());
+    return NodeInTree(node_type(node), iterator(m_root), node->m_value_pair.first.begin());
   }
 
   template <class T, class Compare> template<class... Args>
@@ -642,7 +636,7 @@ namespace xsm{
     const_iterator parent = --pos;
     key_type::const_iterator key_start = ProcessHint(parent, node);
 
-    return NodeInTree(node, parent, key_start).first;
+    return NodeInTree(node_type(node), parent, key_start).first;
   }
 
   template <class T, class Compare>
@@ -982,7 +976,6 @@ namespace xsm::detail{
   // Move constructor
   template <class T, class Compare>
   Node<T,Compare>::Node(Node&& node) noexcept {
-    std::cout << "Node move constructor" << std::endl;
 
     // Assuming that the user only has access to nodes outside of tree
     assert(node.m_parent == nullptr);
@@ -997,7 +990,6 @@ namespace xsm::detail{
   // Move assignment operator
   template <class T, class Compare>
   Node<T,Compare>& Node<T,Compare>::operator=(Node&& node) noexcept {
-    std::cout << "Node move assignment" << std::endl;
 
     // Assuming that the user only has access to nodes outside of tree
     assert(node.m_parent == nullptr);
@@ -1217,6 +1209,9 @@ namespace xsm::detail{
     // Otherwise, node will be deleted by its parent
     if (m_node_ptr && !m_node_ptr->GetParent() && !m_node_ptr->CountChildren()){
       delete m_node_ptr;
+    }
+    else {
+      m_node_ptr = nullptr;
     }
   }
 
