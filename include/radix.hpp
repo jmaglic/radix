@@ -148,6 +148,17 @@ namespace xsm::detail{
   };
 
   //friend void swap(Node_handle& x, Node_handle& y) noexcept(noexcept(x.swap(y)));
+  
+  ////////////////////////
+  // INSERT RETURN TYPE //
+  ////////////////////////
+
+  template <class Iter, class NodeType>
+  struct Node_insert_bundle{
+    Iter position;
+    NodeType node;
+    bool inserted;
+  };
 
   //////////////
   // ITERATOR //
@@ -228,6 +239,7 @@ namespace xsm{
       typedef std::reverse_iterator<iterator> reverse_iterator;
       typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
       typedef detail::Node_handle<mapped_type,key_compare> node_type;
+      typedef detail::Node_insert_bundle<iterator,node_type> insert_return_type;
 
       // Constructors and related
       radix();
@@ -253,8 +265,7 @@ namespace xsm{
       iterator insert(const_iterator, value_type&&);
       template<class InputIt> void insert(InputIt, InputIt);
       void insert(std::initializer_list<value_type>);
-      //insert_return_type insert(node_type&&);
-      iterator insert(node_type&&); // TODO replace return type
+      insert_return_type insert(node_type&&); // TODO replace return type
       iterator insert(const_iterator, node_type&&);
       std::pair<iterator,bool> insert(const key_type&, const mapped_type&); // TODO: Reevaluate
       std::pair<bool,bool> insert(const std::vector<std::string>&, const mapped_type&); // TODO: Reevaluate
@@ -477,16 +488,22 @@ namespace xsm{
   }
 
   template <class T, class Compare>
-  typename radix<T,Compare>::iterator radix<T,Compare>::insert(node_type&& node){
+  typename radix<T,Compare>::insert_return_type radix<T,Compare>::insert(node_type&& node){
+    insert_return_type retval;
     if (node.empty()){
-      return end();
+      retval.inserted = false;
+      retval.node = std::move(node);
+      retval.position = end();
     }
-    iterator it;
-    bool inserted;
-    std::tie(it,std::ignore) = NodeInTree(std::move(node), iterator(m_root), node.m_node_ptr->m_value_pair.first.begin());
-    // Move assignment
-    node = node_type();
-    return it;
+    else {
+      std::tie(retval.position,retval.inserted) 
+        = NodeInTree(std::move(node), iterator(m_root), node.m_node_ptr->m_value_pair.first.begin());
+      retval.node = std::move(node);
+      if (retval.inserted) {
+        retval.node = node_type();
+      }
+    }
+    return retval;
   }
 
   template <class T, class Compare>
@@ -495,7 +512,6 @@ namespace xsm{
       return end();
     }
     iterator it;
-    bool inserted;
     std::tie(it,std::ignore) = NodeInTree(std::move(node), pos, ProcessHint(pos,node.m_node_ptr));
     // Move assignment
     node = node_type();

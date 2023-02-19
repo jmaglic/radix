@@ -2,14 +2,16 @@
 #include <map>
 #include <vector>
 
+#include "commonwords.hpp"
 #include "radix.hpp"
 
 int main(){
+    
+  typedef xsm::radix<int> radix;
+  //typedef std::map<std::string,int> radix;
 
   {
     // Node handle manipulation
-    
-    typedef xsm::radix<int> radix;
 
     // Default constructor
 
@@ -50,123 +52,126 @@ int main(){
   }
 
   {
-    // 
-    //typedef std::map<std::string, int> radix;
-    typedef xsm::radix<int> radix;
+    // Extract and insert 
 
-    radix rdx;
+    radix rdx({{"a", 12}, {"b", 13}, {"ba", 14}, {"bb", 15}, 
+        {"c", 16}, {"ca", 17}, {"cb", 18}, {"cc", 19}});
 
-    auto [it, suc] = rdx.emplace("a", 12);
-    rdx.emplace("b", 13);
-    rdx.emplace("ba", 14);
-    rdx.emplace("bb", 15);
-    rdx.emplace("c", 16);
-    rdx.emplace("ca", 17);
-    rdx.emplace("cb", 18);
-    rdx.emplace("cc", 19);
+    assert(rdx.size() == 8);
 
-    std::cout << "Contents" << std::endl;
-    for (auto e : rdx){
-      std::cout << e.first << std::endl;
-    }
-
-    auto nh_a = rdx.extract(it);
+    // Extract overloads
+    auto nh_a = rdx.extract(rdx.find("a"));
     auto nh_b = rdx.extract(std::string("b"));
     auto nh_c = rdx.extract("c");
 
-    std::cout << "Contents" << std::endl;
-    for (auto e : rdx){
-      std::cout << e.first << std::endl;
+    assert(rdx.size() == 5);
+
+    {
+      // Insert node handle
+      
+      auto insert_return = rdx.insert(std::move(nh_a));
+
+      assert(rdx.size() == 6);
+      assert(rdx.contains("a"));
+      assert(insert_return.position == rdx.find("a"));
+      assert(insert_return.node.empty());
+      assert(insert_return.inserted);
     }
 
-    rdx.insert(std::move(nh_a));
+    {
+      // Move node, then insert
+      
+      auto nh_movecon(std::move(nh_b));
 
-    std::cout << "Contents" << std::endl;
-    for (auto e : rdx){
-      std::cout << e.first << std::endl;
+      assert(nh_b.empty());
+      assert(nh_movecon.key() == "b");
+      assert(nh_movecon.mapped() == 13);
+
+      auto insert_return = rdx.insert(std::move(nh_movecon));
+
+      assert(rdx.size() == 7);
+      assert(rdx.contains("b"));
+      assert(insert_return.position == rdx.find("b"));
+      assert(insert_return.node.empty());
+      assert(insert_return.inserted);
+      assert(nh_movecon.empty());
+
     }
 
-    // Call node move constructor
-    auto nh_movecon(std::move(nh_b));
-    std::cout << "Moved node handle: " << nh_movecon.key() << std::endl;
+    {
+      // Failed insert
+      
+      rdx.emplace("c", 13);
 
-    rdx.insert(std::move(nh_movecon));
+      auto insert_return = rdx.insert(std::move(nh_c));
 
-    auto nh_moveassign = radix::node_type();
-    nh_moveassign = std::move(nh_c);
-    std::cout << "Move assigned handle: " << nh_moveassign.key() << std::endl;
-    std::cout << "Move assigned handle: " << nh_moveassign.mapped() << std::endl;
+      assert(rdx.size() == 8);
+      assert(rdx.contains("c"));
+      assert(rdx["c"] == 13);
+      assert(insert_return.position == rdx.find("c"));
+      assert(!insert_return.node.empty());
+      assert(insert_return.node.key() == "c");
+      assert(!insert_return.inserted);
+      assert(nh_c.empty());
 
-    rdx.emplace("c", 13);
-    // Fail insert
-    rdx.insert(std::move(nh_moveassign));
-
-    std::cout << rdx["c"] << std::endl;
-
-    std::cout << (nh_moveassign.empty()? "Empty" : "WHAT") << std::endl;
-
+    }
   }
 
-  // Node handle is not empty
-
-  if (true) {
-    typedef std::map<std::string, int> radix;
-    //typedef xsm::radix<int> radix;
+  {
+    // Test situations where node handle becomes empty
 
     radix rdx({{"hello", 1}, {"hell", 2}, {"hellscape", 3}});
 
-    std::cout << "Contents" << std::endl;
-    for (auto e : rdx){
-      std::cout << e.first << std::endl;
-    }
-
     auto nh = rdx.extract(rdx.find("hell"));
 
-    std::cout << "Node handle" << std::endl;
-    std::cout << nh.key() << ": " << nh.mapped() << std::endl;
+    assert(nh.key() == "hell");
+    assert(nh.mapped() == 2);
 
-    auto moved_nh = radix::node_type();
-    moved_nh = std::move(nh);
+    // Move node
+    auto moved_nh = std::move(nh);
 
-    std::cout << "Old Node handle" << std::endl;
-    std::cout << (nh.empty()? "Empty" : "Huh?") << std::endl;
-    //std::cout << nh.key() << ": " << nh.mapped() << std::endl;
+    assert(nh.empty());
+    assert(moved_nh.key() == "hell");
+    assert(moved_nh.mapped() == 2);
 
-    std::cout << "New Node handle" << std::endl;
-    std::cout << moved_nh.key() << ": " << moved_nh.mapped() << std::endl;
-
+    // Block key in rdx
     rdx.emplace("hell", 31);
 
-    rdx.insert(std::move(moved_nh));
+    auto ret = rdx.insert(std::move(moved_nh));
 
-    std::cout << "Old Node handle" << std::endl;
-    //std::cout << nh.key() << ": " << nh.mapped() << std::endl;
-    std::cout << (nh.empty()? "Empty" : "Huh?") << std::endl;
-
-    std::cout << "New Node handle" << std::endl;
-    std::cout << (moved_nh.empty()? "Empty" : "Huh?") << std::endl;
-    //std::cout << moved_nh.key() << ": " << moved_nh.mapped() << std::endl;
+    assert(!ret.inserted);
+    assert(ret.position == rdx.find("hell"));
+    assert(rdx.at("hell") == 31);
+    assert(nh.empty());
+    assert(moved_nh.empty());
   }
 
+  {
+    // Insert node handle with hint
+    
+    auto [common_words, imported] = commonwords::readWords();
+    if (!imported){
+      commonwords::failedImport();
+    }
 
-  //{
-  //  // Test extracting root node
+    radix rdx;
 
-  //  //typedef xsm::radix<int> radix;
-  //  typedef std::map<std::string, int> radix;
+    for (const std::string& word : common_words){
+      rdx.emplace(word, 1);
+    }
 
-  //  radix rdx({{"", 1}, {"whop", 2}});
+    radix rdx_2nd;
+    auto it = rdx_2nd.end();
 
-  //  auto nh = rdx.extract("");
+    for (const std::string& word : common_words){
+      auto nh = rdx.extract(word);
+      it = rdx_2nd.insert(it, std::move(nh));
 
-  //  for (auto e : rdx){
-  //    std::cout << e.first << std::endl;
-  //  }
+      assert(it->first == word);
+    }
+    assert(rdx_2nd.size() == 10000);
+  }
 
-  //  std::cout << nh.key() << nh.mapped() << std::endl;
-
-  //}
- 
   /* ISSUE WITH STD::MAP
   radix rdx2nd;
   rdx2nd.insert({{"cool", 1}, {"story", 29}});
