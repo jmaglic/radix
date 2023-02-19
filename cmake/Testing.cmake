@@ -7,6 +7,7 @@ set(TEST_NAMES
   radix_emplace
   radix_insert
   radix_insert_hint
+  radix_extract
   radix_overwrite
   radix_contains
   radix_dereference
