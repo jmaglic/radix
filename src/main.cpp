@@ -7,35 +7,6 @@
 
 int main(){
     
-  typedef xsm::radix<int> radix;
-  //typedef std::map<std::string,int> radix;
-
-  {
-    // Extract from one tree and insert into other with hint
-    
-    auto [common_words, imported] = commonwords::readWords();
-    if (!imported){
-      commonwords::failedImport();
-    }
-
-    radix rdx;
-
-    for (const std::string& word : common_words){
-      rdx.emplace(word, 1);
-    }
-
-    radix rdx_2nd;
-    auto it = rdx_2nd.end();
-
-    for (const std::string& word : common_words){
-      auto nh = rdx.extract(word);
-      it = rdx_2nd.insert(it, std::move(nh));
-
-      assert(it->first == word);
-    }
-    assert(rdx_2nd.size() == 10000);
-  }
-
   /* ISSUE WITH STD::MAP
   radix rdx2nd;
   rdx2nd.insert({{"cool", 1}, {"story", 29}});

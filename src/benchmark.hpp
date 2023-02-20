@@ -13,7 +13,7 @@ namespace benchmark{
     func();
     
     std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-    std::cout << "Benchmark " << bm_name << ": "
+    std::cout << "Benchmark - " << bm_name << ": "
       << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() 
       << " us" << std::endl;
   }
