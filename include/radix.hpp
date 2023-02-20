@@ -265,7 +265,7 @@ namespace xsm{
       iterator insert(const_iterator, value_type&&);
       template<class InputIt> void insert(InputIt, InputIt);
       void insert(std::initializer_list<value_type>);
-      insert_return_type insert(node_type&&); // TODO replace return type
+      insert_return_type insert(node_type&&);
       iterator insert(const_iterator, node_type&&);
       std::pair<iterator,bool> insert(const key_type&, const mapped_type&); // TODO: Reevaluate
       std::pair<bool,bool> insert(const std::vector<std::string>&, const mapped_type&); // TODO: Reevaluate
@@ -548,7 +548,6 @@ namespace xsm{
   template <class T, class Compare>
   std::pair<typename radix<T,Compare>::iterator,bool> radix<T,Compare>::NodeInTree(
       node_type&& nh, const_iterator parent, key_type::const_iterator key_start){
-    // TODO: Consider replacing node_ptr with node_type, to avoid deletion issues
 
     auto key_end = nh.key().end();
 
