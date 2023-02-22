@@ -75,7 +75,6 @@ namespace xsm::detail{
     void print(); // TODO just for testing
 
     // Container operations
-    void Remove();
     const Node<T,Compare>* Retrieve(const key_type&) const;
     node_ptr Retrieve(const key_type&);
     size_t CountChildren() const;
@@ -665,11 +664,10 @@ namespace xsm{
 
   template <class T, class Compare>
   typename radix<T,Compare>::iterator radix<T,Compare>::erase(const_iterator it){
-    detail::Node<T,Compare>* node = it.m_node;
-    ++it;
-    node->Remove();
-    --m_size;
-    return iterator(it.m_node); 
+    auto ret_it = it;
+    ++ret_it;
+    extract(it);
+    return iterator(ret_it.m_node);
   }
 
   template <class T, class Compare>
@@ -713,8 +711,6 @@ namespace xsm{
     // Decrementing the counter causes an issue when the iterator doesn't point to an element in this radix
     // but this is the same behaviour as in std::map
     --m_size;
-
-    assert(extracted->m_children.empty() && !extracted->m_parent);
 
     return node_type(extracted);
   }
@@ -1019,28 +1015,6 @@ namespace xsm::detail{
     m_is_leaf = true;
     
     return *this;
-  }
-
-  template <class T, class Compare>
-  void Node<T,Compare>::Remove(){
-    // TODO: This will keep the mapped object in the map and only make it inaccessible
-    if (!IsChildless()){
-      m_is_leaf = false;
-    }
-    else {
-      const std::string key = StrDiff(m_value_pair.first, m_parent->m_value_pair.first);
-      m_parent->m_children.erase(key);
-      // Recursively delete ancestor, if they
-      //  - do not have other children, and
-      //  - are not a leaf node, and
-      //  - are not the root node
-      if (m_parent->IsChildless() && !m_parent->m_is_leaf && !m_parent->m_value_pair.first.empty()){
-        m_parent->Remove();
-      }
-      // TODO: Instead of deleteing node, return node handle. when the node handle's scope ends then 
-      // the node will be deleted
-      delete this;
-    }
   }
 
   template <class T, class Compare>
