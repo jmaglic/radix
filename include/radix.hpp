@@ -27,10 +27,14 @@ namespace xsm{
 }
 
 namespace xsm::detail{
+  // Aux function declaration
   std::string StrDiff(const std::string&, const std::string&);
 
   // Forward declaration for friend relation
   template <class T, class Compare, class ItType=T> class Iterator_impl;
+  template <class T, class Compare> class Node;
+  template <class T, class Compare> class Node_handle;
+  template <class Iter, class NodeType> struct Node_insert_bundle;
 
   //////////
   // NODE //
@@ -1121,6 +1125,7 @@ namespace xsm::detail{
     // Let parent adopt new node
     parent->Adopt(empty_node);
 
+    // TODO use std::map::swap
     // Transfer children from target to new node
     auto it = m_children.begin();
 
