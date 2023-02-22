@@ -36,6 +36,8 @@ int main(){
       it = rdx_2nd.insert(it, std::move(nh));
     }
   };
+
+  benchmark::time(extract_then_insert, "radix extract the insert");
     
 }
 

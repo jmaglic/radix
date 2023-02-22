@@ -1125,19 +1125,11 @@ namespace xsm::detail{
     // Let parent adopt new node
     parent->Adopt(empty_node);
 
-    // TODO use std::map::swap
     // Transfer children from target to new node
-    auto it = m_children.begin();
+    empty_node->m_children.swap(m_children);
 
-    while (it != m_children.end()) {
-      // Increment iterator, store old iterator
-      auto extract_it = it++;
-      // Extract child from map
-      auto nh = m_children.extract(extract_it);
-      // Empty node adopts child
-      nh.mapped()->SetParent(empty_node);
-      // Child is inserted in empty node's map
-      empty_node->m_children.insert(std::move(nh));
+    for (auto it : empty_node->m_children){
+      it.second->SetParent(empty_node);
     }
   }
   
