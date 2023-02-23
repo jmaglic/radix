@@ -60,16 +60,13 @@ namespace xsm::detail{
     value_type m_value_pair;
     node_ptr m_parent;
     child_map m_children;
-    bool m_is_leaf; // TODO Make const
+    const bool m_is_leaf;
 
     // Constructors and related
     Node();
     Node(node_ptr, value_type&&, const bool=false);
     template <class... Args> Node(node_ptr, const bool, Args&&...);
-    Node(const Node&);
-    Node(Node&&) noexcept;
     ~Node();
-    Node& operator=(Node&&) noexcept;
    
     // Display
     void print(); // TODO just for testing
@@ -80,7 +77,6 @@ namespace xsm::detail{
     size_t CountChildren() const;
 
     // Methods used during container manipulation
-    void MakeLeaf(const mapped_type&); // TODO Remove
     node_ptr AddChild(const key_type&, node_ptr);
     node_ptr AddChild(const key_type&);
   
@@ -988,35 +984,6 @@ namespace xsm::detail{
     }
   }
 
-  // Move constructor
-  template <class T, class Compare>
-  Node<T,Compare>::Node(Node&& node) noexcept {
-
-    // Assuming that the user only has access to nodes outside of tree
-    assert(node.m_parent == nullptr);
-    assert(node.m_children.size() == 0);
-    assert(node.m_is_leaf);
-
-    m_value_pair = std::move(node.m_value_pair);
-    m_is_leaf = true;
-
-  }
-  
-  // Move assignment operator
-  template <class T, class Compare>
-  Node<T,Compare>& Node<T,Compare>::operator=(Node&& node) noexcept {
-
-    // Assuming that the user only has access to nodes outside of tree
-    assert(node.m_parent == nullptr);
-    assert(node.m_children.size() == 0);
-    assert(node.m_is_leaf);
-
-    m_value_pair = std::move(node.m_value_pair);
-    m_is_leaf = true;
-    
-    return *this;
-  }
-
   template <class T, class Compare>
   const Node<T,Compare>* Node<T,Compare>::Retrieve(const key_type& key) const {
     if (key.empty()){
@@ -1043,12 +1010,6 @@ namespace xsm::detail{
     return m_children.size();
   }
   
-  template <class T, class Compare>
-  void Node<T,Compare>::MakeLeaf(const mapped_type& value){
-    m_value_pair.second = value;
-    m_is_leaf = true;
-  }
-
   template <class T, class Compare>
   typename Node<T,Compare>::node_ptr Node<T,Compare>::AddChild(const key_type& word, node_ptr node){
     node->SetParent(this);
