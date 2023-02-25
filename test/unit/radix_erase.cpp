@@ -35,9 +35,9 @@ int main() {
     assert(rdx.empty());
 
     // Correct return iterator
-    rdx.insert("hello", true);
-    rdx.insert("hell", true);
-    rdx.insert("he", true);
+    rdx.emplace("hello", true);
+    rdx.emplace("hell", true);
+    rdx.emplace("he", true);
     assert(rdx.size() == 3);
 
     it = rdx.erase(rdx.find("he"));
@@ -55,13 +55,13 @@ int main() {
     xsm::radix<bool> rdx;
     
     // erase(iterator)
-    rdx.insert("hello",true);
+    rdx.emplace("hello",true);
     rdx.erase(rdx.begin());
     assert(!rdx.contains("hello"));
     assert(rdx.size() == 0);
 
     // erase(const iterator)
-    rdx.insert("hello",true);
+    rdx.emplace("hello",true);
     rdx.erase(rdx.cbegin());
     assert(!rdx.contains("hello"));
     assert(rdx.size() == 0);

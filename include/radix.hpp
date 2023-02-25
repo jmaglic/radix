@@ -265,8 +265,6 @@ namespace xsm{
       void insert(std::initializer_list<value_type>);
       insert_return_type insert(node_type&&);
       iterator insert(const_iterator, node_type&&);
-      std::pair<iterator,bool> insert(const key_type&, const mapped_type&); // TODO: Reevaluate
-      std::pair<bool,bool> insert(const std::vector<key_type>&, const mapped_type&); // TODO: Reevaluate
       // template< class M > std::pair<iterator, bool> insert_or_assign( const Key& k, M&& obj );
       // template< class M > std::pair<iterator, bool> insert_or_assign( Key&& k, M&& obj );
       // template< class M > iterator insert_or_assign( const_iterator hint, const Key& k, M&& obj );
@@ -374,7 +372,7 @@ namespace xsm{
   radix<T,Compare>::radix(const radix& rdx){
     m_root = new detail::Node<T,Compare>();
     for (auto it = rdx.begin(); it != rdx.end(); ++it){
-      insert(it->first, it->second);
+      emplace(it->first, it->second);
     }
     m_size = rdx.size();
   }
@@ -468,23 +466,6 @@ namespace xsm{
     }
   }
   
-  template <class T, class Compare>
-  std::pair<detail::Iterator_impl<T,Compare>,bool> radix<T,Compare>::insert(const key_type& key, const mapped_type& value){
-    return emplace(std::move(std::make_pair(key, value)));
-  }
-  
-  template <class T, class Compare>
-  std::pair<bool,bool> radix<T,Compare>::insert(const std::vector<key_type>& key_list, const mapped_type& value){
-    bool all = true;
-    bool any = false;
-    for (const key_type& key : key_list){
-      bool success = insert(key, value).second;
-      all &= success;
-      any |= success;
-    }
-    return std::make_pair(all,any);
-  }
-
   template <class T, class Compare>
   typename radix<T,Compare>::insert_return_type radix<T,Compare>::insert(node_type&& node){
     insert_return_type retval;

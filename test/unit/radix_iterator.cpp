@@ -10,7 +10,7 @@ int main() {
   // Insert
   size_t i = 0;
   for (i = 0; i < keys.size(); ++i){
-    rdx.insert(keys[i], true);
+    rdx.emplace(keys[i], true);
   }
 
   // begin and end

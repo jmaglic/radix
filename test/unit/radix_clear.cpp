@@ -3,14 +3,13 @@
 // Use of clear() and empty()
 int main() {
   xsm::radix<bool> rdx;
-  bool success = true;
-  success &= rdx.empty();
+  assert(rdx.empty());
   
-  rdx.insert("something",true);
-  success &= !rdx.empty();
+  rdx.emplace("something",true);
+  assert(!rdx.empty());
 
   rdx.clear();
-  success &= rdx.empty();
-  return success? 0 : -1;
+  assert(rdx.empty());
+  return 0;
 }
 

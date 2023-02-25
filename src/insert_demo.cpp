@@ -20,7 +20,7 @@ int main() {
       exit = true;
     }
     else {
-      rdx.insert(word,true);
+      rdx.emplace(word,true);
       rdx.print();
     }
   }

@@ -2,18 +2,17 @@
 
 // Use of contains()
 int main() {
-  bool success = true;
   xsm::radix<bool> rdx;
-  rdx.insert("hello",true);
-  rdx.insert("hellscape",true);
+  rdx.emplace("hello",true);
+  rdx.emplace("hellscape",true);
   
-  success &= rdx.contains("hello");
-  success &= !rdx.contains("hell");
+  assert(rdx.contains("hello"));
+  assert(!rdx.contains("hell"));
   
-  rdx.insert("hell",true);
+  rdx.emplace("hell",true);
 
-  success &= rdx.contains("hell");
+  assert(rdx.contains("hell"));
 
-  return success? 0 : -1;
+  return 0;
 }
 
