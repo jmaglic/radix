@@ -93,9 +93,9 @@ namespace xsm::detail{
     bool IsLeaf() const;
 
     // Get and set
-    Node* GetParent() const;
+    node_ptr GetParent() const;
     void SetParent(node_ptr);
-    Node* GetFirstChild() const;
+    node_ptr GetFirstChild() const;
     const child_map& GetChildren() const;
     const key_type& GetKey() const;
   };
@@ -251,8 +251,7 @@ namespace xsm{
       radix<T,Compare>& operator=(radix<T,Compare>&&) noexcept;
 
       // Capacity
-      bool empty() const;
-      //[[nodiscard]] bool empty() const noexcept;
+      [[nodiscard]] bool empty() const noexcept;
       size_type size() const noexcept;
   
       // Modifiers
@@ -415,7 +414,7 @@ namespace xsm{
   }
 
   template <class T, class Compare>
-  bool radix<T,Compare>::empty() const {
+  [[nodiscard]] bool radix<T,Compare>::empty() const noexcept {
     return begin() == end();
   }
   
@@ -1111,7 +1110,7 @@ namespace xsm::detail{
   }
   
   template <class T, class Compare>
-  Node<T,Compare>* Node<T,Compare>::GetParent() const {
+  typename Node<T,Compare>::node_ptr Node<T,Compare>::GetParent() const {
     return m_parent;
   }
   
@@ -1121,7 +1120,7 @@ namespace xsm::detail{
   }
   
   template <class T, class Compare>
-  Node<T,Compare>* Node<T,Compare>::GetFirstChild() const {
+  typename Node<T,Compare>::node_ptr Node<T,Compare>::GetFirstChild() const {
     return m_children.begin()->second;
   }
   
