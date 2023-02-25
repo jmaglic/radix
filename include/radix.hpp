@@ -267,7 +267,7 @@ namespace xsm{
       insert_return_type insert(node_type&&);
       iterator insert(const_iterator, node_type&&);
       std::pair<iterator,bool> insert(const key_type&, const mapped_type&); // TODO: Reevaluate
-      std::pair<bool,bool> insert(const std::vector<std::string>&, const mapped_type&); // TODO: Reevaluate
+      std::pair<bool,bool> insert(const std::vector<key_type>&, const mapped_type&); // TODO: Reevaluate
       // template< class M > std::pair<iterator, bool> insert_or_assign( const Key& k, M&& obj );
       // template< class M > std::pair<iterator, bool> insert_or_assign( Key&& k, M&& obj );
       // template< class M > iterator insert_or_assign( const_iterator hint, const Key& k, M&& obj );
@@ -589,9 +589,9 @@ namespace xsm{
           // New keyword is prefix of the existing nodekey
           if (key_end == last_match.first){
             // Add a new node with the prefix to the current node
-            parent.m_node->AddChild(std::string(key_start, key_end), nh.m_node_ptr);
+            parent.m_node->AddChild(key_type(key_start, key_end), nh.m_node_ptr);
             // Old child node becomes child of the new node
-            nh.m_node_ptr->AddChild(std::string(last_match.second, entrykey_end), entry.second);
+            nh.m_node_ptr->AddChild(key_type(last_match.second, entrykey_end), entry.second);
             // Remove old node from current node
             parent.m_node->m_children.erase(entry.first);
 
@@ -612,16 +612,16 @@ namespace xsm{
         // This node has two children, one representing the new key, the other representing the
         // entry key
         else {
-          std::string common_prefix(key_start, last_match.first);
+          key_type common_prefix(key_start, last_match.first);
 
           // New parent
-          node_ptr parent_ptr = parent.m_node->AddChild(std::string(key_start, last_match.first));
+          node_ptr parent_ptr = parent.m_node->AddChild(key_type(key_start, last_match.first));
           // Old entry
-          parent_ptr->AddChild(std::string(last_match.second,entrykey_end), entry.second);
+          parent_ptr->AddChild(key_type(last_match.second,entrykey_end), entry.second);
           entry.second->SetParent(parent_ptr);
           parent.m_node->m_children.erase(entry.first); 
           // New entry
-          parent_ptr->AddChild(std::string(last_match.first,key_end), nh.m_node_ptr);
+          parent_ptr->AddChild(key_type(last_match.first,key_end), nh.m_node_ptr);
 
           m_size++;
           return std::make_pair(iterator(nh.m_node_ptr),true);
@@ -630,7 +630,7 @@ namespace xsm{
     } while (next_child);
     
     // 5. No common prefix has been found in any children -> keyword becomes a new entry
-    parent.m_node->AddChild(std::string(key_start, key_end), nh.m_node_ptr);
+    parent.m_node->AddChild(key_type(key_start, key_end), nh.m_node_ptr);
     m_size++;
     return std::make_pair(iterator(nh.m_node_ptr), true);
   }
@@ -729,12 +729,12 @@ namespace xsm{
   }
 
   template <class T, class Compare>
-  T& radix<T,Compare>::at(const std::string& key){
+  T& radix<T,Compare>::at(const key_type& key){
     return const_cast<T&>(std::as_const(*this).at(key));
   }
 
   template <class T, class Compare>
-  const T& radix<T,Compare>::at(const std::string& key) const {
+  const T& radix<T,Compare>::at(const key_type& key) const {
     const detail::Node<T,Compare>* ptr = m_root->Retrieve(key);
     if (ptr == nullptr){
       throw std::out_of_range("radix::at:  key not found");
@@ -753,12 +753,12 @@ namespace xsm{
   }
 
   template <class T, class Compare>
-  T& radix<T,Compare>::operator[](const std::string& key){
+  T& radix<T,Compare>::operator[](const key_type& key){
     return insert(std::make_pair(key, T())).first->second;
   }
 
   template <class T, class Compare>
-  bool radix<T,Compare>::contains(const std::string& key) const {
+  bool radix<T,Compare>::contains(const key_type& key) const {
     const detail::Node<T,Compare>* ptr = m_root->Retrieve(key);
     return (ptr != nullptr && ptr->m_is_leaf);
   }
@@ -904,11 +904,11 @@ namespace xsm::detail{
     // Until we reach the root node
     while (!m_node->m_value_pair.first.empty()){
       // If node has no children, then go up to parent and remember child
-      std::string prev_child = m_node->m_value_pair.first;
+      key_type prev_child = m_node->m_value_pair.first;
       m_node = m_node->GetParent();
 
       // Find next child 
-      std::string key = StrDiff(prev_child, m_node->m_value_pair.first);
+      key_type key = StrDiff(prev_child, m_node->m_value_pair.first);
       auto it = m_node->m_children.find(key);
       ++it;
       if (it != m_node->m_children.end()){
@@ -992,9 +992,9 @@ namespace xsm::detail{
     auto begin = key.begin();
     auto end = key.end();
     for (auto pos = begin; pos <= end; ++pos){
-      std::string substr(begin,pos);
+      key_type substr(begin,pos);
       if (m_children.contains(substr)){
-        return m_children.at(substr)->Retrieve(std::string(pos,end));
+        return m_children.at(substr)->Retrieve(key_type(pos,end));
       }
     }
     return nullptr;
