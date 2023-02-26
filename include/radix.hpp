@@ -1004,6 +1004,11 @@ namespace xsm::detail{
 
   template <class T, class Compare>
   typename Node<T,Compare>::node_ptr Node<T,Compare>::Retrieve(const key_type& key) {
+    // The use of const_cast is typically discouraged. As far as I understand, it is okay in this
+    // case, because casting away the const is allowed if the underlying object is not const. Since
+    // this node has to be non-const for this function to be called, the "constness" of the returned
+    // node pointer can be cast away. The danger that the object is stored in read-only memory does
+    // not exist.
     return const_cast<node_ptr>(std::as_const(*this).Retrieve(key)); 
   }
 
