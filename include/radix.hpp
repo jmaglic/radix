@@ -7,9 +7,9 @@
 #ifndef radix_hpp
 #define radix_hpp
 
-//////////////////
-// DECLARATIONS //
-//////////////////
+//////////////
+// INCLUDES //
+//////////////
 
 #include <map>
 #include <string>
@@ -20,6 +20,10 @@
 #include <iterator>
 #include <functional>
 #include <utility>
+
+//////////////////
+// DECLARATIONS //
+//////////////////
 
 // Forward declaration for friend relation
 namespace xsm{
@@ -39,8 +43,21 @@ namespace xsm::detail{
   //////////
   // NODE //
   //////////
-  // Node represents a key-value pair
-  template <class T, class Compare> class Node{
+  // Node is the class that stores the key-value pair, when an element is added
+  // to the radix tree. Each node represents one pair and connects to other nodes
+  // via pointers. Each node has one parent and a variable number of children that
+  // are stored inside a std::map. Due to the nature of radix trees, there are
+  // nodes that do not themselves store meaningful data but only exist to link to
+  // children. These are called non-leaf nodes.
+  // The node class implementation is entirely private and only accessible through
+  // its friend relations. Nodes are only accessed via pointers, so the class does
+  // not provide move and copy constructors/operators.
+  // Node deletion follows the following rules:
+  //  - the radix instance deletes its root node
+  //  - parent nodes delete their children
+  //  - Node_handle manages and deletes orphan nodes
+  template <class T, class Compare>
+  class Node{
 
     // Friends
     friend typename radix<T,Compare>::iterator;
@@ -48,7 +65,7 @@ namespace xsm::detail{
     friend typename radix<T,Compare>::node_type;
     friend xsm::radix<T,Compare>;
 
-    // Typedefs
+    // Aliases
     using key_type = typename radix<T,Compare>::key_type;
     using mapped_type = typename radix<T,Compare>::mapped_type;
     using value_type = typename radix<T,Compare>::value_type;
@@ -117,6 +134,7 @@ namespace xsm::detail{
     public:
       using key_type = typename radix<T,Compare>::key_type;
       using mapped_type = typename radix<T,Compare>::mapped_type;
+      using node_ptr = typename Node<T,Compare>::node_ptr;
       //using allocator_type
       
       constexpr Node_handle() noexcept = default;
@@ -140,10 +158,10 @@ namespace xsm::detail{
       using child_map = typename Node<T,Compare>::child_map;
       using node_type = typename radix<T,Compare>::node_type;
 
-      Node<T,Compare>* m_node_ptr = nullptr;
+      node_ptr m_node_ptr = nullptr;
 
       // Constructor from raw pointer
-      Node_handle(Node<T,Compare>*);
+      Node_handle(node_ptr);
 
   };
 
@@ -1168,7 +1186,7 @@ namespace xsm::detail{
   }
 
   template <class T, class Compare>
-  Node_handle<T,Compare>::Node_handle(Node<T,Compare>* node) : m_node_ptr(node) {}
+  Node_handle<T,Compare>::Node_handle(node_ptr node) : m_node_ptr(node) {}
 
   template <class T, class Compare>
   [[nodiscard]] bool Node_handle<T,Compare>::empty() const noexcept {
