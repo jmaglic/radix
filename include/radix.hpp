@@ -184,9 +184,9 @@ namespace xsm::detail{
       using difference_type = typename radix<T,Compare>::difference_type;
       using reference = typename radix<T,Compare>::reference;
       using pointer = typename radix<T,Compare>::pointer;
+      
       // Constructor
       Iterator_impl();
-      Iterator_impl(node_ptr);
 
       // Iterator operations
       Iterator_impl& operator++();
@@ -206,6 +206,8 @@ namespace xsm::detail{
       friend bool operator!= <> (const Iterator_impl<T,Compare,ItType>&, const Iterator_impl<T,Compare,ItType2>&);
     private:
       node_ptr m_node;
+
+      Iterator_impl(node_ptr);
 
       bool Advance();
       bool Regress();
