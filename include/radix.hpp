@@ -96,6 +96,7 @@ namespace xsm::detail{
     node_ptr GetParent() const;
     void SetParent(node_ptr);
     node_ptr GetFirstChild() const;
+    child_map& GetChildren();
     const child_map& GetChildren() const;
     const key_type& GetKey() const;
   };
@@ -363,7 +364,8 @@ namespace xsm{
 
   // Constructor from initaliser list
   template <class T, class Compare>
-  radix<T,Compare>::radix(std::initializer_list<typename radix<T,Compare>::value_type> init) : m_root(new detail::Node<T,Compare>()), m_size(0){
+  radix<T,Compare>::radix(std::initializer_list<typename radix<T,Compare>::value_type> init) : 
+    m_root(new detail::Node<T,Compare>()), m_size(0){
     insert(init);
   }
   
@@ -515,7 +517,7 @@ namespace xsm{
       correct_parent_found = last_match.first == parentkey_end;
   
       if (!correct_parent_found){
-        parent = iterator(parent.m_node->m_parent);
+        parent = iterator(parent.m_node->GetParent());
       }
       else {
         key_start = last_match.second;
@@ -536,7 +538,7 @@ namespace xsm{
       next_child = false;
 
       // Loop through all children in iterator, until you find a match within the keys
-      for (std::pair<const key_type,node_ptr>& entry : parent.m_node->m_children){
+      for (std::pair<const key_type,node_ptr>& entry : parent.m_node->GetChildren()){
 
         auto entrykey_start = entry.first.begin();
         auto entrykey_end = entry.first.end();
@@ -573,7 +575,7 @@ namespace xsm{
             // Old child node becomes child of the new node
             nh.m_node_ptr->AddChild(key_type(last_match.second, entrykey_end), entry.second);
             // Remove old node from current node
-            parent.m_node->m_children.erase(entry.first);
+            parent.m_node->GetChildren().erase(entry.first);
 
             m_size++;
             return std::make_pair(iterator(nh.m_node_ptr),true);
@@ -599,7 +601,7 @@ namespace xsm{
           // Old entry
           parent_ptr->AddChild(key_type(last_match.second,entrykey_end), entry.second);
           entry.second->SetParent(parent_ptr);
-          parent.m_node->m_children.erase(entry.first); 
+          parent.m_node->GetChildren().erase(entry.first); 
           // New entry
           parent_ptr->AddChild(key_type(last_match.first,key_end), nh.m_node_ptr);
 
@@ -740,7 +742,7 @@ namespace xsm{
   template <class T, class Compare>
   bool radix<T,Compare>::contains(const key_type& key) const {
     const detail::Node<T,Compare>* ptr = m_root->Retrieve(key);
-    return (ptr != nullptr && ptr->m_is_leaf);
+    return (ptr != nullptr && ptr->IsLeaf());
   }
   
   template <class T, class Compare>
@@ -889,9 +891,9 @@ namespace xsm::detail{
 
       // Find next child 
       key_type key = StrDiff(prev_child, m_node->m_value_pair.first);
-      auto it = m_node->m_children.find(key);
+      auto it = m_node->GetChildren().find(key);
       ++it;
-      if (it != m_node->m_children.end()){
+      if (it != m_node->GetChildren().end()){
         m_node = it->second;
         return !m_node->IsLeaf();
       }
@@ -902,20 +904,20 @@ namespace xsm::detail{
 
   template <class T, class Compare, class ItType>
   bool Iterator_impl<T,Compare,ItType>::Regress(){
-    if (m_node->m_parent){
+    if (m_node->GetParent()){
       // Check whether this node has younger siblings
       // younger == sorted before
-      key_type start_key = StrDiff(this->operator->()->first, m_node->m_parent->m_value_pair.first);
-      auto it = m_node->m_parent->m_children.find(start_key);
+      key_type start_key = StrDiff(this->operator->()->first, m_node->GetParent()->m_value_pair.first);
+      auto it = m_node->GetParent()->GetChildren().find(start_key);
       // This node has no younger siblings
-      if (it == m_node->m_parent->m_children.begin()){
-        m_node = m_node->m_parent;
+      if (it == m_node->GetParent()->GetChildren().begin()){
+        m_node = m_node->GetParent();
         return !m_node->IsLeaf();
       }
       m_node = (--it)->second;
     }
-    while (!m_node->m_children.empty()){
-      m_node = m_node->m_children.rbegin()->second;
+    while (!m_node->GetChildren().empty()){
+      m_node = m_node->GetChildren().rbegin()->second;
     }
     return !m_node->IsLeaf();
   }
@@ -959,7 +961,7 @@ namespace xsm::detail{
   // Each Node is responsible for deleting its children
   template <class T, class Compare>
   Node<T,Compare>::~Node(){
-    for (auto& entry : m_children){
+    for (auto& entry : GetChildren()){
       delete entry.second;
     }
   }
@@ -973,8 +975,8 @@ namespace xsm::detail{
     auto end = key.end();
     for (auto pos = begin; pos <= end; ++pos){
       key_type substr(begin,pos);
-      if (m_children.contains(substr)){
-        return m_children.at(substr)->Retrieve(key_type(pos,end));
+      if (GetChildren().contains(substr)){
+        return GetChildren().at(substr)->Retrieve(key_type(pos,end));
       }
     }
     return nullptr;
@@ -987,13 +989,13 @@ namespace xsm::detail{
 
   template <class T, class Compare>
   size_t Node<T,Compare>::CountChildren() const {
-    return m_children.size();
+    return GetChildren().size();
   }
   
   template <class T, class Compare>
   typename Node<T,Compare>::node_ptr Node<T,Compare>::AddChild(const key_type& word, node_ptr node){
     node->SetParent(this);
-    return m_children.emplace(word, node).first->second;
+    return GetChildren().emplace(word, node).first->second;
   }
 
   template <class T, class Compare>
@@ -1041,9 +1043,9 @@ namespace xsm::detail{
     parent->Adopt(empty_node);
 
     // Transfer children from target to new node
-    empty_node->m_children.swap(m_children);
+    empty_node->GetChildren().swap(GetChildren());
 
-    for (auto it : empty_node->m_children){
+    for (auto it : empty_node->GetChildren()){
       it.second->SetParent(empty_node);
     }
   }
@@ -1052,8 +1054,8 @@ namespace xsm::detail{
   typename Node<T,Compare>::node_ptr Node<T,Compare>::GiveUpChild(){
     // Extracts the first child of this node, severs the relation between child and this node,
     // and returns the orphaned node pointer
-    auto first_child_it = m_children.begin();
-    auto nh = m_children.extract(first_child_it);
+    auto first_child_it = GetChildren().begin();
+    auto nh = GetChildren().extract(first_child_it);
 
     node_ptr orphan = nh.mapped();
 
@@ -1063,7 +1065,7 @@ namespace xsm::detail{
 
   template <class T, class Compare>
   void Node<T,Compare>::RemoveParent(){
-    m_parent = nullptr;
+    SetParent(nullptr);
   }
 
   template <class T, class Compare>
@@ -1075,14 +1077,14 @@ namespace xsm::detail{
   template <class T, class Compare>
   void Node<T,Compare>::Emancipate(){
     // Cut ties with parent
-    const key_type keydiff = StrDiff(GetKey(), m_parent->GetKey());
-    m_parent->m_children.erase(m_parent->m_children.find(keydiff));
+    const key_type keydiff = StrDiff(GetKey(), GetParent()->GetKey());
+    GetParent()->GetChildren().erase(GetParent()->GetChildren().find(keydiff));
     RemoveParent();
   }
 
   template <class T, class Compare>
   bool Node<T,Compare>::IsChildless() const {
-    return !m_children.size();
+    return !GetChildren().size();
   }
 
   template <class T, class Compare>
@@ -1102,9 +1104,14 @@ namespace xsm::detail{
   
   template <class T, class Compare>
   typename Node<T,Compare>::node_ptr Node<T,Compare>::GetFirstChild() const {
-    return m_children.begin()->second;
+    return GetChildren().begin()->second;
   }
   
+  template <class T, class Compare>
+  typename Node<T,Compare>::child_map& Node<T,Compare>::GetChildren(){
+    return m_children;
+  }
+
   template <class T, class Compare>
   const typename Node<T,Compare>::child_map& Node<T,Compare>::GetChildren() const {
     return m_children;
@@ -1117,9 +1124,9 @@ namespace xsm::detail{
   
   template <class T, class Compare>
   void Node<T,Compare>::print(){
-    std::cout << " ("<< (m_is_leaf? "+" : "-") << ")";
+    std::cout << " ("<< (IsLeaf()? "+" : "-") << ")";
     std::cout << " <";
-    for (auto& entry : m_children){
+    for (auto& entry : GetChildren()){
       std::cout << entry.first;
       entry.second->print();
     }
