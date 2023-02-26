@@ -480,7 +480,7 @@ namespace xsm{
     }
     else {
       std::tie(retval.position,retval.inserted) 
-        = NodeInTree(std::move(node), iterator(m_root), node.m_node_ptr->m_value_pair.first.begin());
+        = NodeInTree(std::move(node), iterator(m_root), node.m_node_ptr->GetKey().begin());
       retval.node = std::move(node);
       if (retval.inserted) {
         retval.node = node_type();
@@ -504,15 +504,15 @@ namespace xsm{
   template <class T, class Compare>
   typename radix<T,Compare>::key_type::const_iterator radix<T,Compare>::ProcessHint(const_iterator& parent, node_ptr node){
     
-    auto key_start = node->m_value_pair.first.begin();
-    auto key_end = node->m_value_pair.first.end();
+    auto key_start = node->GetKey().begin();
+    auto key_end = node->GetKey().end();
 
     bool correct_parent_found = false;
 
     while(!correct_parent_found){
 
-      auto parentkey_start = parent.m_node->m_value_pair.first.begin();
-      auto parentkey_end = parent.m_node->m_value_pair.first.end();
+      auto parentkey_start = parent.m_node->GetKey().begin();
+      auto parentkey_end = parent.m_node->GetKey().end();
   
       auto last_match = std::mismatch(parentkey_start, parentkey_end, key_start, key_end);
   
@@ -623,7 +623,7 @@ namespace xsm{
   std::pair<detail::Iterator_impl<T,Compare>,bool> radix<T,Compare>::emplace(Args&&... args){
     
     node_ptr node = new detail::Node<T,Compare>(nullptr, true, std::forward<Args>(args)...);
-    return NodeInTree(node_type(node), iterator(m_root), node->m_value_pair.first.begin());
+    return NodeInTree(node_type(node), iterator(m_root), node->GetKey().begin());
   }
 
   template <class T, class Compare> template<class... Args>
@@ -671,7 +671,7 @@ namespace xsm{
   void radix<T,Compare>::swap(radix<T,Compare>& rdx){
     // swap m_root
     {
-      detail::Node<T,Compare>* temp = m_root;
+      node_ptr temp = m_root;
       m_root = rdx.m_root;
       rdx.m_root = temp;
     }
@@ -719,8 +719,8 @@ namespace xsm{
 
   template <class T, class Compare>
   const T& radix<T,Compare>::at(const key_type& key) const {
-    const detail::Node<T,Compare>* ptr = m_root->Retrieve(key);
-    if (ptr == nullptr){
+    const node_ptr node = m_root->Retrieve(key);
+    if (node == nullptr){
       throw std::out_of_range("radix::at:  key not found");
     }
     return m_root->Retrieve(key)->m_value_pair.second;
@@ -743,8 +743,8 @@ namespace xsm{
 
   template <class T, class Compare>
   bool radix<T,Compare>::contains(const key_type& key) const {
-    const detail::Node<T,Compare>* ptr = m_root->Retrieve(key);
-    return (ptr != nullptr && ptr->IsLeaf());
+    const node_ptr node = m_root->Retrieve(key);
+    return (node != nullptr && node->IsLeaf());
   }
   
   template <class T, class Compare>
@@ -886,13 +886,13 @@ namespace xsm::detail{
     }
 
     // Until we reach the root node
-    while (!m_node->m_value_pair.first.empty()){
+    while (!m_node->GetKey().empty()){
       // If node has no children, then go up to parent and remember child
-      key_type prev_child = m_node->m_value_pair.first;
+      key_type prev_child = m_node->GetKey();
       m_node = m_node->GetParent();
 
       // Find next child 
-      key_type key = StrDiff(prev_child, m_node->m_value_pair.first);
+      key_type key = StrDiff(prev_child, m_node->GetKey());
       auto it = m_node->GetChildren().find(key);
       ++it;
       if (it != m_node->GetChildren().end()){
@@ -909,7 +909,7 @@ namespace xsm::detail{
     if (m_node->GetParent()){
       // Check whether this node has younger siblings
       // younger == sorted before
-      key_type start_key = StrDiff(this->operator->()->first, m_node->GetParent()->m_value_pair.first);
+      key_type start_key = StrDiff(this->operator->()->first, m_node->GetParent()->GetKey());
       auto it = m_node->GetParent()->GetChildren().find(start_key);
       // This node has no younger siblings
       if (it == m_node->GetParent()->GetChildren().begin()){
@@ -1002,7 +1002,7 @@ namespace xsm::detail{
 
   template <class T, class Compare>
   typename Node<T,Compare>::node_ptr Node<T,Compare>::AddChild(const key_type& part){
-    return AddChild(part, new Node(this, false, m_value_pair.first + part, T()));
+    return AddChild(part, new Node(this, false, GetKey() + part, T()));
   }
 
 
@@ -1182,7 +1182,7 @@ namespace xsm::detail{
   
   template <class T, class Compare>
   const typename Node_handle<T,Compare>::key_type& Node_handle<T,Compare>::key() const {
-    return m_node_ptr->m_value_pair.first;
+    return m_node_ptr->GetKey();
   }
                                                                                
   template <class T, class Compare>
