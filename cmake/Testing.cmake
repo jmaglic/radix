@@ -13,6 +13,7 @@ set(TEST_NAMES
   radix_dereference
   radix_assign
   radix_clear
+  radix_swap
   radix_erase
   radix_iterator
   radix_iterator_type)
