@@ -126,15 +126,20 @@ namespace xsm::detail{
   /////////////////
   // NODE HANDLE //
   /////////////////
+  // Node handle is the return type for xsm::radix::extract, and also serves as the class, that
+  // is allowed to manage and delete isolated nodes, i.e. nodes without children or a parent.
+  // In this latter function it behaves like unique_ptr, where it deletes the object
+  // once node handle outlives its life-time.
   template <class T, class Compare>
   class Node_handle{
+    // Friend
     friend radix<T,Compare>;
 
     public:
       using key_type = typename radix<T,Compare>::key_type;
       using mapped_type = typename radix<T,Compare>::mapped_type;
       using node_ptr = typename Node<T,Compare>::node_ptr;
-      //using allocator_type
+      //using allocator_type // TODO
       
       constexpr Node_handle() noexcept = default;
       Node_handle(Node_handle<T,Compare>&&) noexcept;
