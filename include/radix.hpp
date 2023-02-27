@@ -174,7 +174,7 @@ namespace xsm::detail{
   ////////////////////////
   // INSERT RETURN TYPE //
   ////////////////////////
-
+  // Small structure that serves as return type for an xsm::radix::insert overload.
   template <class Iter, class NodeType>
   struct Node_insert_bundle{
     Iter position;
@@ -185,7 +185,7 @@ namespace xsm::detail{
   //////////////
   // ITERATOR //
   //////////////
-  // Custom iterator class
+  // Bidiectional iterator class
   template <class T, class Compare, class ItType>
   class Iterator_impl {
 
@@ -362,8 +362,7 @@ namespace xsm{
     private:
       using node_ptr = typename detail::Node<mapped_type,key_compare>::node_ptr;
       
-      // Pointer to root node of radix tree
-      node_ptr m_root; 
+      node_ptr m_root; // Pointer to root node of radix tree
       size_type m_size;
 
       key_type::const_iterator ProcessHint(const_iterator&, node_ptr);
