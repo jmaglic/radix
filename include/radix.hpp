@@ -71,6 +71,7 @@ namespace xsm::detail{
     using value_type = typename radix<T,Compare>::value_type;
     using key_compare = typename radix<T,Compare>::key_compare;
     typedef Node<T,Compare>* node_ptr;
+    typedef const Node<T,Compare>* const const_node_ptr;
     typedef std::map<key_type,node_ptr,key_compare> child_map;
 
     // Members
@@ -89,7 +90,7 @@ namespace xsm::detail{
     void print(); // TODO just for testing
 
     // Container operations
-    const Node<T,Compare>* Retrieve(const key_type&) const;
+    const_node_ptr Retrieve(const key_type&) const;
     node_ptr Retrieve(const key_type&);
     size_t CountChildren() const;
 
@@ -987,7 +988,7 @@ namespace xsm::detail{
   }
 
   template <class T, class Compare>
-  const Node<T,Compare>* Node<T,Compare>::Retrieve(const key_type& key) const {
+  typename Node<T,Compare>::const_node_ptr Node<T,Compare>::Retrieve(const key_type& key) const {
     if (key.empty()){
       return this;
     }
