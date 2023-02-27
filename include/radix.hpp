@@ -85,38 +85,36 @@ namespace xsm::detail{
     Node(node_ptr, value_type&&, const bool=false);
     template <class... Args> Node(node_ptr, const bool, Args&&...);
     ~Node();
-   
-    // Display
-    void print(); // TODO just for testing
 
-    // Container operations
-    const_node_ptr Retrieve(const key_type&) const;
-    node_ptr Retrieve(const key_type&);
-    size_t CountChildren() const;
-
-    // Methods used during container manipulation
-    node_ptr AddChild(const key_type&, node_ptr);
-    node_ptr AddChild(const key_type&);
-  
-    // Methods for node extraction
-    node_ptr Extract();
-    void SubstituteWith(node_ptr);
-    node_ptr GiveUpChild();
-    void RemoveParent();
-    void Adopt(node_ptr);
-    void Emancipate();
-    
-    // For iterator operations
+    // Node state
     bool IsChildless() const;
     bool IsLeaf() const;
+    size_t CountChildren() const;
 
-    // Get and set
+    // Getters and setters
     node_ptr GetParent() const;
     void SetParent(node_ptr);
     node_ptr GetFirstChild() const;
     child_map& GetChildren();
     const child_map& GetChildren() const;
     const key_type& GetKey() const;
+
+    // Node ownership
+    node_ptr AddChild(const key_type&, node_ptr);
+    node_ptr AddChild(const key_type&);
+    node_ptr Extract();
+    node_ptr GiveUpChild();
+    void SubstituteWith(node_ptr);
+    void RemoveParent();
+    void Adopt(node_ptr);
+    void Emancipate();
+
+    // Container operations
+    const_node_ptr Retrieve(const key_type&) const;
+    node_ptr Retrieve(const key_type&);
+
+    // Display
+    void print(); // TODO just for testing
   };
 
   // Forward declarations to allow for overloaded comparison operators
