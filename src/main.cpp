@@ -6,22 +6,55 @@
 
 int main() {
 
-  xsm::radix<int> rdx({{"aa", 1}, {"ab", 2}, {"a", 3}});
-
-  xsm::radix<int> rdx2;
-
-  rdx.swap(rdx2);
-
-  assert(rdx2.contains("aa"));
-  assert(rdx2.contains("ab"));
-  assert(rdx2.contains("a"));
-  assert(rdx2.at("aa") == 1);
-  assert(rdx2.at("ab") == 2);
-  assert(rdx2.at("a") == 3);
-  assert(rdx2.size() == 3);
-  assert(rdx.empty());
-
+  // Test xsm::radix::contains with custom comparator to find element that starts with a letter
+  {
+    struct StartsWithK {};
   
+    struct Comp{
+      using is_transparent = void;
+      bool operator()(std::string lhs, std::string rhs) const {
+        return lhs.compare(rhs) < 0;
+      }
+      bool operator()(std::string lhs, StartsWithK rhs) const {
+        return tolower(lhs[0]) < 'k';
+      }
+      bool operator()(StartsWithK lhs, std::string rhs) const {
+        return 'k' < tolower(rhs[0]);
+      }
+    };
+  
+    //typedef std::map<std::string, bool, Comp> radix;
+    typedef xsm::radix<bool,Comp> radix;
+  
+    radix rdx({{"albert", true}, {"kristina", false}, {"sarah", true}});
+  
+    assert(rdx.contains(StartsWithK()));
+  
+    rdx.erase(rdx.find("kristina"));
+  
+    assert(!rdx.contains(StartsWithK()));
+  }
+
+  // Test inverting order of tree
+  {
+    struct Comp{
+      using is_transparent = void;
+      bool operator()(std::string lhs, std::string rhs) const {
+        return lhs.compare(rhs) > 0; // Inverted order
+      }
+    };
+  
+    typedef xsm::radix<bool,Comp> radix;
+
+    radix rdx({{"a", true}, {"b", true}, {"c", true}});
+
+    std::string keys[] = {"c", "b", "a"};
+    size_t i = 0;
+    for (auto e : rdx){
+      assert(e.first == keys[i++]);
+    }
+  }
+
   /*
   struct IsEven {};
   struct IsOdd {};
@@ -45,10 +78,9 @@ int main() {
     }
   };
 
-  std::map<int,bool,Comp> map;
-  map.emplace(1,true);
+  std::map<std::string,bool,Comp> map;
+  //std::radix<bool,Comp> map;
   map.emplace(2,true);
-  map.emplace(3,true);
   map.emplace(4,true);
 
 
@@ -56,10 +88,13 @@ int main() {
     std::cout << e.first << std::endl;
   }
 
-  std::cout << map.lower_bound(IsEven())->first << std::endl;
-  std::cout << map.upper_bound(IsEven())->first << std::endl;
-  */
+  assert(map.contains(IsEven()));
+  assert(!map.contains(IsOdd()));
 
+  //std::cout << map.lower_bound(IsEven())->first << std::endl;
+  //std::cout << map.upper_bound(IsEven())->first << std::endl;
+
+  */
 
   /* ISSUE WITH STD::MAP
   radix rdx2nd;

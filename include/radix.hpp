@@ -339,7 +339,7 @@ namespace xsm{
       //size_type count(const key_type&) const;
       //template<class K> size_type count(const K&) const;
       bool contains(const key_type&) const;
-      //template<class K> bool contains(const K&) const;
+      template<class K> bool contains(const K&) const;
 
       // Iterator
       iterator begin() noexcept;
@@ -766,6 +766,17 @@ namespace xsm{
   bool radix<T,Compare>::contains(const key_type& key) const {
     const node_ptr node = m_root->Retrieve(key);
     return (node != nullptr && node->IsLeaf());
+  }
+
+  template <class T, class Compare> template<class K>
+  bool radix<T,Compare>::contains(const K& key) const {
+    Compare comp;
+    for (auto it = begin(); it != end(); ++it){
+      if (!comp(it->first,key) && !comp(key,it->first)) {
+        return true;
+      }
+    }
+    return false;
   }
   
   template <class T, class Compare>
