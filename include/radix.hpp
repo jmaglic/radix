@@ -317,8 +317,8 @@ namespace xsm{
       const mapped_type& at(const key_type&) const;
       iterator find(const key_type&);
       const_iterator find(const key_type&) const;
-      //template<class K> iterator find(const K&);
-      //template<class K> const_iterator find(const K&) const;
+      template<class K> iterator find(const K&);
+      template<class K> const_iterator find(const K&) const;
       //std::pair<iterator,iterator> equal_range(const key_type&);
       //std::pair<const_iterator,const_iterator> equal_range(const key_type&) const;
       //template<class K> std::pair<iterator,iterator> equal_range(const K&);
@@ -754,6 +754,30 @@ namespace xsm{
   template <class T, class Compare>
   typename radix<T,Compare>::const_iterator radix<T,Compare>::find(const key_type& key) const {
     return const_iterator(m_root->Retrieve(key));
+  }
+
+  template <class T, class Compare> template<class K>
+  typename radix<T,Compare>::iterator radix<T,Compare>::find(const K& key){
+    Compare comp;
+    iterator it;
+    for (it = begin(); it != end(); ++it){
+      if (!comp(it->first, key) && !comp(key, it->first)){
+        break;
+      }
+    }
+    return it;
+  }
+
+  template <class T, class Compare> template<class K>
+  typename radix<T,Compare>::const_iterator radix<T,Compare>::find(const K& key) const {
+    Compare comp;
+    const_iterator it;
+    for (it = cbegin(); it != cend(); ++it){
+      if (!comp(it->first, key) && !comp(key, it->first)){
+        break;
+      }
+    }
+    return it;
   }
 
   template <class T, class Compare>

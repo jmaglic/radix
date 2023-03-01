@@ -5,26 +5,32 @@
 #include "radix.hpp"
 
 int main() {
+    
+  struct StartsWithK {};
+  
+  struct CompK{
+    using is_transparent = void;
+    bool operator()(std::string lhs, std::string rhs) const {
+      return lhs.compare(rhs) < 0;
+    }
+    bool operator()(std::string lhs, StartsWithK rhs) const {
+      return tolower(lhs[0]) < 'k';
+    }
+    bool operator()(StartsWithK lhs, std::string rhs) const {
+      return 'k' < tolower(rhs[0]);
+    }
+  };
+
+  struct CompInv{
+    using is_transparent = void;
+    bool operator()(std::string lhs, std::string rhs) const {
+      return lhs.compare(rhs) > 0; // Inverted order
+    }
+  };
 
   // Test xsm::radix::contains with custom comparator to find element that starts with a letter
   {
-    struct StartsWithK {};
-  
-    struct Comp{
-      using is_transparent = void;
-      bool operator()(std::string lhs, std::string rhs) const {
-        return lhs.compare(rhs) < 0;
-      }
-      bool operator()(std::string lhs, StartsWithK rhs) const {
-        return tolower(lhs[0]) < 'k';
-      }
-      bool operator()(StartsWithK lhs, std::string rhs) const {
-        return 'k' < tolower(rhs[0]);
-      }
-    };
-  
-    //typedef std::map<std::string, bool, Comp> radix;
-    typedef xsm::radix<bool,Comp> radix;
+    typedef xsm::radix<bool,CompK> radix;
   
     radix rdx({{"albert", true}, {"kristina", false}, {"sarah", true}});
   
@@ -45,14 +51,7 @@ int main() {
 
   // Test inverting order of tree
   {
-    struct Comp{
-      using is_transparent = void;
-      bool operator()(std::string lhs, std::string rhs) const {
-        return lhs.compare(rhs) > 0; // Inverted order
-      }
-    };
-  
-    typedef xsm::radix<bool,Comp> radix;
+    typedef xsm::radix<bool,CompInv> radix;
 
     radix rdx({{"a", true}, {"b", true}, {"c", true}});
 
@@ -61,6 +60,29 @@ int main() {
     for (auto e : rdx){
       assert(e.first == keys[i++]);
     }
+  }
+
+  // Test find
+  {
+    typedef xsm::radix<bool,CompK> radix;
+
+    radix rdx({{"denmark", true}, {"korea", true}, {"kazakhstan", true}, {"togo", true}});
+    
+    assert(rdx.find("kazakhstan") == rdx.find(StartsWithK()));
+
+    rdx.erase("kazakhstan");
+
+    assert(rdx.find("korea") == rdx.find(StartsWithK()));
+
+    rdx.erase("korea");
+
+    assert(rdx.find("korea") == rdx.end());
+    assert(rdx.find(StartsWithK()) == rdx.end());
+
+    // Const overload
+    const radix c_rdx({{"denmark", true}, {"korea", true}, {"kazakhstan", true}, {"togo", true}});
+
+    assert(c_rdx.find("kazakhstan") == c_rdx.find(StartsWithK()));
   }
 
   /*
