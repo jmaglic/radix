@@ -278,6 +278,7 @@ namespace xsm{
       // Capacity
       [[nodiscard]] bool empty() const noexcept;
       size_type size() const noexcept;
+      // size_type max_size() const noexcept;
   
       // Modifiers
       std::pair<iterator,bool> insert(const value_type&);
@@ -303,8 +304,8 @@ namespace xsm{
       iterator erase(iterator);
       iterator erase(const_iterator);
       iterator erase(const_iterator, const_iterator);
-      size_type erase(const key_type&);
-      //template<class K> size_type erase(K&&);
+      size_type erase(const key_type&); 
+      //template<class K> size_type erase(K&&); c++23
       void swap(radix<T,Compare>&);
       node_type extract(const_iterator);
       node_type extract(const key_type&);
@@ -315,6 +316,14 @@ namespace xsm{
       // Element access
       mapped_type& at(const key_type&);
       const mapped_type& at(const key_type&) const;
+      mapped_type& operator[](const key_type&);
+      //mapped_type& operator[](key_type&&);
+
+      // Lookup
+      size_type count(const key_type&) const;
+      template<class K> size_type count(const K&) const;
+      bool contains(const key_type&) const;
+      template<class K> bool contains(const K&) const;
       iterator find(const key_type&);
       const_iterator find(const key_type&) const;
       template<class K> iterator find(const K&);
@@ -331,14 +340,11 @@ namespace xsm{
       //const_iterator upper_bound(const key_type&) const;
       //template<class K> iterator upper_bound(const K&);
       //template<class K> const_iterator upper_bound(const K&) const;
-      mapped_type& operator[](const key_type&);
-      //mapped_type& operator[](key_type&&);
-
-      // Lookup
-      size_type count(const key_type&) const;
-      template<class K> size_type count(const K&) const;
-      bool contains(const key_type&) const;
-      template<class K> bool contains(const K&) const;
+      
+      // Observers
+      // key_compare key_comp() const;
+      // std::map::value_compare value_comp() const;
+      // allocator_type get_allocator() const noexcept;
 
       // Iterator
       iterator begin() noexcept;
