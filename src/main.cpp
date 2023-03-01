@@ -28,11 +28,19 @@ int main() {
   
     radix rdx({{"albert", true}, {"kristina", false}, {"sarah", true}});
   
+    assert(rdx.count("albert"));
+    assert(rdx.count("kristina"));
+    assert(rdx.count("sarah"));
     assert(rdx.contains(StartsWithK()));
+    assert(rdx.count(StartsWithK()));
   
     rdx.erase(rdx.find("kristina"));
   
+    assert(rdx.count("albert"));
+    assert(!rdx.count("kristina"));
+    assert(rdx.count("sarah"));
     assert(!rdx.contains(StartsWithK()));
+    assert(!rdx.count(StartsWithK()));
   }
 
   // Test inverting order of tree

@@ -281,12 +281,12 @@ namespace xsm{
   
       // Modifiers
       std::pair<iterator,bool> insert(const value_type&);
-      template<class P> std::pair<iterator, bool> insert(P&&);
+      template <class P> std::pair<iterator, bool> insert(P&&);
       std::pair<iterator,bool> insert(value_type&&);
       iterator insert(const_iterator, const value_type&);
-      template<class P> iterator insert(const_iterator, P&&);
+      template <class P> iterator insert(const_iterator, P&&);
       iterator insert(const_iterator, value_type&&);
-      template<class InputIt> void insert(InputIt, InputIt);
+      template <class InputIt> void insert(InputIt, InputIt);
       void insert(std::initializer_list<value_type>);
       insert_return_type insert(node_type&&);
       iterator insert(const_iterator, node_type&&);
@@ -294,9 +294,8 @@ namespace xsm{
       // template< class M > std::pair<iterator, bool> insert_or_assign( Key&& k, M&& obj );
       // template< class M > iterator insert_or_assign( const_iterator hint, const Key& k, M&& obj );
       // template< class M > iterator insert_or_assign( const_iterator hint, Key&& k, M&& obj );
-      template <class... Args>
-      std::pair<iterator,bool> emplace(Args&&...);
-      template<class... Args> iterator emplace_hint(const_iterator, Args&&...);
+      template <class... Args> std::pair<iterator,bool> emplace(Args&&...);
+      template <class... Args> iterator emplace_hint(const_iterator, Args&&...);
       //template<class... Args> pair<iterator, bool> try_emplace(const key_type&, Args&&...);
       //template<class... Args> pair<iterator, bool> try_emplace(key_type&&, Args&&...);
       //template<class... Args> pair<iterator, bool> try_emplace(const iterator, const key_type&, Args&&...);
@@ -336,8 +335,8 @@ namespace xsm{
       //mapped_type& operator[](key_type&&);
 
       // Lookup
-      //size_type count(const key_type&) const;
-      //template<class K> size_type count(const K&) const;
+      size_type count(const key_type&) const;
+      template<class K> size_type count(const K&) const;
       bool contains(const key_type&) const;
       template<class K> bool contains(const K&) const;
 
@@ -760,6 +759,16 @@ namespace xsm{
   template <class T, class Compare>
   T& radix<T,Compare>::operator[](const key_type& key){
     return insert(std::make_pair(key, T())).first->second;
+  }
+
+  template <class T, class Compare>
+  typename xsm::radix<T,Compare>::size_type xsm::radix<T,Compare>::count(const key_type& key) const {
+    return contains(key)? 1 : 0;
+  }
+  
+  template <class T, class Compare> template<class K>
+  typename xsm::radix<T,Compare>::size_type xsm::radix<T,Compare>::count(const K& key) const {
+    return contains(key)? 1 : 0;
   }
 
   template <class T, class Compare>
