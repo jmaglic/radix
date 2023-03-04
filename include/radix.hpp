@@ -764,6 +764,7 @@ namespace xsm{
 
   template <class T, class Compare> template<class K>
   typename radix<T,Compare>::iterator radix<T,Compare>::find(const K& key){
+    // TODO: This is very inefficient! Use node traversal in combination with Compare to make this more efficient
     Compare comp;
     iterator it;
     for (it = begin(); it != end(); ++it){
@@ -798,6 +799,7 @@ namespace xsm{
   
   template <class T, class Compare> template<class K>
   typename xsm::radix<T,Compare>::size_type xsm::radix<T,Compare>::count(const K& key) const {
+    // TODO: this function can return values higher than 1! Implement a version that allows this
     return contains(key)? 1 : 0;
   }
 
