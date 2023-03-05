@@ -5,7 +5,7 @@
 #include "radix.hpp"
 
 int main() {
-    
+  
   struct StartsWithK {};
   
   struct CompK{

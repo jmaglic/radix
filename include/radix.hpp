@@ -204,11 +204,16 @@ namespace xsm::detail{
     using const_node_ptr = typename Node<T,Compare>::const_node_ptr;
     
     public:
+      // These aliases must be public for std::reverse_iterator to work
       using value_type = typename radix<T,Compare>::value_type;
       using difference_type = typename radix<T,Compare>::difference_type;
-      using reference = typename radix<T,Compare>::reference;
-      using pointer = typename radix<T,Compare>::pointer;
-      
+      typedef typename std::conditional<
+        std::is_const_v<ItType>, typename radix<T,Compare>::const_reference, typename radix<T,Compare>::reference
+        >::type reference;
+      typedef typename std::conditional<
+        std::is_const_v<ItType>, typename radix<T,Compare>::const_pointer, typename radix<T,Compare>::pointer
+        >::type pointer;
+
       // Constructor
       Iterator_impl();
 
@@ -217,6 +222,7 @@ namespace xsm::detail{
       Iterator_impl operator++(int);
       Iterator_impl& operator--();
       Iterator_impl operator--(int);
+
       reference operator*() const;
       pointer operator->() const;
 
@@ -230,7 +236,6 @@ namespace xsm::detail{
       friend bool operator!= <> (const Iterator_impl<T,Compare,ItType>&, const Iterator_impl<T,Compare,ItType2>&);
     private:
       node_ptr m_node;
-      //Node<ItType,Compare>* m_node; TODO: I think this should be here instead
 
       Iterator_impl(node_ptr);
 
@@ -545,13 +550,16 @@ namespace xsm{
       auto parentkey_end = parent.m_node->GetKey().end();
   
       auto last_match = std::mismatch(parentkey_start, parentkey_end, key_start, key_end);
-  
+
+      // Check if parent's key is a prefix of node's key
       correct_parent_found = last_match.first == parentkey_end;
   
       if (!correct_parent_found){
+        // Go up one parent
         parent = iterator(parent.m_node->GetParent());
       }
       else {
+        // Node should become a descendent of parent (not necessarily direct child)
         key_start = last_match.second;
       }
     }
@@ -570,7 +578,7 @@ namespace xsm{
       next_child = false;
 
       // Loop through all children in iterator, until you find a match within the keys
-      for (std::pair<const key_type,node_ptr>& entry : parent.m_node->GetChildren()){
+      for (const std::pair<const key_type,node_ptr>& entry : parent.m_node->GetChildren()){
 
         auto entrykey_start = entry.first.begin();
         auto entrykey_end = entry.first.end();
@@ -941,12 +949,12 @@ namespace xsm::detail{
   }
 
   template <class T, class Compare, class ItType>
-  typename radix<T,Compare>::reference Iterator_impl<T,Compare,ItType>::operator*() const {
+  typename Iterator_impl<T,Compare,ItType>::reference Iterator_impl<T,Compare,ItType>::operator*() const {
     return m_node->m_value_pair;
   }
 
   template <class T, class Compare, class ItType>
-  typename radix<T,Compare>::pointer Iterator_impl<T,Compare,ItType>::operator->() const {
+  typename Iterator_impl<T,Compare,ItType>::pointer Iterator_impl<T,Compare,ItType>::operator->() const {
     return &m_node->m_value_pair;
   }
 
