@@ -85,55 +85,15 @@ int main() {
     assert(c_rdx.find("kazakhstan") == c_rdx.find(StartsWithK()));
   }
 
-  /*
-  struct IsEven {};
-  struct IsOdd {};
+  {
+    typedef xsm::radix<bool,CompK> radix;
 
-  struct Comp{
-    using is_transparent = void;
-    bool operator()(int lhs, int rhs) const {
-      return lhs < rhs;
-    }
-    bool operator()(int lhs, IsEven rhs) const {
-      return lhs%2;
-    }
-    bool operator()(IsEven lhs, int rhs) const {
-      return rhs%2;
-    }
-    bool operator()(int lhs, IsOdd rhs) const {
-      return (lhs+1)%2;
-    }
-    bool operator()(IsOdd lhs, int rhs) const {
-      return (rhs+1)%2;
-    }
-  };
-*/
+    radix rdx({{"denmark", true}, {"korea", true}, {"kazakhstan", true}, {"togo", true}});
 
-  typedef std::map<std::string,bool,CompK> IntMap;
-  IntMap map;
-  
-  map.emplace("army",true);
-  map.emplace("knight",true);
-  map.emplace("key",true);
-  map.emplace("kilogram",true);
-  map.emplace("robot",true);
-  map.emplace("karma",true);
-  map.emplace("sale",true);
-
-  IntMap::const_iterator it1;
-  IntMap::const_iterator it2;
-  std::tie(it1,it2) = map.equal_range(StartsWithK());
-  std::cout << it1->first << " " << it2->first << std::endl;
-
-  std::cout << map.count(StartsWithK()) << std::endl; 
-  
-  /*
-*/
-  /*
-  //std::cout << map.lower_bound(IsEven())->first << std::endl;
-  //std::cout << map.upper_bound(IsEven())->first << std::endl;
-
-  */
+    auto it = rdx.lower_bound("denmark");
+    std::cout << it->first << std::endl;
+    
+  }
 
   /* ISSUE WITH STD::MAP
   radix rdx2nd;

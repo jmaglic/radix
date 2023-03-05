@@ -71,7 +71,7 @@ namespace xsm::detail{
     using value_type = typename radix<T,Compare>::value_type;
     using key_compare = typename radix<T,Compare>::key_compare;
     typedef Node<T,Compare>* node_ptr;
-    typedef const Node<T,Compare>* const const_node_ptr;
+    typedef const Node<T,Compare>* const_node_ptr;
     typedef std::map<key_type,node_ptr,key_compare> child_map;
 
     // Members
@@ -112,6 +112,7 @@ namespace xsm::detail{
     // Container operations
     const_node_ptr Retrieve(const key_type&) const;
     node_ptr Retrieve(const key_type&);
+    template <class K> const const_node_ptr FindCondition(const K&) const;
 
     // Display
     void print(); // TODO just for testing
@@ -200,6 +201,7 @@ namespace xsm::detail{
     using reverse_iterator = typename radix<T,Compare>::reverse_iterator;
     using const_reverse_iterator = typename radix<T,Compare>::const_reverse_iterator;
     using node_ptr = typename Node<T,Compare>::node_ptr;
+    using const_node_ptr = typename Node<T,Compare>::const_node_ptr;
     
     public:
       using value_type = typename radix<T,Compare>::value_type;
@@ -228,6 +230,7 @@ namespace xsm::detail{
       friend bool operator!= <> (const Iterator_impl<T,Compare,ItType>&, const Iterator_impl<T,Compare,ItType2>&);
     private:
       node_ptr m_node;
+      //Node<ItType,Compare>* m_node; TODO: I think this should be here instead
 
       Iterator_impl(node_ptr);
 
@@ -335,7 +338,7 @@ namespace xsm{
       //iterator lower_bound(const key_type&);
       //const_iterator lower_bound(const key_type&) const;
       //template<class K> iterator lower_bound(const K&);
-      //template<class K> const_iterator lower_bound(const K&) const;
+      template<class K> const_iterator lower_bound(const K&) const;
       //iterator upper_bound(const key_type&);
       //const_iterator upper_bound(const key_type&) const;
       //template<class K> iterator upper_bound(const K&);
@@ -366,6 +369,7 @@ namespace xsm{
 
     private:
       using node_ptr = typename detail::Node<mapped_type,key_compare>::node_ptr;
+      using const_node_ptr = typename detail::Node<mapped_type,key_compare>::const_node_ptr;
       
       node_ptr m_root; // Pointer to root node of radix tree
       size_type m_size;
@@ -745,7 +749,7 @@ namespace xsm{
 
   template <class T, class Compare>
   const T& radix<T,Compare>::at(const key_type& key) const {
-    const node_ptr node = m_root->Retrieve(key);
+    const_node_ptr node = m_root->Retrieve(key);
     if (node == nullptr){
       throw std::out_of_range("radix::at:  key not found");
     }
@@ -764,7 +768,7 @@ namespace xsm{
 
   template <class T, class Compare> template<class K>
   typename radix<T,Compare>::iterator radix<T,Compare>::find(const K& key){
-    // TODO: This is very inefficient! Use node traversal in combination with Compare to make this more efficient
+    // TODO: Use tree structure
     Compare comp;
     iterator it;
     for (it = begin(); it != end(); ++it){
@@ -777,6 +781,7 @@ namespace xsm{
 
   template <class T, class Compare> template<class K>
   typename radix<T,Compare>::const_iterator radix<T,Compare>::find(const K& key) const {
+    // TODO: Use tree structure
     Compare comp;
     const_iterator it;
     for (it = cbegin(); it != cend(); ++it){
@@ -785,6 +790,13 @@ namespace xsm{
       }
     }
     return it;
+  }
+
+  template <class T, class Compare> template<class K>
+  typename radix<T,Compare>::const_iterator radix<T,Compare>::lower_bound(const K& key) const {
+    return const_iterator(m_root);
+    // TODO: Fix const_iterator issue before
+    //return const_iterator(m_root->FindCondition(key));
   }
 
   template <class T, class Compare>
@@ -805,12 +817,13 @@ namespace xsm{
 
   template <class T, class Compare>
   bool radix<T,Compare>::contains(const key_type& key) const {
-    const node_ptr node = m_root->Retrieve(key);
+    const_node_ptr node = m_root->Retrieve(key);
     return (node != nullptr && node->IsLeaf());
   }
 
   template <class T, class Compare> template<class K>
   bool radix<T,Compare>::contains(const K& key) const {
+    // TODO: Use tree structure
     Compare comp;
     for (auto it = begin(); it != end(); ++it){
       if (!comp(it->first,key) && !comp(key,it->first)) {
@@ -1160,6 +1173,43 @@ namespace xsm::detail{
     const key_type keydiff = StrDiff(GetKey(), GetParent()->GetKey());
     GetParent()->GetChildren().erase(GetParent()->GetChildren().find(keydiff));
     RemoveParent();
+  }
+
+  template <class T, class Compare> template <class K>
+  const typename Node<T,Compare>::const_node_ptr Node<T,Compare>::FindCondition(const K& key) const {
+    /* TODO: Fix const_iterator issues before implementing this function
+    const_node_ptr candidate_node = this;
+    const child_map* children = &GetChildren();
+    bool match_found = false;
+
+    while(!match_found){
+      auto it = children->lower_bound(key);
+      if (it == children->end()){
+        match_found = true;
+      }
+      else if (it == children->begin()){
+        candidate_node = it->second;
+        match_found = true;
+      }
+      else {
+
+        // Store current iterator, then decrement
+        auto current_it = it--;
+        candidate_node = current_it->second;
+
+        if (it->second->IsChildless()){
+          match_found = true;
+        }
+        else {
+          // Repeat with new child map
+          children = &it->second->GetChildren();
+        } 
+
+      }
+      
+    }
+    return candidate_node;
+    */
   }
 
   template <class T, class Compare>
