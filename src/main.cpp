@@ -85,14 +85,23 @@ int main() {
     assert(c_rdx.find("kazakhstan") == c_rdx.find(StartsWithK()));
   }
 
+  // Test lower_bound
   {
     typedef xsm::radix<bool,CompK> radix;
 
     radix rdx({{"denmark", true}, {"korea", true}, {"kazakhstan", true}, {"togo", true}});
 
-    auto it = rdx.lower_bound("denmark");
+    auto it = rdx.lower_bound(StartsWithK());
     std::cout << it->first << std::endl;
     
+  }
+
+  {
+    typedef const xsm::radix<bool> c_radix;
+    c_radix c_rdx({{"hello", true}, {"hi", true}, {"hey", true}});
+
+    std::cout << c_rdx.find(std::string("hello"))->first << std::endl;
+
   }
 
   /* ISSUE WITH STD::MAP

@@ -112,7 +112,7 @@ namespace xsm::detail{
     // Container operations
     const_node_ptr Retrieve(const key_type&) const;
     node_ptr Retrieve(const key_type&);
-    template <class K> const const_node_ptr FindCondition(const K&) const;
+    template <class K> const_node_ptr FindCondition(const K&) const;
 
     // Display
     void print(); // TODO just for testing
@@ -803,7 +803,6 @@ namespace xsm{
   template <class T, class Compare> template<class K>
   typename radix<T,Compare>::const_iterator radix<T,Compare>::lower_bound(const K& key) const {
     return const_iterator(m_root);
-    // TODO: Fix const_iterator issue before
     //return const_iterator(m_root->FindCondition(key));
   }
 
@@ -1184,8 +1183,8 @@ namespace xsm::detail{
   }
 
   template <class T, class Compare> template <class K>
-  const typename Node<T,Compare>::const_node_ptr Node<T,Compare>::FindCondition(const K& key) const {
-    /* TODO: Fix const_iterator issues before implementing this function
+  typename Node<T,Compare>::const_node_ptr Node<T,Compare>::FindCondition(const K& key) const {
+    /*
     const_node_ptr candidate_node = this;
     const child_map* children = &GetChildren();
     bool match_found = false;
@@ -1276,7 +1275,6 @@ namespace xsm::detail{
   /////////////////
   template <class T, class Compare>
   Node_handle<T,Compare>::~Node_handle(){
-    // TODO Consider restricting Node handle's access to the Node destructor
     // If node is orphan and has no children, then delete
     // Otherwise, node will be deleted by its parent
     if (m_node_ptr && !m_node_ptr->GetParent() && !m_node_ptr->CountChildren()){
