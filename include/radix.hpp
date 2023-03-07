@@ -110,9 +110,8 @@ namespace xsm::detail{
     void Emancipate();
 
     // Container operations
-    const_node_ptr Retrieve(const key_type&) const;
     node_ptr Retrieve(const key_type&);
-    template <class K> const_node_ptr FindCondition(const K&) const;
+    template <class K> node_ptr FindCondition(const K&);
 
     // Display
     void print(); // TODO just for testing
@@ -802,8 +801,7 @@ namespace xsm{
 
   template <class T, class Compare> template<class K>
   typename radix<T,Compare>::const_iterator radix<T,Compare>::lower_bound(const K& key) const {
-    return const_iterator(m_root);
-    //return const_iterator(m_root->FindCondition(key));
+    return const_iterator(m_root->FindCondition(key));
   }
 
   template <class T, class Compare>
@@ -1062,7 +1060,7 @@ namespace xsm::detail{
   }
 
   template <class T, class Compare>
-  typename Node<T,Compare>::const_node_ptr Node<T,Compare>::Retrieve(const key_type& key) const {
+  typename Node<T,Compare>::node_ptr Node<T,Compare>::Retrieve(const key_type& key) {
     if (key.empty()){
       return this;
     }
@@ -1075,16 +1073,6 @@ namespace xsm::detail{
       }
     }
     return nullptr;
-  }
-
-  template <class T, class Compare>
-  typename Node<T,Compare>::node_ptr Node<T,Compare>::Retrieve(const key_type& key) {
-    // The use of const_cast is typically discouraged. As far as I understand, it is okay in this
-    // case, because casting away the const is allowed if the underlying object is not const. Since
-    // this node has to be non-const for this function to be called, the "constness" of the returned
-    // node pointer can be cast away. The danger that the object is stored in read-only memory does
-    // not exist.
-    return const_cast<node_ptr>(std::as_const(*this).Retrieve(key)); 
   }
 
   template <class T, class Compare>
@@ -1183,18 +1171,20 @@ namespace xsm::detail{
   }
 
   template <class T, class Compare> template <class K>
-  typename Node<T,Compare>::const_node_ptr Node<T,Compare>::FindCondition(const K& key) const {
-    /*
-    const_node_ptr candidate_node = this;
-    const child_map* children = &GetChildren();
+  typename Node<T,Compare>::node_ptr Node<T,Compare>::FindCondition(const K& key){
+    node_ptr candidate_node = this;
+    child_map children = GetChildren();
     bool match_found = false;
 
     while(!match_found){
-      auto it = children->lower_bound(key);
-      if (it == children->end()){
+      // Find lower bound in child map
+      auto it = children.lower_bound(key);
+      // Child map does not contain match
+      if (it == children.end()){
         match_found = true;
       }
-      else if (it == children->begin()){
+      // First child matches
+      else if (it == children.begin()){
         candidate_node = it->second;
         match_found = true;
       }
@@ -1209,14 +1199,17 @@ namespace xsm::detail{
         }
         else {
           // Repeat with new child map
-          children = &it->second->GetChildren();
+          children = it->second->GetChildren();
         } 
-
       }
-      
     }
+
+    // Find first non-leaf node
+    while (!candidate_node->IsLeaf()){
+      candidate_node = candidate_node->GetFirstChild();
+    }
+
     return candidate_node;
-    */
   }
 
   template <class T, class Compare>
