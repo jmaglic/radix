@@ -112,6 +112,9 @@ namespace xsm::detail{
     // Container operations
     node_ptr Retrieve(const key_type&);
     template <class K> node_ptr FindCondition(const K&);
+  
+    template <class K> 
+    static typename child_map::const_iterator LowerBoundWrapper(const child_map&, const K&);
 
     // Display
     void print(); // TODO just for testing
@@ -346,7 +349,7 @@ namespace xsm{
       //iterator upper_bound(const key_type&);
       //const_iterator upper_bound(const key_type&) const;
       //template<class K> iterator upper_bound(const K&);
-      //template<class K> const_iterator upper_bound(const K&) const;
+      template<class K> const_iterator upper_bound(const K&) const;
       
       // Observers
       // key_compare key_comp() const;
@@ -1171,14 +1174,23 @@ namespace xsm::detail{
   }
 
   template <class T, class Compare> template <class K>
+  typename Node<T,Compare>::child_map::const_iterator Node<T,Compare>::LowerBoundWrapper(
+      const child_map& obj, const K& key){
+    return obj.lower_bound(key);
+  }
+
+  template <class T, class Compare> template <class K>
   typename Node<T,Compare>::node_ptr Node<T,Compare>::FindCondition(const K& key){
+
+    auto condition = &Node::LowerBoundWrapper<K>;
+
     node_ptr candidate_node = this;
     child_map children = GetChildren();
     bool match_found = false;
 
     while(!match_found){
       // Find lower bound in child map
-      auto it = children.lower_bound(key);
+      auto it = condition(children, key);//children.lower_bound(key);
       // Child map does not contain match
       if (it == children.end()){
         match_found = true;

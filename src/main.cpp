@@ -93,7 +93,14 @@ int main() {
 
     auto it = rdx.lower_bound(StartsWithK());
     std::cout << it->first << std::endl;
+   
+    /*
+    it = rdx.find(StartsWithK());
+    std::cout << it->first << std::endl;
     
+    it = rdx.upper_bound(StartsWithK());
+    std::cout << it->first << std::endl;
+    */
   }
 
   {
