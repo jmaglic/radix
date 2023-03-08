@@ -111,7 +111,7 @@ namespace xsm::detail{
 
     // Container operations
     node_ptr Retrieve(const key_type&);
-    template <class K> node_ptr FindCondition(const K&);
+    template <class K> node_ptr FindCondition(bool(*)(const key_type&, const K&), const K&);
 
     // Display
     void print(); // TODO just for testing
@@ -801,7 +801,13 @@ namespace xsm{
 
   template <class T, class Compare> template<class K>
   typename radix<T,Compare>::const_iterator radix<T,Compare>::lower_bound(const K& key) const {
-    return const_iterator(m_root->FindCondition(key));
+    // Condition for finding first item that is not smaller than key
+    bool(*condition)(const key_type&,const K&) = [](const key_type& lhs, const K& rhs){
+      Compare comp;
+      return !comp(lhs,rhs);
+    };
+
+    return const_iterator(m_root->FindCondition(condition, key));
   }
 
   template <class T, class Compare>
@@ -1171,13 +1177,8 @@ namespace xsm::detail{
   }
 
   template <class T, class Compare> template <class K>
-  typename Node<T,Compare>::node_ptr Node<T,Compare>::FindCondition(const K& key){
-
-    // Condition for finding first item that is not smaller than key
-    bool(*condition)(const key_type&,const K&) = [](const key_type& lhs, const K& rhs){
-      Compare comp;
-      return !comp(lhs,rhs);
-    };
+  typename Node<T,Compare>::node_ptr Node<T,Compare>::FindCondition(
+      bool(*condition)(const key_type&, const K&), const K& key){
 
     node_ptr candidate_node = this;
     child_map children = GetChildren();
