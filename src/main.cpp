@@ -85,22 +85,20 @@ int main() {
     assert(c_rdx.find("kazakhstan") == c_rdx.find(StartsWithK()));
   }
 
-  // Test lower_bound
+  // Test lookup functions with templated key and const radix
   {
     typedef const xsm::radix<bool,CompK> radix;
-
-    radix rdx({{"denmark", true}, {"korea", true}, {"kazakhstan", true}, {"togo", true}});
-
-    auto it = rdx.lower_bound(StartsWithK());
-    std::cout << it->first << std::endl;
-   
-    /*
-    it = rdx.find(StartsWithK());
-    std::cout << it->first << std::endl;
     
-    it = rdx.upper_bound(StartsWithK());
-    std::cout << it->first << std::endl;
-    */
+    // Range of matches exists in tree
+    {
+      // "kazakhstan" and "korea" should match with StartsWithK
+      radix rdx({{"denmark", true}, {"korea", true}, {"kazakhstan", true}, {"togo", true}});
+
+      assert(rdx.lower_bound(StartsWithK()) == rdx.find("kazakhstan"));
+      assert(rdx.upper_bound(StartsWithK()) == rdx.find("togo"));
+      assert(rdx.find(StartsWithK()) == rdx.find("kazakhstan"));
+
+    }
   }
 
   {

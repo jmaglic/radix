@@ -788,23 +788,33 @@ namespace xsm{
 
   template <class T, class Compare> template<class K>
   typename radix<T,Compare>::const_iterator radix<T,Compare>::find(const K& key) const {
-    // TODO: Use tree structure
     Compare comp;
-    const_iterator it;
-    for (it = cbegin(); it != cend(); ++it){
-      if (!comp(it->first, key) && !comp(key, it->first)){
-        break;
-      }
+    auto it = lower_bound(key);
+    if (!comp(it->first, key) && !comp(key, it->first)){
+      return it;
     }
-    return it;
+    else{
+      return cend();
+    }
   }
 
   template <class T, class Compare> template<class K>
   typename radix<T,Compare>::const_iterator radix<T,Compare>::lower_bound(const K& key) const {
     // Condition for finding first item that is not smaller than key
-    bool(*condition)(const key_type&,const K&) = [](const key_type& lhs, const K& rhs){
+    bool(*condition)(const key_type&,const K&) = [](const key_type& tree_key, const K& key){
       Compare comp;
-      return !comp(lhs,rhs);
+      return !comp(tree_key,key);
+    };
+
+    return const_iterator(m_root->FindCondition(condition, key));
+  }
+
+  template <class T, class Compare> template<class K>
+  typename radix<T,Compare>::const_iterator radix<T,Compare>::upper_bound(const K& key) const {
+    // Condition for finding first item that is greater than key
+    bool(*condition)(const key_type&,const K&) = [](const key_type& tree_key, const K& key){
+      Compare comp;
+      return comp(key, tree_key);
     };
 
     return const_iterator(m_root->FindCondition(condition, key));
@@ -1193,7 +1203,7 @@ namespace xsm::detail{
           break;
         }
       }
-
+    
       // Child map does not contain match
       if (it == children.end()){
         match_found = true;
