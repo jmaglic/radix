@@ -87,7 +87,7 @@ int main() {
 
   // Test lower_bound
   {
-    typedef xsm::radix<bool,CompK> radix;
+    typedef const xsm::radix<bool,CompK> radix;
 
     radix rdx({{"denmark", true}, {"korea", true}, {"kazakhstan", true}, {"togo", true}});
 
