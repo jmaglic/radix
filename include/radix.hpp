@@ -248,8 +248,8 @@ namespace xsm{
   // RADIX //
   ///////////
   //
-  //template<class T> operator<=>(const radix<T,Compare>, const radix<T,Compare>);
-  //template<class T, class Pred> radix<T,Compare>::size_type erase_if(radix<T,Compare>, Pred);
+  //template <class T> operator<=>(const radix<T,Compare>, const radix<T,Compare>);
+  //template <class T, class Pred> radix<T,Compare>::size_type erase_if(radix<T,Compare>, Pred);
   //
   // Publicly accessible container class
   template <class T, class Compare=std::less<std::string>> class radix{
@@ -304,15 +304,15 @@ namespace xsm{
       // template< class M > iterator insert_or_assign( const_iterator hint, Key&& k, M&& obj );
       template <class... Args> std::pair<iterator,bool> emplace(Args&&...);
       template <class... Args> iterator emplace_hint(const_iterator, Args&&...);
-      //template<class... Args> pair<iterator, bool> try_emplace(const key_type&, Args&&...);
-      //template<class... Args> pair<iterator, bool> try_emplace(key_type&&, Args&&...);
-      //template<class... Args> pair<iterator, bool> try_emplace(const iterator, const key_type&, Args&&...);
-      //template<class... Args> pair<iterator, bool> try_emplace(const_iterator, key_type&&, Args&&...);
+      //template <class... Args> pair<iterator, bool> try_emplace(const key_type&, Args&&...);
+      //template <class... Args> pair<iterator, bool> try_emplace(key_type&&, Args&&...);
+      //template <class... Args> pair<iterator, bool> try_emplace(const iterator, const key_type&, Args&&...);
+      //template <class... Args> pair<iterator, bool> try_emplace(const_iterator, key_type&&, Args&&...);
       iterator erase(iterator);
       iterator erase(const_iterator);
       iterator erase(const_iterator, const_iterator);
       size_type erase(const key_type&); 
-      //template<class K> size_type erase(K&&); c++23
+      //template <class K> size_type erase(K&&); c++23
       void swap(radix<T,Compare>&);
       node_type extract(const_iterator);
       node_type extract(const key_type&);
@@ -328,25 +328,25 @@ namespace xsm{
 
       // Lookup
       size_type count(const key_type&) const;
-      template<class K> size_type count(const K&) const;
+      template <class K> size_type count(const K&) const;
       bool contains(const key_type&) const;
-      template<class K> bool contains(const K&) const;
+      template <class K> bool contains(const K&) const;
       iterator find(const key_type&);
       const_iterator find(const key_type&) const;
-      template<class K> iterator find(const K&);
-      template<class K> const_iterator find(const K&) const;
+      template <class K> iterator find(const K&);
+      template <class K> const_iterator find(const K&) const;
       //std::pair<iterator,iterator> equal_range(const key_type&);
       //std::pair<const_iterator,const_iterator> equal_range(const key_type&) const;
-      //template<class K> std::pair<iterator,iterator> equal_range(const K&);
-      //template<class K> std::pair<const_iterator,const_iterator> equal_range(const K&) const;
+      //template <class K> std::pair<iterator,iterator> equal_range(const K&);
+      //template <class K> std::pair<const_iterator,const_iterator> equal_range(const K&) const;
       iterator lower_bound(const key_type&);
       const_iterator lower_bound(const key_type&) const;
-      template<class K> iterator lower_bound(const K&);
-      template<class K> const_iterator lower_bound(const K&) const;
+      template <class K> iterator lower_bound(const K&);
+      template <class K> const_iterator lower_bound(const K&) const;
       //iterator upper_bound(const key_type&);
       //const_iterator upper_bound(const key_type&) const;
-      //template<class K> iterator upper_bound(const K&);
-      template<class K> const_iterator upper_bound(const K&) const;
+      //template <class K> iterator upper_bound(const K&);
+      template <class K> const_iterator upper_bound(const K&) const;
       
       // Observers
       // key_compare key_comp() const;
@@ -479,7 +479,7 @@ namespace xsm{
     return emplace_hint(pos, key_value);
   }
 
-  template <class T, class Compare> template<class P> 
+  template <class T, class Compare> template <class P> 
   typename radix<T,Compare>::iterator radix<T,Compare>::insert(const_iterator pos, P&& value){
     return emplace_hint(pos, std::forward<P>(value));
   }
@@ -489,7 +489,7 @@ namespace xsm{
     return emplace_hint(pos, std::forward<value_type>(key_value));
   }
   
-  template <class T, class Compare> template<class InputIt>
+  template <class T, class Compare> template <class InputIt>
   void radix<T,Compare>::insert(InputIt it, InputIt end){
     while (it != end){
       insert(*it);
@@ -663,7 +663,7 @@ namespace xsm{
     return NodeInTree(node_type(node), iterator(m_root), node->GetKey().begin());
   }
 
-  template <class T, class Compare> template<class... Args>
+  template <class T, class Compare> template <class... Args>
   typename radix<T,Compare>::iterator radix<T,Compare>::emplace_hint(const_iterator pos, Args&&... args){
     
     node_ptr node = new detail::Node<T,Compare>(nullptr, true, std::forward<Args>(args)...);
@@ -778,7 +778,7 @@ namespace xsm{
     return const_iterator(m_root->Retrieve(key));
   }
 
-  template <class T, class Compare> template<class K>
+  template <class T, class Compare> template <class K>
   typename radix<T,Compare>::iterator radix<T,Compare>::find(const K& key){
     std::cout << "temp find" << std::endl;
     iterator it = lower_bound(key);
@@ -787,7 +787,7 @@ namespace xsm{
     return (it != end() && !comp(it->first, key) && !comp(key, it->first))? it : end();
   }
 
-  template <class T, class Compare> template<class K>
+  template <class T, class Compare> template <class K>
   typename radix<T,Compare>::const_iterator radix<T,Compare>::find(const K& key) const {
     std::cout << "temp const find" << std::endl;
     const_iterator it = lower_bound(key);
@@ -818,7 +818,7 @@ namespace xsm{
     return const_iterator(m_root->FindCondition(condition, key));
   }
 
-  template <class T, class Compare> template<class K>
+  template <class T, class Compare> template <class K>
   typename radix<T,Compare>::iterator radix<T,Compare>::lower_bound(const K& key){
     std::cout << "temp lb" << std::endl;
     // Condition for finding first item that is not smaller than key
@@ -831,7 +831,7 @@ namespace xsm{
     return iterator(m_root->FindCondition(condition, key));
   }
 
-  template <class T, class Compare> template<class K>
+  template <class T, class Compare> template <class K>
   typename radix<T,Compare>::const_iterator radix<T,Compare>::lower_bound(const K& key) const {
     std::cout << "temp const lb" << std::endl;
     // Condition for finding first item that is not smaller than key
@@ -843,7 +843,7 @@ namespace xsm{
     return const_iterator(m_root->FindCondition(condition, key));
   }
 
-  template <class T, class Compare> template<class K>
+  template <class T, class Compare> template <class K>
   typename radix<T,Compare>::const_iterator radix<T,Compare>::upper_bound(const K& key) const {
     std::cout << "temp const ub" << std::endl;
     // Condition for finding first item that is greater than key
@@ -865,7 +865,7 @@ namespace xsm{
     return contains(key)? 1 : 0;
   }
   
-  template <class T, class Compare> template<class K>
+  template <class T, class Compare> template <class K>
   typename xsm::radix<T,Compare>::size_type xsm::radix<T,Compare>::count(const K& key) const {
     // TODO: this function can return values higher than 1! Implement a version that allows this
     return contains(key)? 1 : 0;
@@ -877,7 +877,7 @@ namespace xsm{
     return (node != nullptr && node->IsLeaf());
   }
 
-  template <class T, class Compare> template<class K>
+  template <class T, class Compare> template <class K>
   bool radix<T,Compare>::contains(const K& key) const {
     // TODO: Use tree structure (or just find)
     Compare comp;
