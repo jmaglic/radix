@@ -1223,34 +1223,23 @@ namespace xsm::detail{
       while (!condition(it->second->GetKey(), key) && it != children.cend()){
         ++it;
       }
-     
-      // TODO: Code can be condensed/simplified?
-      // 1. Child map does not contain match
-      if (it == children.end()){
-        // Match could be among last childs descendents
-        // We know that the child map is not empty, so decrementing is allowed
-        --it;
-        match_found = (it->second->IsChildless());
-        // Following line has no effect if match found
+
+      // If match has been found in child map
+      if (it != children.end()){
+        candidate_node = it->second;
+      }
+      
+      // Only check previous child, if match is not first element in child map
+      if (it != children.begin()){
+        --it; 
+        match_found = it->second->IsChildless();
+        // Following line has no effect if match_found == true
         children = it->second->GetChildren();
       }
-      // 2. First child in map matches condition
-      else if (it == children.begin()){
-        candidate_node = it->second;
+      else {
         match_found = true;
       }
-      // 3. Any other child matches condition
-      else {
-        candidate_node = it->second;
-        // There may be a match in the descendents of the previous child
-        --it;
-        //auto current_it = it--;
-        //candidate_node = current_it->second;
 
-        match_found = (it->second->IsChildless());
-        // Following line has no effect if match found
-        children = it->second->GetChildren();
-      }
     }
 
     // Find first non-leaf node (candidate is not root)
