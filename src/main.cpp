@@ -72,24 +72,32 @@ int main() {
   // template lower_bound
   // /template upper_bound
 
-  // Testing look up for const radix
+  // Testing lookup for const radix
   {   
     typedef const xsm::radix<int> radix;
+    //typedef const std::map<std::string,int> radix;
 
     std::initializer_list<std::pair<const std::string,int>> init_list 
       = {{"waste", 123}, {"water", 22}, {"watt", 93}, {"worm", 2}, {"wormhole", 3}};
     radix c_rdx(init_list);
 
+    // Test basic const lookups
     for (auto e : init_list){
       auto it = c_rdx.find(e.first);
       assert(it->first == e.first);
       assert(it->second == e.second);
 
       assert(it == c_rdx.lower_bound(e.first));
-      
-//      assert(upper_bound(e.first) == ++find(e.first));
-
+      assert(++it == c_rdx.upper_bound(e.first));
     }
+
+    // Test key that is not contained in map
+    const std::string unknown_key = "heaven";
+    //assert(c_rdx.find(unknown_key) == c_rdx.cend());
+    std::cout << (c_rdx.find(unknown_key) == c_rdx.cend()? 1 : 0) << std::endl;
+    std::cout << c_rdx.lower_bound(unknown_key)->first << std::endl;
+    std::cout << c_rdx.upper_bound(unknown_key)->first << std::endl;
+
 
   }
   //
