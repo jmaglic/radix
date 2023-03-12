@@ -339,8 +339,8 @@ namespace xsm{
       //std::pair<const_iterator,const_iterator> equal_range(const key_type&) const;
       //template<class K> std::pair<iterator,iterator> equal_range(const K&);
       //template<class K> std::pair<const_iterator,const_iterator> equal_range(const K&) const;
-      //iterator lower_bound(const key_type&);
-      //const_iterator lower_bound(const key_type&) const;
+      iterator lower_bound(const key_type&);
+      const_iterator lower_bound(const key_type&) const;
       template<class K> iterator lower_bound(const K&);
       template<class K> const_iterator lower_bound(const K&) const;
       //iterator upper_bound(const key_type&);
@@ -768,16 +768,19 @@ namespace xsm{
   
   template <class T, class Compare>
   typename radix<T,Compare>::iterator radix<T,Compare>::find(const key_type& key){
+    std::cout << "find" << std::endl;
     return iterator(m_root->Retrieve(key));
   }
 
   template <class T, class Compare>
   typename radix<T,Compare>::const_iterator radix<T,Compare>::find(const key_type& key) const {
+    std::cout << "const find" << std::endl;
     return const_iterator(m_root->Retrieve(key));
   }
 
   template <class T, class Compare> template<class K>
   typename radix<T,Compare>::iterator radix<T,Compare>::find(const K& key){
+    std::cout << "temp find" << std::endl;
     iterator it = lower_bound(key);
 
     const Compare comp;
@@ -786,15 +789,40 @@ namespace xsm{
 
   template <class T, class Compare> template<class K>
   typename radix<T,Compare>::const_iterator radix<T,Compare>::find(const K& key) const {
+    std::cout << "temp const find" << std::endl;
     const_iterator it = lower_bound(key);
 
     Compare comp;
     return (it != cend() && !comp(it->first, key) && !comp(key, it->first))? it : cend();
   }
+  
+  template <class T, class Compare>
+  typename radix<T,Compare>::iterator radix<T,Compare>::lower_bound(const key_type& key){
+    std::cout << "lower_bound" << std::endl;
+    bool(*condition)(const key_type&, const key_type&) = [](const key_type& tree_key, const key_type& key){
+      const Compare comp;
+      return !comp(tree_key,key);
+    };
+    
+    return iterator(m_root->FindCondition(condition, key));
+  }
+
+  template <class T, class Compare>
+  typename radix<T,Compare>::const_iterator radix<T,Compare>::lower_bound(const key_type& key) const {
+    std::cout << "const lower_bound" << std::endl;
+    bool(*condition)(const key_type&,const key_type&) = [](const key_type& tree_key, const key_type& key){
+      const Compare comp;
+      return !comp(tree_key,key);
+    };
+    
+    return const_iterator(m_root->FindCondition(condition, key));
+  }
 
   template <class T, class Compare> template<class K>
   typename radix<T,Compare>::iterator radix<T,Compare>::lower_bound(const K& key){
+    std::cout << "temp lb" << std::endl;
     // Condition for finding first item that is not smaller than key
+    // TODO: Make this a static class method?
     bool(*condition)(const key_type&,const K&) = [](const key_type& tree_key, const K& key){
       const Compare comp;
       return !comp(tree_key,key);
@@ -805,6 +833,7 @@ namespace xsm{
 
   template <class T, class Compare> template<class K>
   typename radix<T,Compare>::const_iterator radix<T,Compare>::lower_bound(const K& key) const {
+    std::cout << "temp const lb" << std::endl;
     // Condition for finding first item that is not smaller than key
     bool(*condition)(const key_type&,const K&) = [](const key_type& tree_key, const K& key){
       const Compare comp;
@@ -816,6 +845,7 @@ namespace xsm{
 
   template <class T, class Compare> template<class K>
   typename radix<T,Compare>::const_iterator radix<T,Compare>::upper_bound(const K& key) const {
+    std::cout << "temp const ub" << std::endl;
     // Condition for finding first item that is greater than key
     bool(*condition)(const key_type&,const K&) = [](const key_type& tree_key, const K& key){
       Compare comp;

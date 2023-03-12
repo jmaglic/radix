@@ -3,34 +3,17 @@
 #include <vector>
 
 #include "radix.hpp"
+#include "custom_comp.hpp"
 
 int main() {
-  
-  struct StartsWithK {};
-  
-  struct CompK{
-    using is_transparent = void;
-    bool operator()(std::string lhs, std::string rhs) const {
-      return lhs.compare(rhs) < 0;
-    }
-    bool operator()(std::string lhs, StartsWithK rhs) const {
-      return tolower(lhs[0]) < 'k';
-    }
-    bool operator()(StartsWithK lhs, std::string rhs) const {
-      return 'k' < tolower(rhs[0]);
-    }
-  };
 
-  struct CompInv{
-    using is_transparent = void;
-    bool operator()(std::string lhs, std::string rhs) const {
-      return lhs.compare(rhs) > 0; // Inverted order
-    }
-  };
-
+  /* Custom comparator test
+   *
+  using StartsWithK = xsm::comp::StartsWithK;
+  
   // Test xsm::radix::contains with custom comparator to find element that starts with a letter
   {
-    typedef xsm::radix<bool,CompK> radix;
+    typedef xsm::radix<bool,xsm::comp::CompK> radix;
   
     radix rdx({{"albert", true}, {"kristina", false}, {"sarah", true}});
   
@@ -51,7 +34,7 @@ int main() {
 
   // Test inverting order of tree
   {
-    typedef xsm::radix<bool,CompInv> radix;
+    typedef xsm::radix<bool,xsm::comp::CompInv> radix;
 
     radix rdx({{"a", true}, {"b", true}, {"c", true}});
 
@@ -61,54 +44,60 @@ int main() {
       assert(e.first == keys[i++]);
     }
   }
+  */
 
-  // Test find
-  {
-    typedef xsm::radix<bool,CompK> radix;
+  // LOOKUP TESTS
 
-    radix rdx({{"denmark", true}, {"korea", true}, {"kazakhstan", true}, {"togo", true}});
-    
-    assert(rdx.find("kazakhstan") == rdx.find(StartsWithK()));
+  using StartsWithK = xsm::comp::StartsWithK;
 
-    rdx.erase("kazakhstan");
+  // count c
+  // template count c
+  // contains c
+  // template contains c
+  // /equal_range
 
-    assert(rdx.find("korea") == rdx.find(StartsWithK()));
+  // const find
+  // /const lower_bound
+  // /const upper_bound
+  
+  // find
+  // /lower_bound
+  // /upper_bound
 
-    rdx.erase("korea");
+  // template const find
+  // template const lower_bound
+  // template const upper_bound
+  
+  // template find
+  // template lower_bound
+  // /template upper_bound
 
-    assert(rdx.find("korea") == rdx.end());
-    
-    assert(rdx.find(StartsWithK()) == rdx.end());
+  // Testing look up for const radix
+  {   
+    typedef const xsm::radix<int> radix;
 
-    // Const overload
-    const radix c_rdx({{"denmark", true}, {"korea", true}, {"kazakhstan", true}, {"togo", true}});
+    std::initializer_list<std::pair<const std::string,int>> init_list 
+      = {{"waste", 123}, {"water", 22}, {"watt", 93}, {"worm", 2}, {"wormhole", 3}};
+    radix c_rdx(init_list);
 
-    assert(c_rdx.find("kazakhstan") == c_rdx.find(StartsWithK()));
-  }
+    for (auto e : init_list){
+      auto it = c_rdx.find(e.first);
+      assert(it->first == e.first);
+      assert(it->second == e.second);
 
-  // Test lookup functions with templated key and const radix
-  {
-    typedef const xsm::radix<bool,CompK> radix;
-    
-    // Range of matches exists in tree
-    {
-      // "kazakhstan" and "korea" should match with StartsWithK
-      radix c_rdx({{"denmark", true}, {"korea", true}, {"kazakhstan", true}, {"togo", true}});
-
-      assert(c_rdx.lower_bound(StartsWithK()) == c_rdx.find("kazakhstan"));
-      assert(c_rdx.upper_bound(StartsWithK()) == c_rdx.find("togo"));
-      assert(c_rdx.find(StartsWithK()) == c_rdx.find("kazakhstan"));
+      assert(it == c_rdx.lower_bound(e.first));
+      
+//      assert(upper_bound(e.first) == ++find(e.first));
 
     }
-  }
-
-  {
-    typedef const xsm::radix<bool> c_radix;
-    c_radix c_rdx({{"hello", true}, {"hi", true}, {"hey", true}});
-
-    std::cout << c_rdx.find(std::string("hello"))->first << std::endl;
 
   }
+  //
+  // 2. non-const radix
+  //
+  // 3. const radix with custom comp
+  //
+  // 4. non-const radix with custom comp
 
   /* ISSUE WITH STD::MAP
   radix rdx2nd;
