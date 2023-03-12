@@ -114,7 +114,7 @@ namespace xsm::detail{
     template <class K> node_ptr FindCondition(bool(*)(const key_type&, const K&), const K&);
 
     // Display
-    void print(); // TODO just for testing
+    void print() const; // TODO just for testing
   };
 
   // Forward declarations to allow for overloaded comparison operators
@@ -341,7 +341,7 @@ namespace xsm{
       //template<class K> std::pair<const_iterator,const_iterator> equal_range(const K&) const;
       //iterator lower_bound(const key_type&);
       //const_iterator lower_bound(const key_type&) const;
-      //template<class K> iterator lower_bound(const K&);
+      template<class K> iterator lower_bound(const K&);
       template<class K> const_iterator lower_bound(const K&) const;
       //iterator upper_bound(const key_type&);
       //const_iterator upper_bound(const key_type&) const;
@@ -369,7 +369,7 @@ namespace xsm{
       const_reverse_iterator crbegin() const noexcept;
       const_reverse_iterator crend() const noexcept;
 
-      void print();
+      void print() const;
 
     private:
       using node_ptr = typename detail::Node<mapped_type,key_compare>::node_ptr;
@@ -681,6 +681,9 @@ namespace xsm{
 
   template <class T, class Compare>
   typename radix<T,Compare>::iterator radix<T,Compare>::erase(const_iterator it){
+    // Passing and iterator that equals end() will result in an error (Seg fault)
+    // This is the same behaviour as in std::map, so there is no need to check for
+    // this case.
     auto ret_it = it;
     ++ret_it;
     extract(it);
@@ -775,34 +778,36 @@ namespace xsm{
 
   template <class T, class Compare> template<class K>
   typename radix<T,Compare>::iterator radix<T,Compare>::find(const K& key){
-    // TODO: Use tree structure
-    Compare comp;
-    iterator it;
-    for (it = begin(); it != end(); ++it){
-      if (!comp(it->first, key) && !comp(key, it->first)){
-        break;
-      }
-    }
-    return it;
+    iterator it = lower_bound(key);
+
+    const Compare comp;
+    return (it != end() && !comp(it->first, key) && !comp(key, it->first))? it : end();
   }
 
   template <class T, class Compare> template<class K>
   typename radix<T,Compare>::const_iterator radix<T,Compare>::find(const K& key) const {
+    const_iterator it = lower_bound(key);
+
     Compare comp;
-    auto it = lower_bound(key);
-    if (!comp(it->first, key) && !comp(key, it->first)){
-      return it;
-    }
-    else{
-      return cend();
-    }
+    return (it != cend() && !comp(it->first, key) && !comp(key, it->first))? it : cend();
+  }
+
+  template <class T, class Compare> template<class K>
+  typename radix<T,Compare>::iterator radix<T,Compare>::lower_bound(const K& key){
+    // Condition for finding first item that is not smaller than key
+    bool(*condition)(const key_type&,const K&) = [](const key_type& tree_key, const K& key){
+      const Compare comp;
+      return !comp(tree_key,key);
+    };
+    
+    return iterator(m_root->FindCondition(condition, key));
   }
 
   template <class T, class Compare> template<class K>
   typename radix<T,Compare>::const_iterator radix<T,Compare>::lower_bound(const K& key) const {
     // Condition for finding first item that is not smaller than key
     bool(*condition)(const key_type&,const K&) = [](const key_type& tree_key, const K& key){
-      Compare comp;
+      const Compare comp;
       return !comp(tree_key,key);
     };
 
@@ -844,7 +849,7 @@ namespace xsm{
 
   template <class T, class Compare> template<class K>
   bool radix<T,Compare>::contains(const K& key) const {
-    // TODO: Use tree structure
+    // TODO: Use tree structure (or just find)
     Compare comp;
     for (auto it = begin(); it != end(); ++it){
       if (!comp(it->first,key) && !comp(key,it->first)) {
@@ -916,7 +921,7 @@ namespace xsm{
   }
   
   template <class T, class Compare>
-  void radix<T,Compare>::print(){
+  void radix<T,Compare>::print() const {
     std::cout << "ROOT";
     m_root->print();
     std::cout << "\n" << std::flush;
@@ -1116,6 +1121,13 @@ namespace xsm::detail{
       node_ptr parent = GetParent();
       // Cut ties with parent
       Emancipate();
+      // Remove parent if they: 
+      //  Are not a leaf node
+      //  & Are childless
+      //  & Are not the root node
+      if (!parent->IsLeaf() && parent->IsChildless() && !parent->GetKey().empty()){
+        delete parent->Extract();
+      }
     }
     else if (CountChildren() == 1){
       // Store parent ptr so that this node can emancipate
@@ -1186,9 +1198,20 @@ namespace xsm::detail{
     RemoveParent();
   }
 
+  // This function is used for both lower_bound() and upper_bound(). Each function specifies a
+  // condition for finding the desired element as a function and passes it to FindCondition() as
+  // a function pointer. The condition must strictly specify a key order, not just key equality.
   template <class T, class Compare> template <class K>
   typename Node<T,Compare>::node_ptr Node<T,Compare>::FindCondition(
       bool(*condition)(const key_type&, const K&), const K& key){
+
+    // If this function is called on an empty radix map, then there is no need
+    // to search the tree.
+    if (IsChildless()){
+      return this;
+    }
+
+    const Compare comp;
 
     node_ptr candidate_node = this;
     child_map children = GetChildren();
@@ -1196,42 +1219,45 @@ namespace xsm::detail{
 
     while(!match_found){
       // Find first child that matches condition
-      typename child_map::const_iterator it;
-      for (it = children.begin(); it != children.end(); ++it){
-        if (condition(it->second->GetKey(), key)){
-          // Match found
-          break;
-        }
+      auto it = children.cbegin();
+      while (!condition(it->second->GetKey(), key) && it != children.cend()){
+        ++it;
       }
-    
-      // Child map does not contain match
+     
+      // TODO: Code can be condensed/simplified?
+      // 1. Child map does not contain match
       if (it == children.end()){
-        match_found = true;
+        // Match could be among last childs descendents
+        // We know that the child map is not empty, so decrementing is allowed
+        --it;
+        match_found = (it->second->IsChildless());
+        // Following line has no effect if match found
+        children = it->second->GetChildren();
       }
-      // First child matches
+      // 2. First child in map matches condition
       else if (it == children.begin()){
         candidate_node = it->second;
         match_found = true;
       }
+      // 3. Any other child matches condition
       else {
+        candidate_node = it->second;
+        // There may be a match in the descendents of the previous child
+        --it;
+        //auto current_it = it--;
+        //candidate_node = current_it->second;
 
-        // Store current iterator, then decrement
-        auto current_it = it--;
-        candidate_node = current_it->second;
-
-        if (it->second->IsChildless()){
-          match_found = true;
-        }
-        else {
-          // Repeat with new child map
-          children = it->second->GetChildren();
-        } 
+        match_found = (it->second->IsChildless());
+        // Following line has no effect if match found
+        children = it->second->GetChildren();
       }
     }
 
-    // Find first non-leaf node
-    while (!candidate_node->IsLeaf()){
-      candidate_node = candidate_node->GetFirstChild();
+    // Find first non-leaf node (candidate is not root)
+    if (!candidate_node->GetKey().empty()){
+      while (!candidate_node->IsLeaf()){
+        candidate_node = candidate_node->GetFirstChild();
+      }
     }
 
     return candidate_node;
@@ -1278,7 +1304,7 @@ namespace xsm::detail{
   }
   
   template <class T, class Compare>
-  void Node<T,Compare>::print(){
+  void Node<T,Compare>::print() const {
     std::cout << " ("<< (IsLeaf()? "+" : "-") << ")";
     std::cout << " <";
     for (auto& entry : GetChildren()){

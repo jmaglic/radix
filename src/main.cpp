@@ -77,6 +77,7 @@ int main() {
     rdx.erase("korea");
 
     assert(rdx.find("korea") == rdx.end());
+    
     assert(rdx.find(StartsWithK()) == rdx.end());
 
     // Const overload
@@ -92,11 +93,11 @@ int main() {
     // Range of matches exists in tree
     {
       // "kazakhstan" and "korea" should match with StartsWithK
-      radix rdx({{"denmark", true}, {"korea", true}, {"kazakhstan", true}, {"togo", true}});
+      radix c_rdx({{"denmark", true}, {"korea", true}, {"kazakhstan", true}, {"togo", true}});
 
-      assert(rdx.lower_bound(StartsWithK()) == rdx.find("kazakhstan"));
-      assert(rdx.upper_bound(StartsWithK()) == rdx.find("togo"));
-      assert(rdx.find(StartsWithK()) == rdx.find("kazakhstan"));
+      assert(c_rdx.lower_bound(StartsWithK()) == c_rdx.find("kazakhstan"));
+      assert(c_rdx.upper_bound(StartsWithK()) == c_rdx.find("togo"));
+      assert(c_rdx.find(StartsWithK()) == c_rdx.find("kazakhstan"));
 
     }
   }
