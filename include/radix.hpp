@@ -343,9 +343,9 @@ namespace xsm{
       const_iterator lower_bound(const key_type&) const;
       template <class K> iterator lower_bound(const K&);
       template <class K> const_iterator lower_bound(const K&) const;
-      //iterator upper_bound(const key_type&);
-      //const_iterator upper_bound(const key_type&) const;
-      //template <class K> iterator upper_bound(const K&);
+      iterator upper_bound(const key_type&);
+      const_iterator upper_bound(const key_type&) const;
+      template <class K> iterator upper_bound(const K&);
       template <class K> const_iterator upper_bound(const K&) const;
       
       // Observers
@@ -380,6 +380,9 @@ namespace xsm{
 
       key_type::const_iterator ProcessHint(const_iterator&, node_ptr);
       std::pair<iterator,bool> NodeInTree(node_type&&, const_iterator, key_type::const_iterator);
+
+      template <class K> static bool conditionLower(const key_type&, const K&);
+      template <class K> static bool conditionUpper(const key_type&, const K&);
   };
 }
  
@@ -795,64 +798,77 @@ namespace xsm{
     Compare comp;
     return (it != cend() && !comp(it->first, key) && !comp(key, it->first))? it : cend();
   }
+
+  /////////////////
+  // LOWER BOUND //
+  /////////////////
+
+  // Condition for finding first item that is not smaller than key
+  // Used in lower_bound
+  template <class T, class Compare> template <class K>
+  bool radix<T,Compare>::conditionLower(const key_type& tree_key, const K& key){
+    const Compare comp;
+    return !comp(tree_key,key);
+  }
   
   template <class T, class Compare>
   typename radix<T,Compare>::iterator radix<T,Compare>::lower_bound(const key_type& key){
     std::cout << "lower_bound" << std::endl;
-    bool(*condition)(const key_type&, const key_type&) = [](const key_type& tree_key, const key_type& key){
-      const Compare comp;
-      return !comp(tree_key,key);
-    };
-    
-    return iterator(m_root->FindCondition(condition, key));
+    return iterator(m_root->FindCondition(radix::conditionLower<key_type>, key));
   }
 
   template <class T, class Compare>
   typename radix<T,Compare>::const_iterator radix<T,Compare>::lower_bound(const key_type& key) const {
     std::cout << "const lower_bound" << std::endl;
-    bool(*condition)(const key_type&,const key_type&) = [](const key_type& tree_key, const key_type& key){
-      const Compare comp;
-      return !comp(tree_key,key);
-    };
-    
-    return const_iterator(m_root->FindCondition(condition, key));
+    return const_iterator(m_root->FindCondition(radix::conditionLower<key_type>, key));
   }
 
   template <class T, class Compare> template <class K>
   typename radix<T,Compare>::iterator radix<T,Compare>::lower_bound(const K& key){
     std::cout << "temp lb" << std::endl;
-    // Condition for finding first item that is not smaller than key
-    // TODO: Make this a static class method?
-    bool(*condition)(const key_type&,const K&) = [](const key_type& tree_key, const K& key){
-      const Compare comp;
-      return !comp(tree_key,key);
-    };
-    
-    return iterator(m_root->FindCondition(condition, key));
+    return iterator(m_root->FindCondition(radix::conditionLower, key));
   }
 
   template <class T, class Compare> template <class K>
   typename radix<T,Compare>::const_iterator radix<T,Compare>::lower_bound(const K& key) const {
     std::cout << "temp const lb" << std::endl;
-    // Condition for finding first item that is not smaller than key
-    bool(*condition)(const key_type&,const K&) = [](const key_type& tree_key, const K& key){
-      const Compare comp;
-      return !comp(tree_key,key);
-    };
+    return const_iterator(m_root->FindCondition(radix::conditionLower, key));
+  }
 
-    return const_iterator(m_root->FindCondition(condition, key));
+  /////////////////
+  // UPPER BOUND //
+  /////////////////
+  
+  // Condition for finding first item that is greater than key
+  // Used in upper_bound
+  template <class T, class Compare> template <class K>
+  bool radix<T,Compare>::conditionUpper(const key_type& tree_key, const K& key){
+    Compare comp;
+    return comp(key, tree_key);
+  }
+  
+  template <class T, class Compare>
+  typename radix<T,Compare>::iterator radix<T,Compare>::upper_bound(const key_type& key){
+    std::cout << "upper_bound" << std::endl;
+    return iterator(m_root->FindCondition(radix::conditionUpper<key_type>, key));
+  }
+
+  template <class T, class Compare>
+  typename radix<T,Compare>::const_iterator radix<T,Compare>::upper_bound(const key_type& key) const {
+    std::cout << "const upper_bound" << std::endl;
+    return const_iterator(m_root->FindCondition(radix::conditionUpper<key_type>, key));
+  }
+
+  template <class T, class Compare> template <class K>
+  typename radix<T,Compare>::iterator radix<T,Compare>::upper_bound(const K& key){
+    std::cout << "temp ub" << std::endl;
+    return iterator(m_root->FindCondition(radix::conditionUpper, key));
   }
 
   template <class T, class Compare> template <class K>
   typename radix<T,Compare>::const_iterator radix<T,Compare>::upper_bound(const K& key) const {
     std::cout << "temp const ub" << std::endl;
-    // Condition for finding first item that is greater than key
-    bool(*condition)(const key_type&,const K&) = [](const key_type& tree_key, const K& key){
-      Compare comp;
-      return comp(key, tree_key);
-    };
-
-    return const_iterator(m_root->FindCondition(condition, key));
+    return const_iterator(m_root->FindCondition(radix::conditionUpper, key));
   }
 
   template <class T, class Compare>
