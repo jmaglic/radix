@@ -65,4 +65,35 @@ int main() {
       assert(rdx.upper_bound(unknown_key) == rdx.find(std::string("worm")));
     }
   }
+  
+  // Testing lookup for const radix
+  {   
+
+    using StartsWithK = xsm::comp::StartsWithK;
+
+    typedef xsm::radix<int, xsm::comp::CompK> radix;
+    //typedef const std::map<std::string,int, xsm::comp::CompK> radix;
+
+    std::initializer_list<std::pair<const std::string,int>> init_list 
+      = {{"king", 123}, {"knight", 22}, {"rook", 93}, {"queen", 2}, {"bishop", 3}, {"pawn", 2}};
+    radix rdx(init_list);
+
+    const radix c_rdx = rdx;
+
+    assert(rdx.find("king") == rdx.find(std::string("king")));
+    assert(rdx.find(StartsWithK()) == rdx.find(std::string("king")));
+    assert(c_rdx.find("king") == c_rdx.find(std::string("king")));
+    assert(c_rdx.find(StartsWithK()) == c_rdx.find(std::string("king")));
+
+    assert(rdx.lower_bound("king") == rdx.find(std::string("king")));
+    assert(rdx.lower_bound(StartsWithK()) == rdx.find(std::string("king")));
+    assert(c_rdx.lower_bound("king") == c_rdx.find(std::string("king")));
+    assert(c_rdx.lower_bound(StartsWithK()) == c_rdx.find(std::string("king")));
+
+    assert(rdx.upper_bound("king") == rdx.find(std::string("knight")));
+    assert(rdx.upper_bound(StartsWithK()) == rdx.find(std::string("pawn")));
+    assert(c_rdx.upper_bound("king") == c_rdx.find(std::string("knight")));
+    assert(c_rdx.upper_bound(StartsWithK()) == c_rdx.find(std::string("pawn")));
+
+  }
 }
