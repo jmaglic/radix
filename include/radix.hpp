@@ -1131,15 +1131,27 @@ namespace xsm::detail{
     if (key.empty()){
       return this;
     }
-    auto begin = key.begin();
-    auto end = key.end();
-    for (auto pos = begin; pos <= end; ++pos){
-      key_type substr(begin,pos);
-      if (GetChildren().contains(substr)){
-        return GetChildren().at(substr)->Retrieve(key_type(pos,end));
+    auto first = key.begin();
+    auto key_end = key.end();
+    auto pos = first;
+    const child_map* children = &(this->GetChildren());
+
+    do {
+      ++pos;
+      key_type subkey(first,pos);
+      auto it = children->find(subkey);
+
+      if (it != children->end()){
+        if (pos == key_end){
+          return it->second;
+        }
+
+        first = pos;
+        children = &(it->second->GetChildren());
       }
-    }
-    return nullptr;
+    } while (pos != key_end);
+
+    return this;
   }
 
   template <class T, class Compare>
