@@ -10,6 +10,7 @@ set(TEST_NAMES
   radix_extract
   radix_overwrite
   radix_contains
+  radix_lookup
   radix_dereference
   radix_assign
   radix_clear
