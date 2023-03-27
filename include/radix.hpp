@@ -335,10 +335,10 @@ namespace xsm{
       const_iterator find(const key_type&) const;
       template <class K> iterator find(const K&);
       template <class K> const_iterator find(const K&) const;
-      //std::pair<iterator,iterator> equal_range(const key_type&);
-      //std::pair<const_iterator,const_iterator> equal_range(const key_type&) const;
-      //template <class K> std::pair<iterator,iterator> equal_range(const K&);
-      //template <class K> std::pair<const_iterator,const_iterator> equal_range(const K&) const;
+      std::pair<iterator,iterator> equal_range(const key_type&);
+      std::pair<const_iterator,const_iterator> equal_range(const key_type&) const;
+      template <class K> std::pair<iterator,iterator> equal_range(const K&);
+      template <class K> std::pair<const_iterator,const_iterator> equal_range(const K&) const;
       iterator lower_bound(const key_type&);
       const_iterator lower_bound(const key_type&) const;
       template <class K> iterator lower_bound(const K&);
@@ -869,6 +869,42 @@ namespace xsm{
   typename radix<T,Compare>::const_iterator radix<T,Compare>::upper_bound(const K& key) const {
     std::cout << "temp const ub" << std::endl;
     return const_iterator(m_root->FindCondition(radix::conditionUpper, key));
+  }
+
+  /////////////////
+  // EQUAL RANGE //
+  /////////////////
+
+  template <class T, class Compare>
+  std::pair<typename radix<T,Compare>::iterator, typename radix<T,Compare>::iterator> 
+    radix<T,Compare>::equal_range(const key_type& key)
+  {
+    std::cout << "equal_range" << std::endl;
+    return std::make_pair(lower_bound(key), upper_bound(key)); 
+  }
+
+  template <class T, class Compare>
+  std::pair<typename radix<T,Compare>::const_iterator, typename radix<T,Compare>::const_iterator> 
+    radix<T,Compare>::equal_range(const key_type& key) const
+  {
+    std::cout << "const equal_range" << std::endl;
+    return std::make_pair(lower_bound(key), upper_bound(key)); 
+  }
+
+  template <class T, class Compare> template <class K>
+  std::pair<typename radix<T,Compare>::iterator, typename radix<T,Compare>::iterator> 
+    radix<T,Compare>::equal_range(const K& key)
+  {
+    std::cout << "temp equal_range" << std::endl;
+    return std::make_pair(lower_bound(key), upper_bound(key)); 
+  }
+
+  template <class T, class Compare> template <class K>
+  std::pair<typename radix<T,Compare>::const_iterator, typename radix<T,Compare>::const_iterator> 
+    radix<T,Compare>::equal_range(const K& key) const
+  {
+    std::cout << "temp const equal_range" << std::endl;
+    return std::make_pair(lower_bound(key), upper_bound(key)); 
   }
 
   template <class T, class Compare>

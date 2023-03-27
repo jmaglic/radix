@@ -21,12 +21,21 @@ int main() {
       assert(c_it == c_rdx.lower_bound(e.first));
       assert(++c_it == c_rdx.upper_bound(e.first));
 
+      radix::const_iterator it_lr, it_ur;
+      std::tie(it_lr, it_ur) = c_rdx.equal_range(e.first);
+      assert(it_lr == c_rdx.lower_bound(e.first));
+      assert(it_ur == c_rdx.upper_bound(e.first));
+
       auto it = rdx.find(e.first);
       assert(it->first == e.first);
       assert(it->second == e.second);
 
       assert(it == rdx.lower_bound(e.first));
       assert(++it == rdx.upper_bound(e.first));
+
+      std::tie(it_lr, it_ur) = rdx.equal_range(e.first);
+      assert(it_lr == rdx.lower_bound(e.first));
+      assert(it_ur == rdx.upper_bound(e.first));
     }
 
     {
@@ -66,7 +75,7 @@ int main() {
     }
   }
   
-  // Testing lookup for const radix
+  // Testing lookup for radix and const radix with template key and custom comparator
   {   
 
     using StartsWithK = xsm::comp::StartsWithK;
@@ -95,5 +104,12 @@ int main() {
     assert(c_rdx.upper_bound("king") == c_rdx.find(std::string("knight")));
     assert(c_rdx.upper_bound(StartsWithK()) == c_rdx.find(std::string("pawn")));
 
+    radix::const_iterator it_lr, it_ur;
+    std::tie(it_lr, it_ur) = rdx.equal_range(StartsWithK());
+    assert(it_lr == rdx.lower_bound(StartsWithK()));
+    assert(it_ur == rdx.upper_bound(StartsWithK()));
+    std::tie(it_lr, it_ur) = c_rdx.equal_range(StartsWithK());
+    assert(it_lr == c_rdx.lower_bound(StartsWithK()));
+    assert(it_ur == c_rdx.upper_bound(StartsWithK()));
   }
 }

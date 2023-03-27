@@ -13,8 +13,6 @@ int main() {
   // template count c
   // contains c
   // template contains c
-  // /equal_range
- 
   
   /* ISSUE WITH STD::MAP
   radix rdx2nd;
