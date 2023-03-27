@@ -2,6 +2,14 @@
 
 // Use of contains()
 int main() {
+
+  // LOOKUP TESTS
+
+  // count c
+  // template count c
+  // contains c
+  // template contains c
+  
   xsm::radix<bool> rdx;
   rdx.emplace("hello",true);
   rdx.emplace("hellscape",true);

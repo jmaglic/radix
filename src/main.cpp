@@ -6,13 +6,6 @@
 #include "custom_comp.hpp"
 
 int main() {
-
-  // LOOKUP TESTS
-
-  // count c
-  // template count c
-  // contains c
-  // template contains c
   
   /* ISSUE WITH STD::MAP
   radix rdx2nd;

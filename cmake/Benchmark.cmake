@@ -2,8 +2,9 @@
 set(RADIX_BENCHMARK_DIR ${CMAKE_SOURCE_DIR}/test/benchmark)
 
 set(BENCHMARK_NAMES
-  radix_new_entry
-  radix_extract_insert)
+  benchmark_new_entry
+  benchmark_extract_insert
+  benchmark_lookup)
 
 foreach(BM IN ITEMS ${BENCHMARK_NAMES})
 
