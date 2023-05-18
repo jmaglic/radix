@@ -1301,8 +1301,6 @@ namespace xsm::detail{
       return this;
     }
 
-    const Compare comp;
-
     node_ptr candidate_node = this;
     child_map children = GetChildren();
     bool match_found = false;
