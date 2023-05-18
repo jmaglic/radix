@@ -95,6 +95,7 @@ namespace xsm::detail{
     node_ptr GetParent() const;
     void SetParent(node_ptr);
     node_ptr GetFirstChild() const;
+    node_ptr GetLastDescendant();
     child_map& GetChildren();
     const child_map& GetChildren() const;
     const key_type& GetKey() const;
@@ -282,6 +283,9 @@ namespace xsm{
       radix<T,Compare>& operator=(const radix<T,Compare>&);
       radix<T,Compare>& operator=(radix<T,Compare>&&) noexcept;
 
+      // Special
+      std::pair<iterator,iterator> complete(const key_type&);
+
       // Capacity
       [[nodiscard]] bool empty() const noexcept;
       size_type size() const noexcept;
@@ -450,6 +454,25 @@ namespace xsm{
     rdx.m_root = new detail::Node<T,Compare>();
     rdx.m_size = 0;
     return *this;
+  }
+
+  // Complete key
+  // The two return iterators are the begin and end iterators for the set of
+  // all descendants of the input key
+  template <class T, class Compare>
+  std::pair<detail::Iterator_impl<T,Compare>,detail::Iterator_impl<T,Compare>> 
+  radix<T,Compare>::complete(const key_type& key){
+
+    // TODO: This implementation doesn't work, because lower_bound never returns 
+    // non-leaf nodes. The implementation needs to be able to find the non-leaf
+    // lower bound, otherwise it cannot correctly return the end iterator
+    // Maybe I could use Retrieve() here
+    // Essentially I need a lower_bound for non-leaf nodes
+    
+    auto b_it = lower_bound(key);
+    iterator e_it(b_it.m_node->GetLastDescendant());
+    ++e_it;
+    return std::make_pair(b_it, e_it);
   }
 
   template <class T, class Compare>
@@ -1351,6 +1374,15 @@ namespace xsm::detail{
   template <class T, class Compare>
   typename Node<T,Compare>::node_ptr Node<T,Compare>::GetFirstChild() const {
     return GetChildren().begin()->second;
+  }
+
+  template <class T, class Compare>
+  typename Node<T,Compare>::node_ptr Node<T,Compare>::GetLastDescendant() {
+    node_ptr candidate = this;
+    while (!candidate->GetChildren().empty()){
+      candidate = candidate->GetChildren().rbegin()->second;
+    }
+    return candidate;
   }
   
   template <class T, class Compare>

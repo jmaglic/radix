@@ -8,7 +8,7 @@
 int main() {
 
   //typedef std::map<std::string,bool,xsm::comp::CompK> map_type;
-  typedef xsm::radix<bool,xsm::comp::CompK> map_type; 
+  typedef xsm::radix<bool> map_type; 
 
   map_type map;
   map.emplace("art", true);
@@ -16,18 +16,18 @@ int main() {
   map.emplace("kilo", true);
   map.emplace("koala", true);
   map.emplace("knight", true);
+  map.emplace("k", true);
   map.emplace("zebra", true);
 
-  std::cout << map.count(xsm::comp::StartsWithK()) << std::endl;
+  map_type::iterator b_it, e_it;
+  std::tie(b_it, e_it) = map.complete("k");
 
-  auto it = map.lower_bound(xsm::comp::StartsWithK());
+  std::cout << b_it->first << std::endl;
+  std::cout << e_it->first << std::endl;
 
-  int i = 0;
-  while (it != map.upper_bound(xsm::comp::StartsWithK())){
-    ++i;
-    ++it;
+  for (b_it; b_it != e_it; ++b_it){
+    std::cout << b_it->first << std::endl;
   }
-  std::cout << i << std::endl;
 
 
   /* ISSUE WITH STD::MAP
