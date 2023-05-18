@@ -7,11 +7,6 @@
 
 int main(){
 
-  // TODO:
-  // All contains
-  // All equal_range
-  // All count
-
   // Import common words
   std::vector<std::string> common_words;
   bool import_success;
@@ -119,6 +114,36 @@ int main(){
   };
 
 
+  // equal_range()
+  std::function<void()> equal_range = [common_words, rdx]() mutable {
+    for (const std::string& word : common_words){
+      rdx.equal_range(word);
+    }
+  };
+
+  // equal_range() const
+  std::function<void()> const_equal_range = [common_words, rdx]() {
+    for (const std::string& word : common_words){
+      rdx.equal_range(word);
+    }
+  };
+
+  // template equal_range()
+  std::function<void()> equal_range_template = [common_words, rdx]() mutable {
+    for (const std::string& word : common_words){
+      rdx.equal_range(word.c_str());
+    }
+  };
+
+  // template equal_range() const
+  std::function<void()> const_equal_range_template = [common_words, rdx]() {
+    for (const std::string& word : common_words){
+      const char *array = &word[0];
+      rdx.equal_range(array);
+    }
+  };
+
+
   // contains() const
   std::function<void()> const_contains = [common_words, rdx]() {
     for (const std::string& word : common_words){
@@ -131,6 +156,22 @@ int main(){
     for (const std::string& word : common_words){
       const char *array = &word[0];
       rdx.contains(array);
+    }
+  };
+
+  
+  // count() const
+  std::function<void()> const_count = [common_words, rdx]() {
+    for (const std::string& word : common_words){
+      rdx.count(word);
+    }
+  };
+
+  // template count() const
+  std::function<void()> const_count_template = [common_words, rdx]() {
+    for (const std::string& word : common_words){
+      const char *array = &word[0];
+      rdx.count(array);
     }
   };
 
@@ -149,7 +190,15 @@ int main(){
   benchmark::time(upper_bound_template, "radix template upper_bound");
   benchmark::time(const_upper_bound_template, "radix template upper_bound const");
 
+  benchmark::time(equal_range, "radix equal_range");
+  benchmark::time(const_equal_range, "radix equal_range const");
+  benchmark::time(equal_range_template, "radix template equal_range");
+  benchmark::time(const_equal_range_template, "radix template equal_range const");
+
   benchmark::time(const_contains, "radix contains const");
   benchmark::time(const_contains_template, "radix template contains const");
+
+  benchmark::time(const_count, "radix count const");
+  benchmark::time(const_count_template, "radix template count const");
 }
 
