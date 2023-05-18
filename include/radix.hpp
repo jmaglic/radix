@@ -114,6 +114,7 @@ namespace xsm::detail{
     node_ptr Retrieve(const key_type&);
     template <class K> node_ptr FindCondition(bool(*)(const key_type&, const K&), const K&);
     template <class K> node_ptr FindConditionNonLeaf(bool(*)(const key_type&, const K&), const K&);
+    template <class K> node_ptr CommonFindCondition(bool(*)(const key_type&, const K&), const K&);
 
     // Display
     void print() const; // TODO just for testing
@@ -1300,6 +1301,9 @@ namespace xsm::detail{
     RemoveParent();
   }
 
+  ////////////////////
+  // FIND CONDITION //
+  ////////////////////
   // This function is used for both lower_bound() and upper_bound(). Each function specifies a
   // condition for finding the desired element as a function and passes it to FindCondition() as
   // a function pointer. The condition must strictly specify a key order, not just key equality.
@@ -1313,34 +1317,7 @@ namespace xsm::detail{
       return this;
     }
 
-    node_ptr candidate_node = this;
-    child_map children = GetChildren();
-    bool match_found = false;
-
-    while(!match_found){
-      // Find first child that matches condition
-      auto it = children.cbegin();
-      while (!condition(it->second->GetKey(), key) && it != children.cend()){
-        ++it;
-      }
-
-      // If match has been found in child map
-      if (it != children.end()){
-        candidate_node = it->second;
-      }
-      
-      // Only check previous child, if match is not first element in child map
-      if (it != children.begin()){
-        --it; 
-        match_found = it->second->IsChildless();
-        // Following line has no effect if match_found == true
-        children = it->second->GetChildren();
-      }
-      else {
-        match_found = true;
-      }
-
-    }
+    node_ptr candidate_node = CommonFindCondition(condition, key);
 
     // Find first non-leaf node (candidate is not root)
     if (!candidate_node->GetKey().empty()){
@@ -1362,6 +1339,13 @@ namespace xsm::detail{
       return this;
     }
 
+    return CommonFindCondition(condition, key);
+  }
+
+  template <class T, class Compare> template <class K>
+  typename Node<T,Compare>::node_ptr Node<T,Compare>::CommonFindCondition(
+      bool(*condition)(const key_type&, const K&), const K& key){
+
     node_ptr candidate_node = this;
     child_map children = GetChildren();
     bool match_found = false;
@@ -1388,9 +1372,7 @@ namespace xsm::detail{
       else {
         match_found = true;
       }
-
     }
-
     return candidate_node;
   }
 
