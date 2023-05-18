@@ -922,14 +922,7 @@ namespace xsm{
 
   template <class T, class Compare> template <class K>
   bool radix<T,Compare>::contains(const K& key) const {
-    // TODO: Use tree structure (or just find)
-    Compare comp;
-    for (auto it = begin(); it != end(); ++it){
-      if (!comp(it->first,key) && !comp(key,it->first)) {
-        return true;
-      }
-    }
-    return false;
+    return (find(key) != cend());
   }
   
   template <class T, class Compare>
