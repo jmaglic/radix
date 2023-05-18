@@ -10,24 +10,36 @@ int main() {
   //typedef std::map<std::string,bool,xsm::comp::CompK> map_type;
   typedef xsm::radix<bool> map_type; 
 
+  // Complete for various search keys
   map_type map;
   map.emplace("art", true);
   map.emplace("beast", true);
   map.emplace("kilo", true);
   map.emplace("koala", true);
   map.emplace("knight", true);
-  map.emplace("k", true);
   map.emplace("zebra", true);
 
   map_type::iterator b_it, e_it;
   std::tie(b_it, e_it) = map.complete("k");
 
-  std::cout << b_it->first << std::endl;
-  std::cout << e_it->first << std::endl;
+  assert(b_it->first == "kilo");
+  assert((++b_it)->first == "knight");
+  assert((++b_it)->first == "koala");
+  assert(++b_it == e_it);
 
-  for (b_it; b_it != e_it; ++b_it){
-    std::cout << b_it->first << std::endl;
-  }
+  std::tie(b_it, e_it) = map.complete("ar");
+  assert(b_it->first == "art");
+  assert(++b_it == e_it);
+
+  std::tie(b_it, e_it) = map.complete("l");
+  assert(++b_it == e_it);
+
+
+  // Complete in empty map
+  map_type empty_map;
+
+  std::tie(b_it, e_it) = empty_map.complete("k");
+  assert(b_it == e_it);
 
 
   /* ISSUE WITH STD::MAP

@@ -113,6 +113,7 @@ namespace xsm::detail{
     // Container operations
     node_ptr Retrieve(const key_type&);
     template <class K> node_ptr FindCondition(bool(*)(const key_type&, const K&), const K&);
+    template <class K> node_ptr FindConditionNonLeaf(bool(*)(const key_type&, const K&), const K&);
 
     // Display
     void print() const; // TODO just for testing
@@ -462,16 +463,16 @@ namespace xsm{
   template <class T, class Compare>
   std::pair<detail::Iterator_impl<T,Compare>,detail::Iterator_impl<T,Compare>> 
   radix<T,Compare>::complete(const key_type& key){
-
-    // TODO: This implementation doesn't work, because lower_bound never returns 
-    // non-leaf nodes. The implementation needs to be able to find the non-leaf
-    // lower bound, otherwise it cannot correctly return the end iterator
-    // Maybe I could use Retrieve() here
-    // Essentially I need a lower_bound for non-leaf nodes
     
-    auto b_it = lower_bound(key);
-    iterator e_it(b_it.m_node->GetLastDescendant());
+    node_ptr b_node = m_root->FindConditionNonLeaf(radix::conditionLower<key_type>, key);
+    iterator e_it(b_node->GetLastDescendant());
     ++e_it;
+
+    iterator b_it(b_node);
+    if (!b_node->IsLeaf()){
+      ++b_it;
+    }
+
     return std::make_pair(b_it, e_it);
   }
 
@@ -1346,6 +1347,48 @@ namespace xsm::detail{
       while (!candidate_node->IsLeaf()){
         candidate_node = candidate_node->GetFirstChild();
       }
+    }
+
+    return candidate_node;
+  }
+
+  template <class T, class Compare> template <class K>
+  typename Node<T,Compare>::node_ptr Node<T,Compare>::FindConditionNonLeaf(
+      bool(*condition)(const key_type&, const K&), const K& key){
+
+    // If this function is called on an empty radix map, then there is no need
+    // to search the tree.
+    if (IsChildless()){
+      return this;
+    }
+
+    node_ptr candidate_node = this;
+    child_map children = GetChildren();
+    bool match_found = false;
+
+    while(!match_found){
+      // Find first child that matches condition
+      auto it = children.cbegin();
+      while (!condition(it->second->GetKey(), key) && it != children.cend()){
+        ++it;
+      }
+
+      // If match has been found in child map
+      if (it != children.end()){
+        candidate_node = it->second;
+      }
+      
+      // Only check previous child, if match is not first element in child map
+      if (it != children.begin()){
+        --it; 
+        match_found = it->second->IsChildless();
+        // Following line has no effect if match_found == true
+        children = it->second->GetChildren();
+      }
+      else {
+        match_found = true;
+      }
+
     }
 
     return candidate_node;
