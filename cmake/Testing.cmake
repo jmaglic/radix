@@ -4,6 +4,7 @@ set(RADIX_TEST_DIR ${CMAKE_SOURCE_DIR}/test/unit)
 
 set(TEST_NAMES
   radix_constructor
+  radix_complete
   radix_emplace
   radix_insert
   radix_insert_hint
