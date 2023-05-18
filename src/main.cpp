@@ -7,6 +7,29 @@
 
 int main() {
 
+  //typedef std::map<std::string,bool,xsm::comp::CompK> map_type;
+  typedef xsm::radix<bool,xsm::comp::CompK> map_type; 
+
+  map_type map;
+  map.emplace("art", true);
+  map.emplace("beast", true);
+  map.emplace("kilo", true);
+  map.emplace("koala", true);
+  map.emplace("knight", true);
+  map.emplace("zebra", true);
+
+  std::cout << map.count(xsm::comp::StartsWithK()) << std::endl;
+
+  auto it = map.lower_bound(xsm::comp::StartsWithK());
+
+  int i = 0;
+  while (it != map.upper_bound(xsm::comp::StartsWithK())){
+    ++i;
+    ++it;
+  }
+  std::cout << i << std::endl;
+
+
   /* ISSUE WITH STD::MAP
   radix rdx2nd;
   rdx2nd.insert({{"cool", 1}, {"story", 29}});
