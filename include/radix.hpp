@@ -270,6 +270,8 @@ namespace xsm{
       typedef const value_type* const_pointer;
       typedef detail::Iterator_impl<mapped_type,key_compare> iterator;
       typedef detail::Iterator_impl<mapped_type,key_compare,const mapped_type> const_iterator;
+      typedef std::pair<iterator,iterator> iterator_pair;
+      typedef std::pair<const_iterator,const_iterator> const_iterator_pair;
       typedef std::reverse_iterator<iterator> reverse_iterator;
       typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
       typedef detail::Node_handle<mapped_type,key_compare> node_type;
@@ -286,7 +288,8 @@ namespace xsm{
       radix<T,Compare>& operator=(radix<T,Compare>&&) noexcept;
 
       // Special
-      std::pair<iterator,iterator> complete(const key_type&);
+      iterator_pair complete(const key_type&);
+      const_iterator_pair complete(const key_type&) const;
 
       // Capacity
       [[nodiscard]] bool empty() const noexcept;
@@ -458,18 +461,34 @@ namespace xsm{
     return *this;
   }
 
-  // Complete key
+  //////////////
+  // COMPLETE //
+  //////////////
   // The two return iterators are the begin and end iterators for the set of
   // all descendants of the input key
   template <class T, class Compare>
-  std::pair<detail::Iterator_impl<T,Compare>,detail::Iterator_impl<T,Compare>> 
-  radix<T,Compare>::complete(const key_type& key){
+  typename radix<T,Compare>::iterator_pair radix<T,Compare>::complete(const key_type& key){
     
     node_ptr b_node = m_root->FindConditionNonLeaf(radix::conditionLower<key_type>, key);
     iterator e_it(b_node->GetLastDescendant());
     ++e_it;
 
     iterator b_it(b_node);
+    if (!b_node->IsLeaf()){
+      ++b_it;
+    }
+
+    return std::make_pair(b_it, e_it);
+  }
+
+  template <class T, class Compare>
+  typename radix<T,Compare>::const_iterator_pair radix<T,Compare>::complete(const key_type& key) const {
+    
+    node_ptr b_node = m_root->FindConditionNonLeaf(radix::conditionLower<key_type>, key);
+    const_iterator e_it(b_node->GetLastDescendant());
+    ++e_it;
+
+    const_iterator b_it(b_node);
     if (!b_node->IsLeaf()){
       ++b_it;
     }
