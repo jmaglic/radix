@@ -910,28 +910,44 @@ namespace xsm{
   std::pair<typename radix<T,Compare>::iterator, typename radix<T,Compare>::iterator> 
     radix<T,Compare>::equal_range(const key_type& key)
   {
-    return std::make_pair(lower_bound(key), upper_bound(key)); 
+    iterator lb = lower_bound(key);
+    iterator ub;
+    for (ub = lb; ub != cend() && !radix::conditionUpper(ub->first,key); ++ub){}
+
+    return std::make_pair(lb, ub);
   }
 
   template <class T, class Compare>
   std::pair<typename radix<T,Compare>::const_iterator, typename radix<T,Compare>::const_iterator> 
     radix<T,Compare>::equal_range(const key_type& key) const
   {
-    return std::make_pair(lower_bound(key), upper_bound(key)); 
+    const_iterator lb = lower_bound(key);
+    const_iterator ub;
+    for (ub = lb; ub != cend() && !radix::conditionUpper(ub->first,key); ++ub){}
+
+    return std::make_pair(lb, ub);
   }
 
   template <class T, class Compare> template <class K>
   std::pair<typename radix<T,Compare>::iterator, typename radix<T,Compare>::iterator> 
     radix<T,Compare>::equal_range(const K& key)
   {
-    return std::make_pair(lower_bound(key), upper_bound(key)); 
+    iterator lb = lower_bound(key);
+    iterator ub;
+    for (ub = lb; ub != cend() && !radix::conditionUpper(ub->first,key); ++ub){}
+
+    return std::make_pair(lb, ub);
   }
 
   template <class T, class Compare> template <class K>
   std::pair<typename radix<T,Compare>::const_iterator, typename radix<T,Compare>::const_iterator> 
     radix<T,Compare>::equal_range(const K& key) const
   {
-    return std::make_pair(lower_bound(key), upper_bound(key)); 
+    const_iterator lb = lower_bound(key);
+    const_iterator ub;
+    for (ub = lb; ub != cend() && !radix::conditionUpper(ub->first,key); ++ub){}
+
+    return std::make_pair(lb, ub);
   }
 
   template <class T, class Compare>
