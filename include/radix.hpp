@@ -1366,32 +1366,34 @@ namespace xsm::detail{
       bool(*condition)(const key_type&, const K&), const K& key){
 
     node_ptr candidate_node = this;
-    child_map children = GetChildren();
+    node_ptr search_node = this;
     bool match_found = false;
 
     while(!match_found){
-      // Find first child that matches condition
-      auto it = children.cbegin();
-      while (!condition(it->second->GetKey(), key) && it != children.cend()){
+
+      // Search for first child that matches the condition in search node
+      auto it = search_node->GetChildren().cbegin();
+      auto endit = search_node->GetChildren().cend();
+      while (it != endit && !condition(it->second->GetKey(), key)){
         ++it;
       }
+      // Search done. Iterator may now point to map element or to end iterator
 
-      // If match has been found in child map
-      if (it != children.end()){
+      if (it != endit) {
         candidate_node = it->second;
       }
       
-      // Only check previous child, if match is not first element in child map
-      if (it != children.begin()){
-        --it; 
-        match_found = it->second->IsChildless();
-        // Following line has no effect if match_found == true
-        children = it->second->GetChildren();
-      }
-      else {
+      // If match is the first in among the children, then there cannot be a match
+      // preceding the candidate
+      if (it == search_node->GetChildren().begin()){
         match_found = true;
       }
-    }
+      else {
+        --it;
+        search_node = it->second;
+      }
+      
+    } // while
     return candidate_node;
   }
 
