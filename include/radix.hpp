@@ -114,7 +114,6 @@ namespace xsm::detail{
     node_ptr Retrieve(const key_type&);
     template <class K> node_ptr FindCondition(bool(*)(const key_type&, const K&), const K&);
     template <class K> node_ptr FindConditionNonLeaf(bool(*)(const key_type&, const K&), const K&);
-    template <class K> node_ptr CommonFindCondition(bool(*)(const key_type&, const K&), const K&);
 
     // Display
     void print() const; // TODO just for testing
@@ -1330,13 +1329,7 @@ namespace xsm::detail{
   typename Node<T,Compare>::node_ptr Node<T,Compare>::FindCondition(
       bool(*condition)(const key_type&, const K&), const K& key){
 
-    // If this function is called on an empty radix map, then there is no need
-    // to search the tree.
-    if (IsChildless()){
-      return this;
-    }
-
-    node_ptr candidate_node = CommonFindCondition(condition, key);
+    node_ptr candidate_node = FindConditionNonLeaf(condition, key);
 
     // Find first non-leaf node (candidate is not root)
     if (!candidate_node->GetKey().empty()){
@@ -1350,19 +1343,6 @@ namespace xsm::detail{
 
   template <class T, class Compare> template <class K>
   typename Node<T,Compare>::node_ptr Node<T,Compare>::FindConditionNonLeaf(
-      bool(*condition)(const key_type&, const K&), const K& key){
-
-    // If this function is called on an empty radix map, then there is no need
-    // to search the tree.
-    if (IsChildless()){
-      return this;
-    }
-
-    return CommonFindCondition(condition, key);
-  }
-
-  template <class T, class Compare> template <class K>
-  typename Node<T,Compare>::node_ptr Node<T,Compare>::CommonFindCondition(
       bool(*condition)(const key_type&, const K&), const K& key){
 
     node_ptr candidate_node = this;
