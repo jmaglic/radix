@@ -946,15 +946,13 @@ namespace xsm{
   
   template <class T, class Compare> template <class K>
   typename xsm::radix<T,Compare>::size_type xsm::radix<T,Compare>::count(const K& key) const {
-    auto it = lower_bound(key);
-    auto fit = upper_bound(key);
 
     size_type i = 0;
-    while (it != fit){
+    for (auto it = lower_bound(key); it != cend() && !radix::conditionUpper(it->first,key); ++it){
       ++i;
-      ++it;
     }
     return i;
+
   }
 
   template <class T, class Compare>
