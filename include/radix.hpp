@@ -112,6 +112,7 @@ namespace xsm::detail{
 
     // Container operations
     node_ptr Retrieve(const key_type&);
+    node_ptr FindLower(const key_type&);
     template <class K> node_ptr FindCondition(bool(*)(const key_type&, const K&), const K&);
     template <class K> node_ptr FindConditionNonLeaf(bool(*)(const key_type&, const K&), const K&);
 
@@ -854,6 +855,7 @@ namespace xsm{
   
   template <class T, class Compare>
   typename radix<T,Compare>::iterator radix<T,Compare>::lower_bound(const key_type& key){
+    //return iterator(m_root->FindLower(key));
     return iterator(m_root->FindCondition(radix::conditionLower<key_type>, key));
   }
 
@@ -1331,6 +1333,25 @@ namespace xsm::detail{
     RemoveParent();
   }
 
+  ////////////////
+  // FIND LOWER //
+  ////////////////
+  template <class T, class Compare>
+  typename Node<T,Compare>::node_ptr Node<T,Compare>::FindLower(const key_type& key){
+
+    node_ptr candidate_node;
+
+    // Find first non-leaf node (candidate is not root)
+    if (!candidate_node->GetKey().empty()){
+      while (!candidate_node->IsLeaf()){
+        candidate_node = candidate_node->GetFirstChild();
+      }
+    }
+
+    return candidate_node;
+  }
+
+
   ////////////////////
   // FIND CONDITION //
   ////////////////////
@@ -1358,14 +1379,14 @@ namespace xsm::detail{
       bool(*condition)(const key_type&, const K&), const K& key){
 
     node_ptr candidate_node = this;
-    node_ptr search_node = this;
+    child_map* children = &(this->GetChildren());
     bool match_found = false;
 
     while(!match_found){
 
       // Search for first child that matches the condition in search node
-      auto it = search_node->GetChildren().cbegin();
-      auto endit = search_node->GetChildren().cend();
+      auto it = children->cbegin();
+      auto endit = children->cend();
       while (it != endit && !condition(it->second->GetKey(), key)){
         ++it;
       }
@@ -1377,12 +1398,12 @@ namespace xsm::detail{
       
       // If match is the first in among the children, then there cannot be a match
       // preceding the candidate
-      if (it == search_node->GetChildren().begin()){
+      if (it == children->begin()){
         match_found = true;
       }
       else {
         --it;
-        search_node = it->second;
+        children = &(it->second->GetChildren());
       }
       
     } // while
