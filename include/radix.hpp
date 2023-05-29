@@ -806,7 +806,7 @@ namespace xsm{
   template <class T, class Compare>
   const T& radix<T,Compare>::at(const key_type& key) const {
     const_node_ptr node = m_root->Retrieve(key);
-    if (node == nullptr){
+    if (node == nullptr || !node->IsLeaf()){
       throw std::out_of_range("radix::at:  key not found");
     }
     return m_root->Retrieve(key)->m_value_pair.second;
@@ -814,12 +814,14 @@ namespace xsm{
   
   template <class T, class Compare>
   typename radix<T,Compare>::iterator radix<T,Compare>::find(const key_type& key){
-    return iterator(m_root->Retrieve(key));
+    node_ptr node = m_root->Retrieve(key);
+    return (node->IsLeaf()? iterator(node) : end());
   }
 
   template <class T, class Compare>
   typename radix<T,Compare>::const_iterator radix<T,Compare>::find(const key_type& key) const {
-    return const_iterator(m_root->Retrieve(key));
+    node_ptr node = m_root->Retrieve(key);
+    return (node->IsLeaf()? const_iterator(node) : cend());
   }
 
   template <class T, class Compare> template <class K>

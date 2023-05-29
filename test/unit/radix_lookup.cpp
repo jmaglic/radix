@@ -1,6 +1,8 @@
 #include "radix.hpp"
 #include "custom_comp.hpp"
 
+#include <exception>
+
 int main() {
   {   
     typedef xsm::radix<int> radix;
@@ -73,6 +75,25 @@ int main() {
       assert(rdx.lower_bound(unknown_key) == rdx.find(std::string("worm")));
       assert(rdx.upper_bound(unknown_key) == rdx.find(std::string("worm")));
     }
+  }
+
+  // Test that non-leaf nodes are inaccessible
+  {
+    xsm::radix<bool> rdx({{"water", true}, {"waste", false}});
+
+    auto it = rdx.find(std::string("wa"));
+    assert(it == rdx.end());
+
+    const xsm::radix<bool> c_rdx = rdx;
+
+    auto c_it = c_rdx.find(std::string("wa"));
+    assert(c_it == c_rdx.end());
+
+    try {
+      c_rdx.at("wa");
+      assert(false);
+    }
+    catch (std::out_of_range e){}
   }
   
   // Testing lookup for radix and const radix with template key and custom comparator
