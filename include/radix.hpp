@@ -343,10 +343,10 @@ namespace xsm{
       const_iterator find(const key_type&) const;
       template <class K> iterator find(const K&);
       template <class K> const_iterator find(const K&) const;
-      std::pair<iterator,iterator> equal_range(const key_type&);
-      std::pair<const_iterator,const_iterator> equal_range(const key_type&) const;
-      template <class K> std::pair<iterator,iterator> equal_range(const K&);
-      template <class K> std::pair<const_iterator,const_iterator> equal_range(const K&) const;
+      iterator_pair equal_range(const key_type&);
+      const_iterator_pair equal_range(const key_type&) const;
+      template <class K> iterator_pair equal_range(const K&);
+      template <class K> const_iterator_pair equal_range(const K&) const;
       iterator lower_bound(const key_type&);
       const_iterator lower_bound(const key_type&) const;
       template <class K> iterator lower_bound(const K&);
@@ -907,8 +907,7 @@ namespace xsm{
   /////////////////
 
   template <class T, class Compare>
-  std::pair<typename radix<T,Compare>::iterator, typename radix<T,Compare>::iterator> 
-    radix<T,Compare>::equal_range(const key_type& key)
+  typename radix<T,Compare>::iterator_pair radix<T,Compare>::equal_range(const key_type& key)
   {
     iterator lb = lower_bound(key);
     iterator ub;
@@ -918,8 +917,7 @@ namespace xsm{
   }
 
   template <class T, class Compare>
-  std::pair<typename radix<T,Compare>::const_iterator, typename radix<T,Compare>::const_iterator> 
-    radix<T,Compare>::equal_range(const key_type& key) const
+  typename radix<T,Compare>::const_iterator_pair radix<T,Compare>::equal_range(const key_type& key) const
   {
     const_iterator lb = lower_bound(key);
     const_iterator ub;
@@ -929,8 +927,7 @@ namespace xsm{
   }
 
   template <class T, class Compare> template <class K>
-  std::pair<typename radix<T,Compare>::iterator, typename radix<T,Compare>::iterator> 
-    radix<T,Compare>::equal_range(const K& key)
+  typename radix<T,Compare>::iterator_pair radix<T,Compare>::equal_range(const K& key)
   {
     iterator lb = lower_bound(key);
     iterator ub;
@@ -940,8 +937,7 @@ namespace xsm{
   }
 
   template <class T, class Compare> template <class K>
-  std::pair<typename radix<T,Compare>::const_iterator, typename radix<T,Compare>::const_iterator> 
-    radix<T,Compare>::equal_range(const K& key) const
+  typename radix<T,Compare>::const_iterator_pair radix<T,Compare>::equal_range(const K& key) const
   {
     const_iterator lb = lower_bound(key);
     const_iterator ub;
