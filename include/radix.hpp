@@ -112,7 +112,6 @@ namespace xsm::detail{
 
     // Container operations
     node_ptr Retrieve(const key_type&);
-    node_ptr FindLower(const key_type&);
     template <class K> node_ptr FindCondition(bool(*)(const key_type&, const K&), const K&);
     template <class K> node_ptr FindConditionNonLeaf(bool(*)(const key_type&, const K&), const K&);
 
@@ -855,7 +854,6 @@ namespace xsm{
   
   template <class T, class Compare>
   typename radix<T,Compare>::iterator radix<T,Compare>::lower_bound(const key_type& key){
-    //return iterator(m_root->FindLower(key));
     return iterator(m_root->FindCondition(radix::conditionLower<key_type>, key));
   }
 
@@ -1332,25 +1330,6 @@ namespace xsm::detail{
     GetParent()->GetChildren().erase(GetParent()->GetChildren().find(keydiff));
     RemoveParent();
   }
-
-  ////////////////
-  // FIND LOWER //
-  ////////////////
-  template <class T, class Compare>
-  typename Node<T,Compare>::node_ptr Node<T,Compare>::FindLower(const key_type& key){
-
-    node_ptr candidate_node;
-
-    // Find first non-leaf node (candidate is not root)
-    if (!candidate_node->GetKey().empty()){
-      while (!candidate_node->IsLeaf()){
-        candidate_node = candidate_node->GetFirstChild();
-      }
-    }
-
-    return candidate_node;
-  }
-
 
   ////////////////////
   // FIND CONDITION //
