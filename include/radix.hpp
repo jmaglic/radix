@@ -287,8 +287,8 @@ namespace xsm{
       radix<T,Compare>& operator=(radix<T,Compare>&&) noexcept;
 
       // Special
-      iterator_pair complete(const key_type&);
-      const_iterator_pair complete(const key_type&) const;
+      template <class K> iterator_pair complete(const K&);
+      template <class K> const_iterator_pair complete(const K&) const;
 
       // Capacity
       [[nodiscard]] bool empty() const noexcept;
@@ -465,10 +465,10 @@ namespace xsm{
   //////////////
   // The two return iterators are the begin and end iterators for the set of
   // all descendants of the input key
-  template <class T, class Compare>
-  typename radix<T,Compare>::iterator_pair radix<T,Compare>::complete(const key_type& key){
+  template <class T, class Compare> template <class K>
+  typename radix<T,Compare>::iterator_pair radix<T,Compare>::complete(const K& key){
     
-    node_ptr b_node = m_root->FindConditionNonLeaf(radix::conditionLower<key_type>, key);
+    node_ptr b_node = m_root->FindConditionNonLeaf(radix::conditionLower<K>, key);
     iterator e_it(b_node->GetLastDescendant());
     ++e_it;
 
@@ -480,10 +480,10 @@ namespace xsm{
     return std::make_pair(b_it, e_it);
   }
 
-  template <class T, class Compare>
-  typename radix<T,Compare>::const_iterator_pair radix<T,Compare>::complete(const key_type& key) const {
+  template <class T, class Compare> template <class K>
+  typename radix<T,Compare>::const_iterator_pair radix<T,Compare>::complete(const K& key) const {
     
-    node_ptr b_node = m_root->FindConditionNonLeaf(radix::conditionLower<key_type>, key);
+    node_ptr b_node = m_root->FindConditionNonLeaf(radix::conditionLower<K>, key);
     const_iterator e_it(b_node->GetLastDescendant());
     ++e_it;
 

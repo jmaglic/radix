@@ -4,8 +4,11 @@
 
 #include "radix.hpp"
 #include "custom_comp.hpp"
+#include "commonwords.hpp"
+#include "benchmark.hpp"
 
 int main() {
+
 
   /* ISSUE WITH STD::MAP
   radix rdx2nd;

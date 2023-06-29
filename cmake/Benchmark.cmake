@@ -2,6 +2,7 @@
 set(RADIX_BENCHMARK_DIR ${CMAKE_SOURCE_DIR}/test/benchmark)
 
 set(BENCHMARK_NAMES
+  benchmark_complete
   benchmark_new_entry
   benchmark_extract_insert
   benchmark_lookup)
