@@ -1,7 +1,7 @@
 //
 //  radix.hpp
 //
-//  Created by Jasmin B. Maglic on 01.01.22.
+//  (c) Jasmin B. Maglic, 2023
 //
 
 #ifndef radix_hpp
